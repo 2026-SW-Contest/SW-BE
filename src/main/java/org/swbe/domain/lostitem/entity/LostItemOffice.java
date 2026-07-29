@@ -7,13 +7,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.swbe.domain.campus.entity.Building;
 import org.swbe.domain.campus.entity.Department;
 import org.swbe.domain.campus.entity.Location;
@@ -47,7 +48,7 @@ public class LostItemOffice {
   @Column(name = "operating_hours", length = 255)
   private String operatingHours;
 
-  @Lob
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   private String guidance;
 
   @Column(name = "is_primary", nullable = false)
@@ -57,7 +58,7 @@ public class LostItemOffice {
   private boolean active = true;
 
   @Column(name = "active_primary_marker", insertable = false, updatable = false)
-  private Integer activePrimaryMarker;
+  private Byte activePrimaryMarker;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;

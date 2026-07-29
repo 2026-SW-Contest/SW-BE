@@ -35,5 +35,5 @@ public class OfficeStaffAssignment {
   private LocalDateTime endedAt;
 
   @Column(name = "active_marker", insertable = false, updatable = false)
-  private Integer activeMarker;
+  private Byte activeMarker;
 }
