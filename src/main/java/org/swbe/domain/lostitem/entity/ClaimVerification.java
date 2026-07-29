@@ -7,13 +7,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.swbe.domain.user.entity.AppUser;
 
 @Entity
@@ -41,7 +42,7 @@ public class ClaimVerification {
   @Column(name = "verification_result", nullable = false, length = 20)
   private String verificationResult;
 
-  @Lob
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @Column(name = "verification_note")
   private String verificationNote;
 

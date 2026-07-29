@@ -53,8 +53,7 @@ CREATE TABLE location (
   CONSTRAINT fk_location_building FOREIGN KEY (building_id)
     REFERENCES building (building_id) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CONSTRAINT fk_location_parent FOREIGN KEY (parent_location_id)
-    REFERENCES location (location_id) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT ck_location_not_self CHECK (parent_location_id IS NULL OR parent_location_id <> location_id)
+    REFERENCES location (location_id) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB;
 CREATE INDEX idx_location_building ON location (building_id);
 CREATE INDEX idx_location_parent ON location (parent_location_id);
@@ -252,7 +251,7 @@ CREATE TABLE temporary_claimant (
   CONSTRAINT pk_temporary_claimant PRIMARY KEY (temporary_claimant_id),
   CONSTRAINT uk_temporary_claimant_student_number UNIQUE (student_number),
   CONSTRAINT fk_temp_claimant_department FOREIGN KEY (department_id) REFERENCES department (department_id) ON DELETE SET NULL,
-  CONSTRAINT fk_temp_claimant_user FOREIGN KEY (linked_user_id) REFERENCES app_user (user_id) ON DELETE SET NULL,
+  CONSTRAINT fk_temp_claimant_user FOREIGN KEY (linked_user_id) REFERENCES app_user (user_id) ON DELETE RESTRICT,
   CONSTRAINT ck_temp_claimant_link CHECK ((linked_user_id IS NULL AND linked_at IS NULL) OR (linked_user_id IS NOT NULL AND linked_at IS NOT NULL))
 ) ENGINE=InnoDB;
 
@@ -332,7 +331,7 @@ CREATE TABLE item_status_history (
   changed_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   CONSTRAINT pk_item_status_history PRIMARY KEY (item_status_history_id),
   CONSTRAINT fk_item_status_history_item FOREIGN KEY (stored_item_id) REFERENCES stored_item (stored_item_id) ON DELETE RESTRICT,
-  CONSTRAINT fk_item_status_history_user FOREIGN KEY (changed_by) REFERENCES app_user (user_id) ON DELETE SET NULL,
+  CONSTRAINT fk_item_status_history_user FOREIGN KEY (changed_by) REFERENCES app_user (user_id) ON DELETE RESTRICT,
   CONSTRAINT ck_item_status_history_actor CHECK ((actor_type='USER' AND changed_by IS NOT NULL) OR (actor_type='SYSTEM' AND changed_by IS NULL))
 ) ENGINE=InnoDB;
 
@@ -347,7 +346,7 @@ CREATE TABLE claim_status_history (
   changed_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   CONSTRAINT pk_claim_status_history PRIMARY KEY (claim_status_history_id),
   CONSTRAINT fk_claim_status_history_claim FOREIGN KEY (item_claim_id) REFERENCES item_claim (item_claim_id) ON DELETE RESTRICT,
-  CONSTRAINT fk_claim_status_history_user FOREIGN KEY (changed_by) REFERENCES app_user (user_id) ON DELETE SET NULL,
+  CONSTRAINT fk_claim_status_history_user FOREIGN KEY (changed_by) REFERENCES app_user (user_id) ON DELETE RESTRICT,
   CONSTRAINT ck_claim_status_history_actor CHECK ((actor_type='USER' AND changed_by IS NOT NULL) OR (actor_type='SYSTEM' AND changed_by IS NULL))
 ) ENGINE=InnoDB;
 
@@ -463,7 +462,7 @@ CREATE TABLE request_status_history (
   changed_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   CONSTRAINT pk_request_status_history PRIMARY KEY (request_status_history_id),
   CONSTRAINT fk_request_status_history_request FOREIGN KEY (service_request_id) REFERENCES service_request (service_request_id) ON DELETE RESTRICT,
-  CONSTRAINT fk_request_status_history_user FOREIGN KEY (changed_by) REFERENCES app_user (user_id) ON DELETE SET NULL,
+  CONSTRAINT fk_request_status_history_user FOREIGN KEY (changed_by) REFERENCES app_user (user_id) ON DELETE RESTRICT,
   CONSTRAINT ck_request_status_history_actor CHECK ((actor_type='USER' AND changed_by IS NOT NULL) OR (actor_type='SYSTEM' AND changed_by IS NULL))
 ) ENGINE=InnoDB;
 
@@ -522,7 +521,7 @@ CREATE TABLE audit_log (
   action_reason TEXT NULL,
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   CONSTRAINT pk_audit_log PRIMARY KEY (audit_log_id),
-  CONSTRAINT fk_audit_log_actor FOREIGN KEY (actor_user_id) REFERENCES app_user (user_id) ON DELETE SET NULL,
+  CONSTRAINT fk_audit_log_actor FOREIGN KEY (actor_user_id) REFERENCES app_user (user_id) ON DELETE RESTRICT,
   CONSTRAINT ck_audit_log_actor CHECK ((actor_type='USER' AND actor_user_id IS NOT NULL) OR (actor_type='SYSTEM' AND actor_user_id IS NULL))
 ) ENGINE=InnoDB;
 CREATE INDEX idx_audit_log_target ON audit_log (target_type, target_id, created_at);
@@ -532,4 +531,3 @@ INSERT INTO app_role (role_code, role_name) VALUES
   ('LOST_ITEM_STAFF', '분실물 담당자'),
   ('FACILITY_STAFF', '시설·기자재 담당자'),
   ('ADMIN', '관리자');
-

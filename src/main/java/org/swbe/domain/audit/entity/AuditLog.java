@@ -7,13 +7,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.swbe.domain.user.entity.AppUser;
 
 @Entity
@@ -52,7 +53,7 @@ public class AuditLog {
   @Column(name = "after_value", columnDefinition = "json")
   private String afterValue;
 
-  @Lob
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @Column(name = "action_reason")
   private String actionReason;
 

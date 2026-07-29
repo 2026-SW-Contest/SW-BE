@@ -50,5 +50,5 @@ public class RequestAssignment {
   private LocalDateTime endedAt;
 
   @Column(name = "current_marker", insertable = false, updatable = false)
-  private Integer currentMarker;
+  private Byte currentMarker;
 }

@@ -7,7 +7,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -15,6 +14,8 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.swbe.domain.user.entity.AppUser;
 
 @Entity
@@ -50,7 +51,7 @@ public class ItemClaim {
   @Column(name = "claim_status", nullable = false, length = 40)
   private String claimStatus = "PENDING";
 
-  @Lob
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @Column(name = "ownership_description")
   private String ownershipDescription;
 
@@ -60,11 +61,11 @@ public class ItemClaim {
   @Column(name = "expected_lost_at")
   private LocalDateTime expectedLostAt;
 
-  @Lob
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @Column(name = "rejection_reason")
   private String rejectionReason;
 
-  @Lob
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @Column(name = "closure_reason")
   private String closureReason;
 

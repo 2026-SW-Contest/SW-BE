@@ -44,5 +44,5 @@ public class UserRole {
   private LocalDateTime revokedAt;
 
   @Column(name = "active_marker", insertable = false, updatable = false)
-  private Integer activeMarker;
+  private Byte activeMarker;
 }
