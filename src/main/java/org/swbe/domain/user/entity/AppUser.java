@@ -2,6 +2,8 @@ package org.swbe.domain.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -43,7 +45,8 @@ public class AppUser {
   private String studentNumber;
 
   @Column(name = "account_status", nullable = false, length = 30)
-  private String accountStatus = "INVITED";
+  @Enumerated(EnumType.STRING)
+  private AccountStatus accountStatus = AccountStatus.INVITED;
 
   @Column(name = "email_verified", nullable = false)
   private boolean emailVerified;
