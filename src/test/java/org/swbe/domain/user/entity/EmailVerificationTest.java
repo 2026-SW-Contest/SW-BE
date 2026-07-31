@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import java.time.LocalDateTime;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
 class EmailVerificationTest {
@@ -44,6 +45,50 @@ class EmailVerificationTest {
     verification.recordFailedAttempt();
 
     assertThat(verification.getAttemptCount()).isEqualTo(1);
+  }
+
+  @Test
+  void determinesAttemptLimit() {
+    EmailVerification verification = createVerification();
+
+    for (int attempt = 0; attempt < 5; attempt++) {
+      verification.recordFailedAttempt();
+    }
+
+    assertThat(verification.hasReachedAttemptLimit(5)).isTrue();
+  }
+
+  @Test
+  void allowsResendAtCooldownBoundary() {
+    EmailVerification verification = createVerification();
+    Duration cooldown = Duration.ofMinutes(1);
+
+    assertThat(verification.isResendAllowed(
+        CREATED_AT.plus(cooldown).minusNanos(1),
+        cooldown
+    )).isFalse();
+    assertThat(verification.isResendAllowed(
+        CREATED_AT.plus(cooldown),
+        cooldown
+    )).isTrue();
+  }
+
+  @Test
+  void invalidatesCodeAndIssuedToken() {
+    EmailVerification verification = createVerification();
+    LocalDateTime verifiedAt = CREATED_AT.plusSeconds(30);
+    verification.completeVerification(
+        "token-hash",
+        verifiedAt,
+        verifiedAt.plusMinutes(30)
+    );
+    LocalDateTime invalidatedAt = CREATED_AT.plusMinutes(1);
+
+    verification.invalidate(invalidatedAt);
+
+    assertThat(verification.getExpiresAt()).isEqualTo(invalidatedAt);
+    assertThat(verification.getVerificationTokenHash()).isNull();
+    assertThat(verification.getVerificationTokenExpiresAt()).isNull();
   }
 
   @Test

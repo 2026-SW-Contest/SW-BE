@@ -12,7 +12,7 @@ public interface EmailVerificationRepository
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   Optional<EmailVerification>
-      findFirstByEmailAndPurposeOrderByCreatedAtDesc(
+      findFirstByEmailAndPurposeOrderByCreatedAtDescIdDesc(
           String email,
           EmailVerificationPurpose purpose
       );

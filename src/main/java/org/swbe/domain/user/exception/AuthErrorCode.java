@@ -9,6 +9,46 @@ public enum AuthErrorCode implements ErrorCode {
       HttpStatus.UNAUTHORIZED,
       "AUTH_INVALID_CREDENTIALS",
       "이메일 또는 비밀번호가 올바르지 않습니다."
+  ),
+  EMAIL_ALREADY_REGISTERED(
+      HttpStatus.CONFLICT,
+      "AUTH_EMAIL_ALREADY_REGISTERED",
+      "이미 가입된 이메일입니다."
+  ),
+  EMAIL_VERIFICATION_RESEND_TOO_SOON(
+      HttpStatus.TOO_MANY_REQUESTS,
+      "AUTH_EMAIL_VERIFICATION_RESEND_TOO_SOON",
+      "인증 코드 재발송은 1분 후에 가능합니다."
+  ),
+  EMAIL_VERIFICATION_NOT_FOUND(
+      HttpStatus.BAD_REQUEST,
+      "AUTH_EMAIL_VERIFICATION_NOT_FOUND",
+      "이메일 인증 요청을 찾을 수 없습니다."
+  ),
+  EMAIL_VERIFICATION_EXPIRED(
+      HttpStatus.BAD_REQUEST,
+      "AUTH_EMAIL_VERIFICATION_EXPIRED",
+      "인증 코드가 만료되었습니다."
+  ),
+  EMAIL_VERIFICATION_CODE_MISMATCH(
+      HttpStatus.BAD_REQUEST,
+      "AUTH_EMAIL_VERIFICATION_CODE_MISMATCH",
+      "인증 코드가 올바르지 않습니다."
+  ),
+  EMAIL_VERIFICATION_ATTEMPTS_EXCEEDED(
+      HttpStatus.TOO_MANY_REQUESTS,
+      "AUTH_EMAIL_VERIFICATION_ATTEMPTS_EXCEEDED",
+      "인증 코드 입력 가능 횟수를 초과했습니다."
+  ),
+  EMAIL_VERIFICATION_ALREADY_COMPLETED(
+      HttpStatus.CONFLICT,
+      "AUTH_EMAIL_VERIFICATION_ALREADY_COMPLETED",
+      "이미 완료된 이메일 인증입니다."
+  ),
+  EMAIL_SEND_FAILED(
+      HttpStatus.BAD_GATEWAY,
+      "AUTH_EMAIL_SEND_FAILED",
+      "인증 메일을 발송하지 못했습니다."
   );
 
   private final HttpStatus status;

@@ -4,6 +4,7 @@ import java.time.Duration;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
+import org.swbe.domain.user.exception.VerificationEmailSendException;
 import org.swbe.domain.user.service.VerificationEmailSender;
 
 @Component
@@ -43,6 +44,10 @@ public class SmtpVerificationEmailSender implements VerificationEmailSender {
     message.setSubject(properties.verificationSubject());
     message.setText(VERIFICATION_BODY.formatted(code, validity.toMinutes()));
 
-    mailSender.send(message);
+    try {
+      mailSender.send(message);
+    } catch (org.springframework.mail.MailException exception) {
+      throw new VerificationEmailSendException(exception);
+    }
   }
 }

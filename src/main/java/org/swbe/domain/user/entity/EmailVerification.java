@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -93,6 +94,20 @@ public class EmailVerification {
 
   public void recordFailedAttempt() {
     attemptCount++;
+  }
+
+  public boolean hasReachedAttemptLimit(int maxAttempts) {
+    return attemptCount >= maxAttempts;
+  }
+
+  public boolean isResendAllowed(LocalDateTime now, Duration cooldown) {
+    return !createdAt.plus(cooldown).isAfter(now);
+  }
+
+  public void invalidate(LocalDateTime invalidatedAt) {
+    expiresAt = invalidatedAt;
+    verificationTokenHash = null;
+    verificationTokenExpiresAt = null;
   }
 
   public void completeVerification(
