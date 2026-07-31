@@ -12,6 +12,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +25,14 @@ import org.swbe.domain.campus.entity.Department;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AppUser {
+
+  private static final Pattern MJU_EMAIL_PATTERN = Pattern.compile(
+      "(?i)^[A-Z0-9._%+-]+@mju\\.ac\\.kr$"
+  );
+  private static final Pattern STUDENT_NUMBER_PATTERN =
+      Pattern.compile("\\d{8}");
+  private static final int MIN_NAME_LENGTH = 2;
+  private static final int MAX_NAME_LENGTH = 100;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,4 +67,91 @@ public class AppUser {
 
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
+
+  private AppUser(
+      String email,
+      String passwordHash,
+      String name,
+      String studentNumber,
+      LocalDateTime registeredAt
+  ) {
+    this.email = email;
+    this.passwordHash = passwordHash;
+    this.name = name;
+    this.studentNumber = studentNumber;
+    this.accountStatus = AccountStatus.ACTIVE;
+    this.emailVerified = true;
+    this.createdAt = registeredAt;
+    this.updatedAt = registeredAt;
+  }
+
+  public static AppUser registerStudent(
+      String email,
+      String passwordHash,
+      String name,
+      String studentNumber,
+      LocalDateTime registeredAt
+  ) {
+    String normalizedEmail = normalizeEmail(email);
+    String normalizedName = stripNullable(name);
+    String normalizedStudentNumber = stripNullable(studentNumber);
+    validateStudentRegistration(
+        normalizedEmail,
+        passwordHash,
+        normalizedName,
+        normalizedStudentNumber,
+        registeredAt
+    );
+    return new AppUser(
+        normalizedEmail,
+        passwordHash,
+        normalizedName,
+        normalizedStudentNumber,
+        registeredAt
+    );
+  }
+
+  private static void validateStudentRegistration(
+      String email,
+      String passwordHash,
+      String name,
+      String studentNumber,
+      LocalDateTime registeredAt
+  ) {
+    requireText(passwordHash, "passwordHash");
+    Objects.requireNonNull(registeredAt, "registeredAt must not be null");
+
+    if (email == null || !MJU_EMAIL_PATTERN.matcher(email).matches()) {
+      throw new IllegalArgumentException("A valid MJU email is required");
+    }
+    if (studentNumber == null
+        || !STUDENT_NUMBER_PATTERN.matcher(studentNumber).matches()) {
+      throw new IllegalArgumentException(
+          "Student number must consist of 8 digits"
+      );
+    }
+    if (name == null
+        || name.length() < MIN_NAME_LENGTH
+        || name.length() > MAX_NAME_LENGTH
+        || name.isBlank()) {
+      throw new IllegalArgumentException(
+          "Name length must be between 2 and 100"
+      );
+    }
+  }
+
+  private static void requireText(String value, String fieldName) {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException(fieldName + " must not be blank");
+    }
+  }
+
+  private static String normalizeEmail(String email) {
+    String stripped = stripNullable(email);
+    return stripped == null ? null : stripped.toLowerCase(Locale.ROOT);
+  }
+
+  private static String stripNullable(String value) {
+    return value == null ? null : value.strip();
+  }
 }

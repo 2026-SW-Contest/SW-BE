@@ -8,8 +8,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -19,14 +19,17 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.swbe.domain.user.dto.response.CsrfResponse;
 import org.swbe.domain.user.dto.response.EmailVerificationTokenResponse;
 import org.swbe.domain.user.dto.response.LoginResponse;
+import org.swbe.domain.user.dto.response.SignupResponse;
 import org.swbe.domain.user.service.AuthService;
 import org.swbe.domain.user.service.EmailVerificationService;
+import org.swbe.domain.user.service.SignupService;
 import org.swbe.global.error.GlobalExceptionHandler;
 
 class AuthControllerTest {
 
   private AuthService authService;
   private EmailVerificationService emailVerificationService;
+  private SignupService signupService;
   private AuthController authController;
   private MockMvc mockMvc;
 
@@ -34,7 +37,12 @@ class AuthControllerTest {
   void setUp() {
     authService = mock(AuthService.class);
     emailVerificationService = mock(EmailVerificationService.class);
-    authController = new AuthController(authService, emailVerificationService);
+    signupService = mock(SignupService.class);
+    authController = new AuthController(
+        authService,
+        emailVerificationService,
+        signupService
+    );
     mockMvc = MockMvcBuilders.standaloneSetup(authController)
         .setControllerAdvice(new GlobalExceptionHandler())
         .build();
@@ -160,5 +168,50 @@ class AuthControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("COMMON_VALIDATION_FAILED"))
         .andExpect(jsonPath("$.fieldErrors[0].field").value("code"));
+  }
+
+  @Test
+  void validSignupRequestCreatesStudentAccount() throws Exception {
+    when(signupService.signup(any())).thenReturn(new SignupResponse(
+        1L,
+        "student@mju.ac.kr",
+        "홍길동",
+        "60241234",
+        List.of("STUDENT")
+    ));
+
+    mockMvc.perform(post("/api/auth/signup")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(validSignupJson("password1")))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.userId").value(1))
+        .andExpect(jsonPath("$.email").value("student@mju.ac.kr"))
+        .andExpect(jsonPath("$.studentNumber").value("60241234"))
+        .andExpect(jsonPath("$.roles[0]").value("STUDENT"));
+  }
+
+  @Test
+  void passwordConfirmationMismatchReturnsValidationError()
+      throws Exception {
+    mockMvc.perform(post("/api/auth/signup")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(validSignupJson("different1")))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("COMMON_VALIDATION_FAILED"))
+        .andExpect(jsonPath("$.fieldErrors[0].field")
+            .value("passwordConfirmed"));
+  }
+
+  private String validSignupJson(String passwordConfirm) {
+    return """
+        {
+          "name": "홍길동",
+          "studentNumber": "60241234",
+          "email": "student@mju.ac.kr",
+          "password": "password1",
+          "passwordConfirm": "%s",
+          "emailVerificationToken": "%s"
+        }
+        """.formatted(passwordConfirm, "a".repeat(43));
   }
 }

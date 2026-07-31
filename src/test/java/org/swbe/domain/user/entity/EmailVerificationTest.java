@@ -1,11 +1,14 @@
 package org.swbe.domain.user.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
-import java.time.LocalDateTime;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
+import org.swbe.domain.user.exception.AuthErrorCode;
+import org.swbe.domain.user.exception.SignupVerificationException;
 
 class EmailVerificationTest {
 
@@ -115,14 +118,87 @@ class EmailVerificationTest {
   @Test
   void consumesVerificationForCreatedUser() {
     EmailVerification verification = createVerification();
+    verification.completeVerification(
+        "token-hash",
+        CREATED_AT.plusMinutes(1),
+        CREATED_AT.plusMinutes(31)
+    );
     AppUser user = mock(AppUser.class);
     LocalDateTime consumedAt = CREATED_AT.plusMinutes(2);
 
-    verification.consume(user, consumedAt);
+    verification.validateUsableForSignup(
+        "student@mju.ac.kr",
+        consumedAt
+    );
+    verification.consumeForSignup(
+        user,
+        "student@mju.ac.kr",
+        consumedAt
+    );
 
     assertThat(verification.getUser()).isSameAs(user);
     assertThat(verification.getConsumedAt()).isEqualTo(consumedAt);
     assertThat(verification.isConsumed()).isTrue();
+  }
+
+  @Test
+  void expiredSignupTokenCannotBeUsed() {
+    EmailVerification verification = createVerification();
+    LocalDateTime tokenExpiresAt = CREATED_AT.plusMinutes(30);
+    verification.completeVerification(
+        "token-hash",
+        CREATED_AT.plusMinutes(1),
+        tokenExpiresAt
+    );
+
+    assertSignupError(
+        () -> verification.validateUsableForSignup(
+            "student@mju.ac.kr",
+            tokenExpiresAt
+        ),
+        AuthErrorCode.EMAIL_VERIFICATION_TOKEN_EXPIRED
+    );
+  }
+
+  @Test
+  void signupEmailMustMatchVerifiedEmail() {
+    EmailVerification verification = createVerification();
+    verification.completeVerification(
+        "token-hash",
+        CREATED_AT.plusMinutes(1),
+        CREATED_AT.plusMinutes(31)
+    );
+
+    assertSignupError(
+        () -> verification.validateUsableForSignup(
+            "other@mju.ac.kr",
+            CREATED_AT.plusMinutes(2)
+        ),
+        AuthErrorCode.EMAIL_VERIFICATION_EMAIL_MISMATCH
+    );
+  }
+
+  @Test
+  void consumedSignupTokenCannotBeReused() {
+    EmailVerification verification = createVerification();
+    verification.completeVerification(
+        "token-hash",
+        CREATED_AT.plusMinutes(1),
+        CREATED_AT.plusMinutes(31)
+    );
+    verification.consumeForSignup(
+        mock(AppUser.class),
+        "student@mju.ac.kr",
+        CREATED_AT.plusMinutes(2)
+    );
+
+    assertSignupError(
+        () -> verification.validateUsableForSignup(
+            "student@mju.ac.kr",
+            CREATED_AT.plusMinutes(3)
+        ),
+        AuthErrorCode.EMAIL_VERIFICATION_TOKEN_CONSUMED
+    );
   }
 
   private EmailVerification createVerification() {
@@ -132,5 +208,17 @@ class EmailVerificationTest {
         CODE_EXPIRES_AT,
         CREATED_AT
     );
+  }
+
+  private void assertSignupError(
+      org.assertj.core.api.ThrowableAssert.ThrowingCallable callable,
+      AuthErrorCode errorCode
+  ) {
+    assertThatThrownBy(callable)
+        .isInstanceOfSatisfying(
+            SignupVerificationException.class,
+            exception -> assertThat(exception.getErrorCode())
+                .isEqualTo(errorCode)
+        );
   }
 }

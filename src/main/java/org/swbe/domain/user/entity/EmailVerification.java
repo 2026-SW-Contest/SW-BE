@@ -13,9 +13,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.swbe.domain.user.exception.SignupVerificationException;
 
 @Entity
 @Table(name = "email_verification")
@@ -120,9 +122,38 @@ public class EmailVerification {
     this.verificationTokenExpiresAt = tokenExpiresAt;
   }
 
-  public void consume(AppUser user, LocalDateTime consumedAt) {
-    this.user = user;
-    this.consumedAt = consumedAt;
+  public void validateUsableForSignup(
+      String signupEmail,
+      LocalDateTime now
+  ) {
+    if (purpose != EmailVerificationPurpose.SIGNUP || !isVerified()) {
+      throw SignupVerificationException.invalidToken();
+    }
+    if (isConsumed()) {
+      throw SignupVerificationException.alreadyConsumed();
+    }
+    if (isTokenExpired(now)) {
+      throw SignupVerificationException.expired();
+    }
+    if (!email.equalsIgnoreCase(signupEmail)) {
+      throw SignupVerificationException.emailMismatch();
+    }
+  }
+
+  public void consumeForSignup(
+      AppUser registeredUser,
+      String signupEmail,
+      LocalDateTime now
+  ) {
+    validateUsableForSignup(signupEmail, now);
+    this.user = Objects.requireNonNull(
+        registeredUser,
+        "registeredUser must not be null"
+    );
+    this.consumedAt = Objects.requireNonNull(
+        now,
+        "consumedAt must not be null"
+    );
   }
 
   public boolean isCodeExpired(LocalDateTime now) {

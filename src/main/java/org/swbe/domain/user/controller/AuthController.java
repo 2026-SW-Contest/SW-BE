@@ -15,11 +15,14 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.swbe.domain.user.dto.request.EmailVerificationConfirmRequest;
 import org.swbe.domain.user.dto.request.EmailVerificationSendRequest;
 import org.swbe.domain.user.dto.request.LoginRequest;
+import org.swbe.domain.user.dto.request.SignupRequest;
 import org.swbe.domain.user.dto.response.CsrfResponse;
 import org.swbe.domain.user.dto.response.EmailVerificationTokenResponse;
 import org.swbe.domain.user.dto.response.LoginResponse;
+import org.swbe.domain.user.dto.response.SignupResponse;
 import org.swbe.domain.user.service.AuthService;
 import org.swbe.domain.user.service.EmailVerificationService;
+import org.swbe.domain.user.service.SignupService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,6 +31,7 @@ public class AuthController {
 
   private final AuthService authService;
   private final EmailVerificationService emailVerificationService;
+  private final SignupService signupService;
 
   @GetMapping("/csrf")
   public CsrfResponse csrf(CsrfToken csrfToken) {
@@ -59,5 +63,13 @@ public class AuthController {
       @Valid @RequestBody EmailVerificationConfirmRequest request
   ) {
     return emailVerificationService.confirmVerificationCode(request);
+  }
+
+  @PostMapping("/signup")
+  @ResponseStatus(HttpStatus.CREATED)
+  public SignupResponse signup(
+      @Valid @RequestBody SignupRequest request
+  ) {
+    return signupService.signup(request);
   }
 }

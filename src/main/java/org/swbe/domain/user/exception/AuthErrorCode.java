@@ -49,6 +49,36 @@ public enum AuthErrorCode implements ErrorCode {
       HttpStatus.BAD_GATEWAY,
       "AUTH_EMAIL_SEND_FAILED",
       "인증 메일을 발송하지 못했습니다."
+  ),
+  STUDENT_NUMBER_ALREADY_REGISTERED(
+      HttpStatus.CONFLICT,
+      "AUTH_STUDENT_NUMBER_ALREADY_REGISTERED",
+      "이미 가입에 사용된 학번입니다."
+  ),
+  INVALID_EMAIL_VERIFICATION_TOKEN(
+      HttpStatus.BAD_REQUEST,
+      "AUTH_INVALID_EMAIL_VERIFICATION_TOKEN",
+      "이메일 인증 토큰이 올바르지 않습니다."
+  ),
+  EMAIL_VERIFICATION_TOKEN_EXPIRED(
+      HttpStatus.BAD_REQUEST,
+      "AUTH_EMAIL_VERIFICATION_TOKEN_EXPIRED",
+      "이메일 인증 토큰이 만료되었습니다."
+  ),
+  EMAIL_VERIFICATION_TOKEN_CONSUMED(
+      HttpStatus.CONFLICT,
+      "AUTH_EMAIL_VERIFICATION_TOKEN_CONSUMED",
+      "이미 사용된 이메일 인증 토큰입니다."
+  ),
+  EMAIL_VERIFICATION_EMAIL_MISMATCH(
+      HttpStatus.BAD_REQUEST,
+      "AUTH_EMAIL_VERIFICATION_EMAIL_MISMATCH",
+      "인증한 이메일과 가입 이메일이 일치하지 않습니다."
+  ),
+  SIGNUP_CONFLICT(
+      HttpStatus.CONFLICT,
+      "AUTH_SIGNUP_CONFLICT",
+      "이메일 또는 학번이 이미 가입에 사용되었습니다."
   );
 
   private final HttpStatus status;
