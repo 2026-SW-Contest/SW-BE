@@ -128,11 +128,28 @@ CREATE TABLE email_verification (
   attempt_count INT NOT NULL DEFAULT 0,
   expires_at DATETIME(6) NOT NULL,
   verified_at DATETIME(6) NULL,
+  verification_token_hash CHAR(64) NULL,
+  verification_token_expires_at DATETIME(6) NULL,
+  consumed_at DATETIME(6) NULL,
   created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   CONSTRAINT pk_email_verification PRIMARY KEY (verification_id),
+  CONSTRAINT uk_email_verification_token_hash UNIQUE (verification_token_hash),
   CONSTRAINT fk_email_verification_user FOREIGN KEY (user_id) REFERENCES app_user (user_id) ON DELETE SET NULL,
   CONSTRAINT ck_email_verification_attempt CHECK (attempt_count >= 0),
-  CONSTRAINT ck_email_verification_expiry CHECK (expires_at > created_at)
+  CONSTRAINT ck_email_verification_expiry CHECK (expires_at > created_at),
+  CONSTRAINT ck_email_verification_token_pair CHECK (
+    (verification_token_hash IS NULL AND verification_token_expires_at IS NULL)
+    OR (
+      verification_token_hash IS NOT NULL
+      AND verification_token_expires_at IS NOT NULL
+      AND verified_at IS NOT NULL
+      AND verification_token_expires_at > verified_at
+    )
+  ),
+  CONSTRAINT ck_email_verification_consumed CHECK (
+    consumed_at IS NULL
+    OR (verified_at IS NOT NULL AND user_id IS NOT NULL)
+  )
 ) ENGINE=InnoDB;
 CREATE INDEX idx_email_verification_email ON email_verification (email, purpose);
 

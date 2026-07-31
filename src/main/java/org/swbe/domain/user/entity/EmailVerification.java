@@ -2,6 +2,8 @@ package org.swbe.domain.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,7 +38,8 @@ public class EmailVerification {
   private String codeHash;
 
   @Column(nullable = false, length = 30)
-  private String purpose;
+  @Enumerated(EnumType.STRING)
+  private EmailVerificationPurpose purpose;
 
   @Column(name = "attempt_count", nullable = false)
   private int attemptCount;
@@ -47,6 +50,80 @@ public class EmailVerification {
   @Column(name = "verified_at")
   private LocalDateTime verifiedAt;
 
+  @Column(name = "verification_token_hash", unique = true, length = 64)
+  private String verificationTokenHash;
+
+  @Column(name = "verification_token_expires_at")
+  private LocalDateTime verificationTokenExpiresAt;
+
+  @Column(name = "consumed_at")
+  private LocalDateTime consumedAt;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
+
+  private EmailVerification(
+      String email,
+      String codeHash,
+      EmailVerificationPurpose purpose,
+      LocalDateTime expiresAt,
+      LocalDateTime createdAt
+  ) {
+    this.email = email;
+    this.codeHash = codeHash;
+    this.purpose = purpose;
+    this.expiresAt = expiresAt;
+    this.createdAt = createdAt;
+  }
+
+  public static EmailVerification createSignupVerification(
+      String email,
+      String codeHash,
+      LocalDateTime expiresAt,
+      LocalDateTime createdAt
+  ) {
+    return new EmailVerification(
+        email,
+        codeHash,
+        EmailVerificationPurpose.SIGNUP,
+        expiresAt,
+        createdAt
+    );
+  }
+
+  public void recordFailedAttempt() {
+    attemptCount++;
+  }
+
+  public void completeVerification(
+      String tokenHash,
+      LocalDateTime verifiedAt,
+      LocalDateTime tokenExpiresAt
+  ) {
+    this.verifiedAt = verifiedAt;
+    this.verificationTokenHash = tokenHash;
+    this.verificationTokenExpiresAt = tokenExpiresAt;
+  }
+
+  public void consume(AppUser user, LocalDateTime consumedAt) {
+    this.user = user;
+    this.consumedAt = consumedAt;
+  }
+
+  public boolean isCodeExpired(LocalDateTime now) {
+    return !expiresAt.isAfter(now);
+  }
+
+  public boolean isVerified() {
+    return verifiedAt != null;
+  }
+
+  public boolean isTokenExpired(LocalDateTime now) {
+    return verificationTokenExpiresAt == null
+        || !verificationTokenExpiresAt.isAfter(now);
+  }
+
+  public boolean isConsumed() {
+    return consumedAt != null;
+  }
 }
