@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -50,6 +51,11 @@ public class SecurityConfig {
             .sessionFixation(fixation -> fixation.changeSessionId())
         )
         .authorizeHttpRequests(authorize -> authorize
+            .requestMatchers(
+                HttpMethod.GET,
+                "/actuator/health",
+                "/actuator/health/**"
+            ).permitAll()
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
             .anyRequest().authenticated()
