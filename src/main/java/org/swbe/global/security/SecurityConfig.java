@@ -58,6 +58,14 @@ public class SecurityConfig {
             ).permitAll()
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
+            .requestMatchers("/api/auth/csrf").permitAll()
+            .requestMatchers("/api/auth/login").permitAll()
+            .requestMatchers(
+                HttpMethod.POST,
+                "/api/auth/email-verifications",
+                "/api/auth/email-verifications/confirm",
+                "/api/auth/signup"
+            ).permitAll()
             .anyRequest().authenticated()
         )
         .exceptionHandling(exception -> exception
