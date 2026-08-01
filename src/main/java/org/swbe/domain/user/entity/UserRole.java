@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,4 +46,26 @@ public class UserRole {
 
   @Column(name = "active_marker", insertable = false, updatable = false)
   private Byte activeMarker;
+
+  private UserRole(
+      AppUser user,
+      AppRole role,
+      LocalDateTime grantedAt
+  ) {
+    this.user = user;
+    this.role = role;
+    this.grantedAt = grantedAt;
+  }
+
+  public static UserRole grantBySystem(
+      AppUser user,
+      AppRole role,
+      LocalDateTime grantedAt
+  ) {
+    return new UserRole(
+        Objects.requireNonNull(user, "user must not be null"),
+        Objects.requireNonNull(role, "role must not be null"),
+        Objects.requireNonNull(grantedAt, "grantedAt must not be null")
+    );
+  }
 }
