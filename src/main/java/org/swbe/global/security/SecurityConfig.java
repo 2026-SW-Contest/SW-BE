@@ -18,12 +18,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -38,7 +42,9 @@ public class SecurityConfig {
       CsrfTokenRepository csrfTokenRepository,
       UrlBasedCorsConfigurationSource corsConfigurationSource,
       RestAuthenticationEntryPoint authenticationEntryPoint,
-      RestAccessDeniedHandler accessDeniedHandler
+      RestAccessDeniedHandler accessDeniedHandler,
+      SessionRegistry sessionRegistry,
+      RestSessionInformationExpiredStrategy expiredSessionStrategy
   ) throws Exception {
     http
         .cors(cors -> cors.configurationSource(corsConfigurationSource))
@@ -46,18 +52,20 @@ public class SecurityConfig {
         .securityContext(context ->
             context.securityContextRepository(securityContextRepository)
         )
-        .sessionManagement(session -> session
-            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-            .sessionFixation(fixation -> fixation.changeSessionId())
-        )
+        .sessionManagement(session -> {
+          session
+              .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+              .sessionFixation(fixation -> fixation.changeSessionId());
+          session.maximumSessions(-1)
+              .sessionRegistry(sessionRegistry)
+              .expiredSessionStrategy(expiredSessionStrategy);
+        })
         .authorizeHttpRequests(authorize -> authorize
             .requestMatchers(
                 HttpMethod.GET,
                 "/actuator/health",
                 "/actuator/health/**"
             ).permitAll()
-            .requestMatchers("/api/auth/csrf").permitAll()
-            .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers(
@@ -115,12 +123,24 @@ public class SecurityConfig {
 
   @Bean
   SessionAuthenticationStrategy sessionAuthenticationStrategy(
-      CsrfTokenRepository csrfTokenRepository
+      CsrfTokenRepository csrfTokenRepository,
+      SessionRegistry sessionRegistry
   ) {
     return new CompositeSessionAuthenticationStrategy(List.of(
         new ChangeSessionIdAuthenticationStrategy(),
-        new CsrfAuthenticationStrategy(csrfTokenRepository)
+        new CsrfAuthenticationStrategy(csrfTokenRepository),
+        new RegisterSessionAuthenticationStrategy(sessionRegistry)
     ));
+  }
+
+  @Bean
+  SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
+
+  @Bean
+  HttpSessionEventPublisher httpSessionEventPublisher() {
+    return new HttpSessionEventPublisher();
   }
 
   @Bean
