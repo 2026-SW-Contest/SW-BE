@@ -2,6 +2,7 @@ package org.swbe.global.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
@@ -31,6 +33,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.swbe.domain.user.entity.AccountStatus;
 
@@ -38,6 +42,7 @@ import org.swbe.domain.user.entity.AccountStatus;
     controllers = SecurityLogoutIntegrationTest.ProtectedController.class
 )
 @Import({
+    SecurityLogoutIntegrationTest.ProtectedController.class,
     SecurityConfig.class,
     SecurityErrorResponseWriter.class,
     RestAuthenticationEntryPoint.class,
@@ -124,6 +129,34 @@ class SecurityLogoutIntegrationTest {
     assertThat(session.isInvalid()).isTrue();
   }
 
+  @Test
+  void withdrawalRequiresAuthentication() throws Exception {
+    mockMvc.perform(delete("/api/auth/me").with(csrf()))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code")
+            .value("SECURITY_AUTHENTICATION_REQUIRED"));
+  }
+
+  @Test
+  void withdrawalRequiresCsrfToken() throws Exception {
+    MockHttpSession session = authenticatedSession(principal(1L));
+
+    mockMvc.perform(delete("/api/auth/me").session(session))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code")
+            .value("SECURITY_INVALID_CSRF_TOKEN"));
+  }
+
+  @Test
+  void authenticatedWithdrawalWithCsrfTokenIsAllowed() throws Exception {
+    MockHttpSession session = authenticatedSession(principal(1L));
+
+    mockMvc.perform(delete("/api/auth/me")
+            .session(session)
+            .with(csrf()))
+        .andExpect(status().isNoContent());
+  }
+
   private MockHttpSession authenticatedSession(AppUserPrincipal principal) {
     MockHttpSession session = new MockHttpSession();
     SecurityContext context = SecurityContextHolder.createEmptyContext();
@@ -155,11 +188,16 @@ class SecurityLogoutIntegrationTest {
   }
 
   @RestController
-  static class ProtectedController {
+  public static class ProtectedController {
 
     @GetMapping("/api/protected")
     Map<String, Boolean> protectedResource() {
       return Map.of("authenticated", true);
+    }
+
+    @DeleteMapping("/api/auth/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void withdraw() {
     }
   }
 }

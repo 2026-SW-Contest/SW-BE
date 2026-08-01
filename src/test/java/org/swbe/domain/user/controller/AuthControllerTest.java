@@ -13,6 +13,11 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.csrf.DefaultCsrfToken;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -20,16 +25,22 @@ import org.swbe.domain.user.dto.response.CsrfResponse;
 import org.swbe.domain.user.dto.response.EmailVerificationTokenResponse;
 import org.swbe.domain.user.dto.response.LoginResponse;
 import org.swbe.domain.user.dto.response.SignupResponse;
+import org.swbe.domain.user.entity.AccountStatus;
+import org.swbe.domain.user.service.AccountWithdrawalService;
 import org.swbe.domain.user.service.AuthService;
 import org.swbe.domain.user.service.EmailVerificationService;
 import org.swbe.domain.user.service.SignupService;
 import org.swbe.global.error.GlobalExceptionHandler;
+import org.swbe.global.security.AppUserPrincipal;
+import org.swbe.global.security.UserSessionTerminator;
 
 class AuthControllerTest {
 
   private AuthService authService;
   private EmailVerificationService emailVerificationService;
   private SignupService signupService;
+  private AccountWithdrawalService accountWithdrawalService;
+  private UserSessionTerminator userSessionTerminator;
   private AuthController authController;
   private MockMvc mockMvc;
 
@@ -38,10 +49,14 @@ class AuthControllerTest {
     authService = mock(AuthService.class);
     emailVerificationService = mock(EmailVerificationService.class);
     signupService = mock(SignupService.class);
+    accountWithdrawalService = mock(AccountWithdrawalService.class);
+    userSessionTerminator = mock(UserSessionTerminator.class);
     authController = new AuthController(
         authService,
         emailVerificationService,
-        signupService
+        signupService,
+        accountWithdrawalService,
+        userSessionTerminator
     );
     mockMvc = MockMvcBuilders.standaloneSetup(authController)
         .setControllerAdvice(new GlobalExceptionHandler())
@@ -200,6 +215,41 @@ class AuthControllerTest {
         .andExpect(jsonPath("$.code").value("COMMON_VALIDATION_FAILED"))
         .andExpect(jsonPath("$.fieldErrors[0].field")
             .value("passwordConfirmed"));
+  }
+
+  @Test
+  void withdrawalChangesAccountThenTerminatesSessions() {
+    AppUserPrincipal principal = new AppUserPrincipal(
+        10L,
+        "student@mju.ac.kr",
+        "{bcrypt}password-hash",
+        AccountStatus.ACTIVE,
+        true,
+        List.of(new SimpleGrantedAuthority("ROLE_STUDENT"))
+    );
+    Authentication authentication =
+        UsernamePasswordAuthenticationToken.authenticated(
+            principal,
+            null,
+            principal.getAuthorities()
+        );
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    authController.withdraw(
+        principal,
+        authentication,
+        request,
+        response
+    );
+
+    verify(accountWithdrawalService).withdraw(10L);
+    verify(userSessionTerminator).terminateAll(
+        principal,
+        authentication,
+        request,
+        response
+    );
   }
 
   private String validSignupJson(String passwordConfirm) {
