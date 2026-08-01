@@ -136,7 +136,7 @@ jobs:
           MAIL_SMTP_AUTH: ${{ secrets.MAIL_SMTP_AUTH }}
           MAIL_STARTTLS_ENABLE: ${{ secrets.MAIL_STARTTLS_ENABLE }}
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
-          FRONTEND_ORIGIN: ${{ secrets.FRONTEND_ORIGIN }}
+          FRONTEND_ORIGINS: ${{ secrets.FRONTEND_ORIGINS }}
           SESSION_COOKIE_SECURE: ${{ secrets.SESSION_COOKIE_SECURE }}
           SESSION_COOKIE_SAME_SITE: ${{ secrets.SESSION_COOKIE_SAME_SITE }}
         run: |
@@ -158,7 +158,7 @@ jobs:
               "MAIL_SMTP_AUTH",
               "MAIL_STARTTLS_ENABLE",
               "MAIL_FROM",
-              "FRONTEND_ORIGIN",
+              "FRONTEND_ORIGINS",
               "SESSION_COOKIE_SECURE",
               "SESSION_COOKIE_SAME_SITE",
           ]

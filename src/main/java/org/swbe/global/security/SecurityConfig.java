@@ -128,7 +128,7 @@ public class SecurityConfig {
       SecurityProperties properties
   ) {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of(properties.frontendOrigin()));
+    configuration.setAllowedOrigins(properties.frontendOrigins());
     configuration.setAllowedMethods(
         List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
     );
