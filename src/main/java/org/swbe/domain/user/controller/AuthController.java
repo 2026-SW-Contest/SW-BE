@@ -5,7 +5,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,8 +24,11 @@ import org.swbe.domain.user.dto.response.EmailVerificationTokenResponse;
 import org.swbe.domain.user.dto.response.LoginResponse;
 import org.swbe.domain.user.dto.response.SignupResponse;
 import org.swbe.domain.user.service.AuthService;
+import org.swbe.domain.user.service.AccountWithdrawalService;
 import org.swbe.domain.user.service.EmailVerificationService;
 import org.swbe.domain.user.service.SignupService;
+import org.swbe.global.security.AppUserPrincipal;
+import org.swbe.global.security.UserSessionTerminator;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,6 +38,8 @@ public class AuthController {
   private final AuthService authService;
   private final EmailVerificationService emailVerificationService;
   private final SignupService signupService;
+  private final AccountWithdrawalService accountWithdrawalService;
+  private final UserSessionTerminator userSessionTerminator;
 
   @GetMapping("/csrf")
   public CsrfResponse csrf(CsrfToken csrfToken) {
@@ -71,5 +79,22 @@ public class AuthController {
       @Valid @RequestBody SignupRequest request
   ) {
     return signupService.signup(request);
+  }
+
+  @DeleteMapping("/me")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void withdraw(
+      @AuthenticationPrincipal AppUserPrincipal principal,
+      Authentication authentication,
+      HttpServletRequest request,
+      HttpServletResponse response
+  ) {
+    accountWithdrawalService.withdraw(principal.getUserId());
+    userSessionTerminator.terminateAll(
+        principal,
+        authentication,
+        request,
+        response
+    );
   }
 }

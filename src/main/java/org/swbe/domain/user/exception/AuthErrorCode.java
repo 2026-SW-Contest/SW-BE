@@ -79,6 +79,11 @@ public enum AuthErrorCode implements ErrorCode {
       HttpStatus.CONFLICT,
       "AUTH_SIGNUP_CONFLICT",
       "이메일 또는 학번이 이미 가입에 사용되었습니다."
+  ),
+  ACCOUNT_NOT_FOUND(
+      HttpStatus.NOT_FOUND,
+      "AUTH_ACCOUNT_NOT_FOUND",
+      "사용자 계정을 찾을 수 없습니다."
   );
 
   private final HttpStatus status;

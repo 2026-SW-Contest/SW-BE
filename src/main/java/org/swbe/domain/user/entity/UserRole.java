@@ -68,4 +68,20 @@ public class UserRole {
         Objects.requireNonNull(grantedAt, "grantedAt must not be null")
     );
   }
+
+  public void revoke(LocalDateTime revokedAt) {
+    if (this.revokedAt != null) {
+      return;
+    }
+    LocalDateTime revokedAtValue = Objects.requireNonNull(
+        revokedAt,
+        "revokedAt must not be null"
+    );
+    if (revokedAtValue.isBefore(grantedAt)) {
+      throw new IllegalArgumentException(
+          "revokedAt must not precede grantedAt"
+      );
+    }
+    this.revokedAt = revokedAtValue;
+  }
 }

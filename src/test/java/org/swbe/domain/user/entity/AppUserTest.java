@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class AppUserTest {
 
@@ -41,5 +42,45 @@ class AppUserTest {
         "1234",
         REGISTERED_AT
     )).isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  void withdrawAnonymizesAccountAndReleasesSignupIdentifiers() {
+    AppUser withdrawnUser = registeredUser();
+    ReflectionTestUtils.setField(withdrawnUser, "id", 10L);
+    LocalDateTime withdrawnAt = REGISTERED_AT.plusDays(1);
+
+    withdrawnUser.withdraw(withdrawnAt);
+
+    assertThat(withdrawnUser.getEmail())
+        .isEqualTo("withdrawn-10@users.invalid");
+    assertThat(withdrawnUser.getPasswordHash()).isNull();
+    assertThat(withdrawnUser.getName()).isEqualTo("탈퇴한 사용자");
+    assertThat(withdrawnUser.getStudentNumber()).isNull();
+    assertThat(withdrawnUser.getDepartment()).isNull();
+    assertThat(withdrawnUser.getAccountStatus())
+        .isEqualTo(AccountStatus.WITHDRAWN);
+    assertThat(withdrawnUser.isEmailVerified()).isFalse();
+    assertThat(withdrawnUser.getUpdatedAt()).isEqualTo(withdrawnAt);
+
+    AppUser rejoinedUser = registeredUser();
+    assertThat(rejoinedUser.getEmail()).isEqualTo("student@mju.ac.kr");
+    assertThat(rejoinedUser.getStudentNumber()).isEqualTo("60241234");
+  }
+
+  @Test
+  void transientUserCannotWithdraw() {
+    assertThatThrownBy(() -> registeredUser().withdraw(REGISTERED_AT))
+        .isInstanceOf(IllegalStateException.class);
+  }
+
+  private AppUser registeredUser() {
+    return AppUser.registerStudent(
+        "student@mju.ac.kr",
+        "{bcrypt}encoded-password",
+        "홍길동",
+        "60241234",
+        REGISTERED_AT
+    );
   }
 }

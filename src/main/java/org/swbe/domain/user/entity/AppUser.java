@@ -33,6 +33,9 @@ public class AppUser {
       Pattern.compile("\\d{8}");
   private static final int MIN_NAME_LENGTH = 2;
   private static final int MAX_NAME_LENGTH = 100;
+  private static final String WITHDRAWN_EMAIL_FORMAT =
+      "withdrawn-%d@users.invalid";
+  private static final String WITHDRAWN_USER_NAME = "탈퇴한 사용자";
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -108,6 +111,27 @@ public class AppUser {
         normalizedName,
         normalizedStudentNumber,
         registeredAt
+    );
+  }
+
+  public void withdraw(LocalDateTime withdrawnAt) {
+    if (id == null) {
+      throw new IllegalStateException("Only persisted users can withdraw");
+    }
+    if (accountStatus == AccountStatus.WITHDRAWN) {
+      return;
+    }
+
+    email = WITHDRAWN_EMAIL_FORMAT.formatted(id);
+    passwordHash = null;
+    name = WITHDRAWN_USER_NAME;
+    studentNumber = null;
+    department = null;
+    accountStatus = AccountStatus.WITHDRAWN;
+    emailVerified = false;
+    updatedAt = Objects.requireNonNull(
+        withdrawnAt,
+        "withdrawnAt must not be null"
     );
   }
 
