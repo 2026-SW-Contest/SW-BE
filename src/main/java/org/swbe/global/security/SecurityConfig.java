@@ -65,7 +65,8 @@ public class SecurityConfig {
                 HttpMethod.GET,
                 "/actuator/health",
                 "/actuator/health/**",
-                "/api/locations"
+                "/api/locations",
+                "/api/service-request-categories"
             ).permitAll()
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
