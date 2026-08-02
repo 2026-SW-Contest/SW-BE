@@ -1,8 +1,10 @@
 package org.swbe.domain.servicerequest.repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +12,14 @@ import org.swbe.domain.servicerequest.entity.ServiceRequest;
 
 public interface ServiceRequestRepository
     extends JpaRepository<ServiceRequest, Long> {
+
+  @EntityGraph(attributePaths = {
+      "requestCategory",
+      "location",
+      "requester"
+  })
+  @Query("SELECT request FROM ServiceRequest request WHERE request.id = :id")
+  Optional<ServiceRequest> findDetailById(@Param("id") Long id);
 
   @Query(
       value = """

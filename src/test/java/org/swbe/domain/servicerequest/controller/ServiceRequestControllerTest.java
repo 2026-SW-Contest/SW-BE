@@ -16,9 +16,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.swbe.domain.servicerequest.dto.response.ServiceRequestCategoryDetailResponse;
+import org.swbe.domain.servicerequest.dto.response.ServiceRequestDetailDataResponse;
+import org.swbe.domain.servicerequest.dto.response.ServiceRequestDetailResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestListItemResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestListResponse;
+import org.swbe.domain.servicerequest.dto.response.ServiceRequestLocationDetailResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestPageResponse;
+import org.swbe.domain.servicerequest.service.ServiceRequestDetailService;
 import org.swbe.domain.servicerequest.service.ServiceRequestQueryService;
 import org.swbe.global.security.RestAccessDeniedHandler;
 import org.swbe.global.security.RestAuthenticationEntryPoint;
@@ -44,6 +49,9 @@ class ServiceRequestControllerTest {
 
   @MockitoBean
   private ServiceRequestQueryService serviceRequestQueryService;
+
+  @MockitoBean
+  private ServiceRequestDetailService serviceRequestDetailService;
 
   @MockitoBean
   private UserDetailsService userDetailsService;
@@ -109,5 +117,38 @@ class ServiceRequestControllerTest {
             .queryParam("size", "101"))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("COMMON_VALIDATION_FAILED"));
+  }
+
+  @Test
+  void anonymousUserCanGetPublicServiceRequestDetail() throws Exception {
+    var data = new ServiceRequestDetailDataResponse(
+        25L,
+        "SR-20260801-0001",
+        "Flickering hallway light",
+        "The hallway light keeps flickering.",
+        "LED light",
+        new ServiceRequestCategoryDetailResponse(1L, "Electricity/Lighting"),
+        new ServiceRequestLocationDetailResponse(2L, "Student Center"),
+        "IN_PROGRESS",
+        "In progress",
+        List.of(),
+        false,
+        false,
+        LocalDateTime.of(2026, 8, 1, 16, 0),
+        LocalDateTime.of(2026, 8, 1, 16, 10)
+    );
+    when(serviceRequestDetailService.getServiceRequest(25L, null, false))
+        .thenReturn(new ServiceRequestDetailResponse(data));
+
+    mockMvc.perform(get("/api/service-requests/25"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.serviceRequestId").value(25))
+        .andExpect(jsonPath("$.data.receiptNumber")
+            .value("SR-20260801-0001"))
+        .andExpect(jsonPath("$.data.category.categoryId").value(1))
+        .andExpect(jsonPath("$.data.location.locationId").value(2))
+        .andExpect(jsonPath("$.data.attachments.length()").value(0))
+        .andExpect(jsonPath("$.data.editable").value(false))
+        .andExpect(jsonPath("$.data.deletable").value(false));
   }
 }

@@ -6,15 +6,21 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.swbe.domain.servicerequest.dto.request.ServiceRequestSearchCondition;
+import org.swbe.domain.servicerequest.dto.response.ServiceRequestDetailResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestListResponse;
 import org.swbe.domain.servicerequest.entity.ServiceRequestStatus;
+import org.swbe.domain.servicerequest.service.ServiceRequestDetailService;
 import org.swbe.domain.servicerequest.service.ServiceRequestQueryService;
+import org.swbe.global.security.AppUserPrincipal;
 
 @RestController
 @RequestMapping("/api/service-requests")
@@ -22,11 +28,14 @@ import org.swbe.domain.servicerequest.service.ServiceRequestQueryService;
 public class ServiceRequestController {
 
   private final ServiceRequestQueryService serviceRequestQueryService;
+  private final ServiceRequestDetailService serviceRequestDetailService;
 
   public ServiceRequestController(
-      ServiceRequestQueryService serviceRequestQueryService
+      ServiceRequestQueryService serviceRequestQueryService,
+      ServiceRequestDetailService serviceRequestDetailService
   ) {
     this.serviceRequestQueryService = serviceRequestQueryService;
+    this.serviceRequestDetailService = serviceRequestDetailService;
   }
 
   @GetMapping
@@ -53,6 +62,24 @@ public class ServiceRequestController {
             page,
             size
         )
+    );
+  }
+
+  @GetMapping("/{serviceRequestId}")
+  public ServiceRequestDetailResponse getServiceRequest(
+      @PathVariable @Positive Long serviceRequestId,
+      @AuthenticationPrincipal AppUserPrincipal principal
+  ) {
+    Long viewerUserId = principal == null ? null : principal.getUserId();
+    boolean administrator = principal != null
+        && principal.getAuthorities().stream()
+        .map(GrantedAuthority::getAuthority)
+        .anyMatch("ROLE_ADMIN"::equals);
+
+    return serviceRequestDetailService.getServiceRequest(
+        serviceRequestId,
+        viewerUserId,
+        administrator
     );
   }
 }
