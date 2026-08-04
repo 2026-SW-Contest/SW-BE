@@ -24,7 +24,6 @@ import org.swbe.domain.servicerequest.exception.ServiceRequestErrorCode;
 import org.swbe.domain.servicerequest.repository.RequestAssignmentRepository;
 import org.swbe.domain.servicerequest.repository.ServiceRequestAttachmentRepository;
 import org.swbe.domain.servicerequest.repository.ServiceRequestRepository;
-import org.swbe.domain.user.entity.AppUser;
 import org.swbe.global.error.BusinessException;
 
 @ExtendWith(MockitoExtension.class)
@@ -159,8 +158,6 @@ class ServiceRequestDetailServiceTest {
       Long requesterId,
       String status
   ) {
-    AppUser requester = mock(AppUser.class);
-    lenient().when(requester.getId()).thenReturn(requesterId);
     RequestCategory category = mock(RequestCategory.class);
     when(category.getId()).thenReturn(1L);
     when(category.getName()).thenReturn("Electricity/Lighting");
@@ -169,7 +166,7 @@ class ServiceRequestDetailServiceTest {
     when(location.getName()).thenReturn("Student Center");
     ServiceRequest request = mock(ServiceRequest.class);
     when(request.getId()).thenReturn(id);
-    lenient().when(request.getRequester()).thenReturn(requester);
+    lenient().when(request.isRequestedBy(requesterId)).thenReturn(true);
     when(request.getVisibility()).thenReturn(visibility);
     when(request.getReceiptNumber()).thenReturn("SR-20260801-0001");
     when(request.getTitle()).thenReturn("Flickering hallway light");

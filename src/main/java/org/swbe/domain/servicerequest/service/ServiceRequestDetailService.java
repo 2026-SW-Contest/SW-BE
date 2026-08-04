@@ -46,7 +46,7 @@ public class ServiceRequestDetailService {
     ServiceRequest request = serviceRequestRepository
         .findDetailById(serviceRequestId)
         .orElseThrow(this::notFound);
-    boolean owner = isOwner(request, viewerUserId);
+    boolean owner = request.isRequestedBy(viewerUserId);
     if (!canView(request, serviceRequestId, viewerUserId, owner, administrator)) {
       throw notFound();
     }
@@ -63,39 +63,35 @@ public class ServiceRequestDetailService {
     );
     boolean editable = owner && status == ServiceRequestStatus.RECEIVED;
 
-    var data = new ServiceRequestDetailDataResponse(
-        request.getId(),
-        request.getReceiptNumber(),
-        request.getTitle(),
-        request.getDescription(),
-        request.getEquipmentName(),
-        new ServiceRequestCategoryDetailResponse(
-            request.getRequestCategory().getId(),
-            request.getRequestCategory().getName()
-        ),
-        new ServiceRequestLocationDetailResponse(
-            request.getLocation().getId(),
-            request.getLocation().getName()
-        ),
-        request.getRequestStatus(),
-        status.getDisplayName(),
-        attachments,
-        editable,
-        editable,
-        request.getCreatedAt(),
-        request.getUpdatedAt()
-    );
+    ServiceRequestDetailDataResponse data =
+        new ServiceRequestDetailDataResponse(
+            request.getId(),
+            request.getReceiptNumber(),
+            request.getTitle(),
+            request.getDescription(),
+            request.getEquipmentName(),
+            new ServiceRequestCategoryDetailResponse(
+                request.getRequestCategory().getId(),
+                request.getRequestCategory().getName()
+            ),
+            new ServiceRequestLocationDetailResponse(
+                request.getLocation().getId(),
+                request.getLocation().getName()
+            ),
+            request.getRequestStatus(),
+            status.getDisplayName(),
+            attachments,
+            editable,
+            editable,
+            request.getCreatedAt(),
+            request.getUpdatedAt()
+        );
 
     return new ServiceRequestDetailResponse(data);
   }
 
   private boolean isPublic(ServiceRequest request) {
     return PUBLIC_VISIBILITY.equals(request.getVisibility());
-  }
-
-  private boolean isOwner(ServiceRequest request, Long viewerUserId) {
-    return viewerUserId != null
-        && viewerUserId.equals(request.getRequester().getId());
   }
 
   private boolean canView(

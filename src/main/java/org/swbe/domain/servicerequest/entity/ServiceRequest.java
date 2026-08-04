@@ -72,4 +72,8 @@ public class ServiceRequest {
 
   @Column(name = "completed_at")
   private LocalDateTime completedAt;
+
+  public boolean isRequestedBy(Long userId) {
+    return userId != null && userId.equals(requester.getId());
+  }
 }
