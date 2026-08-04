@@ -67,8 +67,8 @@ public class SecurityConfig {
                 "/actuator/health/**",
                 "/api/locations",
                 "/api/facility-categories",
-                "/api/service-requests",
-                "/api/service-requests/*"
+                "/api/facility-requests",
+                "/api/facility-requests/*"
             ).permitAll()
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
