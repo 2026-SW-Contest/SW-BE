@@ -54,7 +54,7 @@ class ServiceRequestCategoryControllerTest {
         ))
     );
 
-    mockMvc.perform(get("/api/service-request-categories"))
+    mockMvc.perform(get("/api/request-categories"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.length()").value(2))
         .andExpect(jsonPath("$.data[0].categoryId").value(1))

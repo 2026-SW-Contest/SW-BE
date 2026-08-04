@@ -8,7 +8,7 @@ import org.swbe.domain.servicerequest.dto.response.ServiceRequestCategoryListRes
 import org.swbe.domain.servicerequest.service.RequestCategoryQueryService;
 
 @RestController
-@RequestMapping("/api/service-request-categories")
+@RequestMapping("/api/request-categories")
 @RequiredArgsConstructor
 public class ServiceRequestCategoryController {
 

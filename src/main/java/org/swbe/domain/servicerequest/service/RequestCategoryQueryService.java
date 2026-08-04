@@ -1,5 +1,6 @@
 package org.swbe.domain.servicerequest.service;
 
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +17,7 @@ public class RequestCategoryQueryService {
   private final RequestCategoryRepository requestCategoryRepository;
 
   public ServiceRequestCategoryListResponse getCategories() {
-    var categories = requestCategoryRepository
+    List<ServiceRequestCategoryResponse> categories = requestCategoryRepository
         .findAllByActiveTrueOrderByIdAsc()
         .stream()
         .map(this::toResponse)
