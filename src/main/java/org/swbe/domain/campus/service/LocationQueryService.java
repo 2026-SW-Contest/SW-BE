@@ -1,6 +1,7 @@
 package org.swbe.domain.campus.service;
 
 import java.util.Comparator;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,15 +16,15 @@ import org.swbe.domain.campus.repository.LocationRepository;
 @Transactional(readOnly = true)
 public class LocationQueryService {
 
-  private static final int OTHER_LOCATION_ORDER = Integer.MAX_VALUE;
-
   private final LocationRepository locationRepository;
 
   public LocationListResponse getLocations() {
-    var locations = locationRepository
+    List<LocationResponse> locations = locationRepository
         .findAllByActiveTrueAndBuilding_ActiveTrue()
         .stream()
-        .sorted(Comparator.comparingInt(this::locationOrder))
+        .sorted(Comparator.comparingInt(
+            location -> location.getBuilding().displayOrder()
+        ))
         .map(this::toResponse)
         .toList();
 
@@ -37,14 +38,5 @@ public class LocationQueryService {
         building.getCode(),
         location.getName()
     );
-  }
-
-  private int locationOrder(Location location) {
-    String code = location.getBuilding().getCode();
-    if (code == null || !code.matches("S\\d+")) {
-      return OTHER_LOCATION_ORDER;
-    }
-
-    return Integer.parseInt(code.substring(1));
   }
 }

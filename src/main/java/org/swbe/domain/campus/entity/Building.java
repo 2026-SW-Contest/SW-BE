@@ -20,6 +20,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Building {
 
+  private static final int LAST_DISPLAY_ORDER = Integer.MAX_VALUE;
+
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "building_id")
@@ -43,4 +45,12 @@ public class Building {
 
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
+
+  public int displayOrder() {
+    if (code == null || !code.matches("S\\d+")) {
+      return LAST_DISPLAY_ORDER;
+    }
+
+    return Integer.parseInt(code.substring(1));
+  }
 }
