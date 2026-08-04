@@ -31,8 +31,8 @@ public class ServiceRequest {
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "request_category_id")
-  private RequestCategory requestCategory;
+  @JoinColumn(name = "facility_category_id")
+  private FacilityCategory facilityCategory;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "location_id")
