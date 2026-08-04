@@ -14,7 +14,7 @@ public interface ServiceRequestRepository
     extends JpaRepository<ServiceRequest, Long> {
 
   @EntityGraph(attributePaths = {
-      "requestCategory",
+      "facilityCategory",
       "location",
       "requester"
   })
@@ -25,7 +25,7 @@ public interface ServiceRequestRepository
       value = """
           SELECT request
           FROM ServiceRequest request
-          JOIN FETCH request.requestCategory category
+          JOIN FETCH request.facilityCategory category
           JOIN FETCH request.location location
           WHERE request.visibility = 'PUBLIC'
             AND (:categoryId IS NULL OR category.id = :categoryId)
@@ -43,7 +43,7 @@ public interface ServiceRequestRepository
           SELECT COUNT(request)
           FROM ServiceRequest request
           WHERE request.visibility = 'PUBLIC'
-            AND (:categoryId IS NULL OR request.requestCategory.id = :categoryId)
+            AND (:categoryId IS NULL OR request.facilityCategory.id = :categoryId)
             AND (:locationId IS NULL OR request.location.id = :locationId)
             AND (:status IS NULL OR request.requestStatus = :status)
             AND (

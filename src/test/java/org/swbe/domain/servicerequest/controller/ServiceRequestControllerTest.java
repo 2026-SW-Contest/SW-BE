@@ -16,7 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.swbe.domain.servicerequest.dto.response.ServiceRequestCategoryDetailResponse;
+import org.swbe.domain.servicerequest.dto.response.FacilityCategoryResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestDetailDataResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestDetailResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestListItemResponse;
@@ -127,7 +127,7 @@ class ServiceRequestControllerTest {
         "Flickering hallway light",
         "The hallway light keeps flickering.",
         "LED light",
-        new ServiceRequestCategoryDetailResponse(1L, "Electricity/Lighting"),
+        new FacilityCategoryResponse(1L, "Electricity/Lighting"),
         new ServiceRequestLocationDetailResponse(2L, "Student Center"),
         "IN_PROGRESS",
         "In progress",

@@ -9,7 +9,7 @@ public record ServiceRequestDetailDataResponse(
     String title,
     String description,
     String equipmentName,
-    ServiceRequestCategoryDetailResponse category,
+    FacilityCategoryResponse category,
     ServiceRequestLocationDetailResponse location,
     String requestStatus,
     String requestStatusName,

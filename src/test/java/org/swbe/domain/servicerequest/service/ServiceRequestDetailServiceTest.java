@@ -17,7 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.swbe.domain.campus.entity.Location;
 import org.swbe.domain.file.entity.FileResource;
-import org.swbe.domain.servicerequest.entity.RequestCategory;
+import org.swbe.domain.servicerequest.entity.FacilityCategory;
 import org.swbe.domain.servicerequest.entity.ServiceRequest;
 import org.swbe.domain.servicerequest.entity.ServiceRequestAttachment;
 import org.swbe.domain.servicerequest.exception.ServiceRequestErrorCode;
@@ -158,7 +158,7 @@ class ServiceRequestDetailServiceTest {
       Long requesterId,
       String status
   ) {
-    RequestCategory category = mock(RequestCategory.class);
+    FacilityCategory category = mock(FacilityCategory.class);
     when(category.getId()).thenReturn(1L);
     when(category.getName()).thenReturn("Electricity/Lighting");
     Location location = mock(Location.class);
@@ -174,7 +174,7 @@ class ServiceRequestDetailServiceTest {
         "The hallway light keeps flickering."
     );
     when(request.getEquipmentName()).thenReturn("LED light");
-    when(request.getRequestCategory()).thenReturn(category);
+    when(request.getFacilityCategory()).thenReturn(category);
     when(request.getLocation()).thenReturn(location);
     when(request.getRequestStatus()).thenReturn(status);
     when(request.getCreatedAt()).thenReturn(

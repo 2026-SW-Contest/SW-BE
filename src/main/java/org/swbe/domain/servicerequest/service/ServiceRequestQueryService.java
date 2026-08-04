@@ -86,7 +86,7 @@ public class ServiceRequestQueryService {
     return new ServiceRequestListItemResponse(
         request.getId(),
         request.getTitle(),
-        request.getRequestCategory().getName(),
+        request.getFacilityCategory().getName(),
         request.getLocation().getName(),
         request.getRequestStatus(),
         status.getDisplayName(),

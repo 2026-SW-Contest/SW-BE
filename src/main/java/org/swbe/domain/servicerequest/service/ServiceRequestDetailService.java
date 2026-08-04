@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestAttachmentResponse;
-import org.swbe.domain.servicerequest.dto.response.ServiceRequestCategoryDetailResponse;
+import org.swbe.domain.servicerequest.dto.response.FacilityCategoryResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestDetailDataResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestDetailResponse;
 import org.swbe.domain.servicerequest.dto.response.ServiceRequestLocationDetailResponse;
@@ -70,9 +70,9 @@ public class ServiceRequestDetailService {
             request.getTitle(),
             request.getDescription(),
             request.getEquipmentName(),
-            new ServiceRequestCategoryDetailResponse(
-                request.getRequestCategory().getId(),
-                request.getRequestCategory().getName()
+            new FacilityCategoryResponse(
+                request.getFacilityCategory().getId(),
+                request.getFacilityCategory().getName()
             ),
             new ServiceRequestLocationDetailResponse(
                 request.getLocation().getId(),

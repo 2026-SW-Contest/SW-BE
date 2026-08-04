@@ -10,27 +10,27 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.swbe.domain.servicerequest.entity.RequestCategory;
-import org.swbe.domain.servicerequest.repository.RequestCategoryRepository;
+import org.swbe.domain.servicerequest.entity.FacilityCategory;
+import org.swbe.domain.servicerequest.repository.FacilityCategoryRepository;
 
 @ExtendWith(MockitoExtension.class)
-class RequestCategoryQueryServiceTest {
+class FacilityCategoryQueryServiceTest {
 
   @Mock
-  private RequestCategoryRepository requestCategoryRepository;
+  private FacilityCategoryRepository facilityCategoryRepository;
 
   @InjectMocks
-  private RequestCategoryQueryService requestCategoryQueryService;
+  private FacilityCategoryQueryService facilityCategoryQueryService;
 
   @Test
   void activeCategoriesAreReturnedInIdOrder() {
-    RequestCategory electrical = category(1L, "전기/조명");
-    RequestCategory temperature = category(2L, "냉난방/온도");
-    RequestCategory other = category(8L, "기타");
-    when(requestCategoryRepository.findAllByActiveTrueOrderByIdAsc())
+    FacilityCategory electrical = category(1L, "전기/조명");
+    FacilityCategory temperature = category(2L, "냉난방/온도");
+    FacilityCategory other = category(8L, "기타");
+    when(facilityCategoryRepository.findAllByActiveTrueOrderByIdAsc())
         .thenReturn(List.of(electrical, temperature, other));
 
-    var response = requestCategoryQueryService.getCategories();
+    var response = facilityCategoryQueryService.getCategories();
 
     assertThat(response.data())
         .extracting(category -> category.categoryId())
@@ -42,16 +42,16 @@ class RequestCategoryQueryServiceTest {
 
   @Test
   void noCategoriesReturnsEmptyList() {
-    when(requestCategoryRepository.findAllByActiveTrueOrderByIdAsc())
+    when(facilityCategoryRepository.findAllByActiveTrueOrderByIdAsc())
         .thenReturn(List.of());
 
-    var response = requestCategoryQueryService.getCategories();
+    var response = facilityCategoryQueryService.getCategories();
 
     assertThat(response.data()).isEmpty();
   }
 
-  private RequestCategory category(Long id, String name) {
-    RequestCategory category = mock(RequestCategory.class);
+  private FacilityCategory category(Long id, String name) {
+    FacilityCategory category = mock(FacilityCategory.class);
     when(category.getId()).thenReturn(id);
     when(category.getName()).thenReturn(name);
     return category;

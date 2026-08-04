@@ -22,7 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.swbe.domain.campus.entity.Location;
 import org.swbe.domain.servicerequest.dto.request.ServiceRequestSearchCondition;
-import org.swbe.domain.servicerequest.entity.RequestCategory;
+import org.swbe.domain.servicerequest.entity.FacilityCategory;
 import org.swbe.domain.servicerequest.entity.ServiceRequest;
 import org.swbe.domain.servicerequest.entity.ServiceRequestStatus;
 import org.swbe.domain.servicerequest.repository.ServiceRequestRepository;
@@ -41,14 +41,14 @@ class ServiceRequestQueryServiceTest {
   @Test
   void publicRequestsAreReturnedAsPagedSummary() {
     LocalDateTime createdAt = LocalDateTime.of(2026, 8, 1, 16, 0);
-    RequestCategory category = mock(RequestCategory.class);
+    FacilityCategory category = mock(FacilityCategory.class);
     when(category.getName()).thenReturn("전기/조명");
     Location location = mock(Location.class);
     when(location.getName()).thenReturn("학생회관");
     ServiceRequest request = mock(ServiceRequest.class);
     when(request.getId()).thenReturn(25L);
     when(request.getTitle()).thenReturn("학생회관 1층 조명 깜빡임");
-    when(request.getRequestCategory()).thenReturn(category);
+    when(request.getFacilityCategory()).thenReturn(category);
     when(request.getLocation()).thenReturn(location);
     when(request.getRequestStatus()).thenReturn("IN_PROGRESS");
     when(request.getCreatedAt()).thenReturn(createdAt);
