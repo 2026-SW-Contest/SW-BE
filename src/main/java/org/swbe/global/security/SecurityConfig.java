@@ -70,6 +70,10 @@ public class SecurityConfig {
                 "/api/facility-requests",
                 "/api/facility-requests/*"
             ).permitAll()
+            .requestMatchers(
+                HttpMethod.POST,
+                "/api/facility-requests"
+            ).hasRole("STUDENT")
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers(

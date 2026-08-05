@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -73,7 +74,64 @@ public class FacilityRequest {
   @Column(name = "completed_at")
   private LocalDateTime completedAt;
 
+  private FacilityRequest(
+      FacilityCategory facilityCategory,
+      Location location,
+      AppUser requester,
+      String receiptNumber,
+      String title,
+      String description,
+      String equipmentName,
+      LocalDateTime createdAt
+  ) {
+    this.facilityCategory = Objects.requireNonNull(facilityCategory);
+    this.location = Objects.requireNonNull(location);
+    this.requester = Objects.requireNonNull(requester);
+    this.receiptNumber = requireText(receiptNumber, "receiptNumber");
+    this.title = requireText(title, "title");
+    this.description = requireText(description, "description");
+    this.equipmentName = stripNullable(equipmentName);
+    this.visibility = "PRIVATE";
+    this.requestStatus = FacilityRequestStatus.RECEIVED.name();
+    this.createdAt = Objects.requireNonNull(createdAt);
+    this.updatedAt = createdAt;
+  }
+
+  public static FacilityRequest create(
+      FacilityCategory facilityCategory,
+      Location location,
+      AppUser requester,
+      String receiptNumber,
+      String title,
+      String description,
+      String equipmentName,
+      LocalDateTime createdAt
+  ) {
+    return new FacilityRequest(
+        facilityCategory,
+        location,
+        requester,
+        receiptNumber,
+        title,
+        description,
+        equipmentName,
+        createdAt
+    );
+  }
+
   public boolean isRequestedBy(Long userId) {
     return userId != null && userId.equals(requester.getId());
+  }
+
+  private static String requireText(String value, String fieldName) {
+    String stripped = stripNullable(value);
+    if (stripped == null || stripped.isBlank()) {
+      throw new IllegalArgumentException(fieldName + " must not be blank");
+    }
+    return stripped;
+  }
+
+  private static String stripNullable(String value) {
+    return value == null ? null : value.strip();
   }
 }
