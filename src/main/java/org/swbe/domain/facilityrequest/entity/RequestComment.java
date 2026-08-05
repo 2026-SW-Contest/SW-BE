@@ -1,4 +1,4 @@
-package org.swbe.domain.campus.entity;
+package org.swbe.domain.facilityrequest.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,44 +13,39 @@ import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.swbe.domain.user.entity.AppUser;
 
 @Entity
-@Table(name = "building")
+@Table(name = "request_comment")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Building {
-
-  private static final int LAST_DISPLAY_ORDER = Integer.MAX_VALUE;
+public class RequestComment {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "building_id")
+  @Column(name = "request_comment_id")
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "campus_id")
-  private Campus campus;
+  @JoinColumn(name = "facility_request_id")
+  private FacilityRequest facilityRequest;
 
-  @Column(name = "building_name", nullable = false, length = 100)
-  private String name;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "author_user_id")
+  private AppUser author;
 
-  @Column(name = "building_code", unique = true, length = 30)
-  private String code;
+  @Column(name = "comment_type", nullable = false, length = 30)
+  private String commentType;
 
-  @Column(name = "is_active", nullable = false)
-  private boolean active = true;
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+  @Column(nullable = false)
+  private String content;
+
+  @Column(name = "is_internal", nullable = false)
+  private boolean internal;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
-
-  @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt;
-
-  public int displayOrder() {
-    if (code == null || !code.matches("S\\d+")) {
-      return LAST_DISPLAY_ORDER;
-    }
-
-    return Integer.parseInt(code.substring(1));
-  }
 }

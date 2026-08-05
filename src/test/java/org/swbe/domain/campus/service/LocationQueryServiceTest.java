@@ -58,6 +58,9 @@ class LocationQueryServiceTest {
   private Location location(Long id, String code, String name) {
     Building building = mock(Building.class);
     when(building.getCode()).thenReturn(code);
+    when(building.displayOrder()).thenReturn(
+        code == null ? Integer.MAX_VALUE : id.intValue()
+    );
 
     Location location = mock(Location.class);
     when(location.getId()).thenReturn(id);
