@@ -2,7 +2,6 @@ package org.swbe.domain.facilityrequest.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -21,7 +20,7 @@ import org.swbe.domain.facilityrequest.entity.FacilityCategory;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestAttachment;
 import org.swbe.domain.facilityrequest.exception.FacilityRequestErrorCode;
-import org.swbe.domain.facilityrequest.repository.RequestAssignmentRepository;
+import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailResponse;
 import org.swbe.domain.facilityrequest.repository.FacilityRequestAttachmentRepository;
 import org.swbe.domain.facilityrequest.repository.FacilityRequestRepository;
 import org.swbe.global.error.BusinessException;
@@ -33,17 +32,14 @@ class FacilityRequestDetailServiceTest {
   private FacilityRequestRepository facilityRequestRepository;
 
   @Mock
-  private RequestAssignmentRepository requestAssignmentRepository;
-
-  @Mock
   private FacilityRequestAttachmentRepository attachmentRepository;
 
   @InjectMocks
   private FacilityRequestDetailService facilityRequestDetailService;
 
   @Test
-  void anonymousUserCanViewPublicRequestWithAttachments() {
-    FacilityRequest request = request(10L, "PUBLIC", 7L, "IN_PROGRESS");
+  void anonymousUserCanViewRequestWithAttachments() {
+    FacilityRequest request = request(10L, "IN_PROGRESS");
     FileResource file = mock(FileResource.class);
     when(file.getId()).thenReturn(15L);
     when(file.getOriginalFilename()).thenReturn("broken-light.jpg");
@@ -55,10 +51,10 @@ class FacilityRequestDetailServiceTest {
         .findAllByFacilityRequest_IdAndFile_DeletedAtIsNullOrderByIdAsc(10L))
         .thenReturn(List.of(attachment));
 
-    var response = facilityRequestDetailService.getFacilityRequest(
+    FacilityRequestDetailResponse response =
+        facilityRequestDetailService.getFacilityRequest(
         10L,
-        null,
-        false
+        null
     );
 
     assertThat(response.data().facilityRequestId()).isEqualTo(10L);
@@ -69,69 +65,46 @@ class FacilityRequestDetailServiceTest {
     assertThat(response.data().attachments().getFirst().fileUrl()).isNull();
     assertThat(response.data().editable()).isFalse();
     assertThat(response.data().deletable()).isFalse();
-    verifyNoInteractions(requestAssignmentRepository);
   }
 
   @Test
-  void ownerCanEditAndDeleteReceivedPrivateRequest() {
-    FacilityRequest request = request(10L, "PRIVATE", 7L, "RECEIVED");
+  void ownerCanEditAndDeleteReceivedRequest() {
+    FacilityRequest request = request(10L, "RECEIVED");
+    when(request.isRequestedBy(7L)).thenReturn(true);
     when(facilityRequestRepository.findDetailById(10L))
         .thenReturn(Optional.of(request));
     when(attachmentRepository
         .findAllByFacilityRequest_IdAndFile_DeletedAtIsNullOrderByIdAsc(10L))
         .thenReturn(List.of());
 
-    var response = facilityRequestDetailService.getFacilityRequest(
+    FacilityRequestDetailResponse response =
+        facilityRequestDetailService.getFacilityRequest(
         10L,
-        7L,
-        false
+        7L
     );
 
     assertThat(response.data().editable()).isTrue();
     assertThat(response.data().deletable()).isTrue();
-    verifyNoInteractions(requestAssignmentRepository);
   }
 
   @Test
-  void currentlyAssignedUserCanViewPrivateRequest() {
-    FacilityRequest request = request(10L, "PRIVATE", 7L, "CHECKING");
+  void nonOwnerCanViewRequestButCannotEditOrDelete() {
+    FacilityRequest request = request(10L, "CHECKING");
     when(facilityRequestRepository.findDetailById(10L))
         .thenReturn(Optional.of(request));
-    when(requestAssignmentRepository
-        .existsByFacilityRequest_IdAndAssignedUser_IdAndEndedAtIsNull(10L, 9L))
-        .thenReturn(true);
     when(attachmentRepository
         .findAllByFacilityRequest_IdAndFile_DeletedAtIsNullOrderByIdAsc(10L))
         .thenReturn(List.of());
 
-    var response = facilityRequestDetailService.getFacilityRequest(
+    FacilityRequestDetailResponse response =
+        facilityRequestDetailService.getFacilityRequest(
         10L,
-        9L,
-        false
+        9L
     );
 
     assertThat(response.data().facilityRequestId()).isEqualTo(10L);
     assertThat(response.data().editable()).isFalse();
-  }
-
-  @Test
-  void unauthorizedPrivateRequestIsHiddenAsNotFound() {
-    FacilityRequest request = mock(FacilityRequest.class);
-    when(request.getVisibility()).thenReturn("PRIVATE");
-    when(facilityRequestRepository.findDetailById(10L))
-        .thenReturn(Optional.of(request));
-
-    assertThatThrownBy(
-        () -> facilityRequestDetailService.getFacilityRequest(10L, null, false)
-    )
-        .isInstanceOf(BusinessException.class)
-        .satisfies(exception -> assertThat(
-            ((BusinessException) exception).getErrorCode()
-        ).isEqualTo(FacilityRequestErrorCode.NOT_FOUND));
-    verifyNoInteractions(
-        requestAssignmentRepository,
-        attachmentRepository
-    );
+    assertThat(response.data().deletable()).isFalse();
   }
 
   @Test
@@ -140,22 +113,17 @@ class FacilityRequestDetailServiceTest {
         .thenReturn(Optional.empty());
 
     assertThatThrownBy(
-        () -> facilityRequestDetailService.getFacilityRequest(99L, null, false)
+        () -> facilityRequestDetailService.getFacilityRequest(99L, null)
     )
         .isInstanceOf(BusinessException.class)
         .satisfies(exception -> assertThat(
             ((BusinessException) exception).getErrorCode()
         ).isEqualTo(FacilityRequestErrorCode.NOT_FOUND));
-    verifyNoInteractions(
-        requestAssignmentRepository,
-        attachmentRepository
-    );
+    verifyNoInteractions(attachmentRepository);
   }
 
   private FacilityRequest request(
       Long id,
-      String visibility,
-      Long requesterId,
       String status
   ) {
     FacilityCategory category = mock(FacilityCategory.class);
@@ -166,14 +134,10 @@ class FacilityRequestDetailServiceTest {
     when(location.getName()).thenReturn("Student Center");
     FacilityRequest request = mock(FacilityRequest.class);
     when(request.getId()).thenReturn(id);
-    lenient().when(request.isRequestedBy(requesterId)).thenReturn(true);
-    when(request.getVisibility()).thenReturn(visibility);
-    when(request.getReceiptNumber()).thenReturn("SR-20260801-0001");
     when(request.getTitle()).thenReturn("Flickering hallway light");
     when(request.getDescription()).thenReturn(
         "The hallway light keeps flickering."
     );
-    when(request.getEquipmentName()).thenReturn("LED light");
     when(request.getFacilityCategory()).thenReturn(category);
     when(request.getLocation()).thenReturn(location);
     when(request.getRequestStatus()).thenReturn(status);

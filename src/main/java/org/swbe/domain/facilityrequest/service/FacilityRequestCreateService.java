@@ -50,7 +50,6 @@ public class FacilityRequestCreateService {
   private final AppUserRepository appUserRepository;
   private final FileResourceRepository fileResourceRepository;
   private final FileStorage fileStorage;
-  private final FacilityRequestReceiptNumberGenerator receiptNumberGenerator;
   private final Clock clock;
 
   @Transactional
@@ -78,15 +77,12 @@ public class FacilityRequestCreateService {
         ));
 
     LocalDateTime now = LocalDateTime.now(clock);
-    String receiptNumber = receiptNumberGenerator.next(now.toLocalDate());
     FacilityRequest facilityRequest = FacilityRequest.create(
         category,
         location,
         requester,
-        receiptNumber,
         request.title(),
         request.description(),
-        request.equipmentName(),
         now
     );
 
@@ -104,7 +100,6 @@ public class FacilityRequestCreateService {
       return new FacilityRequestCreateResponse(
           new FacilityRequestCreateDataResponse(
               facilityRequest.getId(),
-              facilityRequest.getReceiptNumber(),
               facilityRequest.getRequestStatus(),
               storedFiles.size(),
               facilityRequest.getCreatedAt()

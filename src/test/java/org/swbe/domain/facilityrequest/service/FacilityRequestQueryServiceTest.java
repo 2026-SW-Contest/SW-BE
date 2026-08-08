@@ -18,10 +18,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.swbe.domain.campus.entity.Location;
 import org.swbe.domain.facilityrequest.dto.request.FacilityRequestSearchCondition;
+import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListItemResponse;
+import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.entity.FacilityCategory;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestStatus;
@@ -39,7 +42,7 @@ class FacilityRequestQueryServiceTest {
   private FacilityRequestQueryService facilityRequestQueryService;
 
   @Test
-  void publicRequestsAreReturnedAsPagedSummary() {
+  void requestsAreReturnedAsPagedSummary() {
     LocalDateTime createdAt = LocalDateTime.of(2026, 8, 1, 16, 0);
     FacilityCategory category = mock(FacilityCategory.class);
     when(category.getName()).thenReturn("전기/조명");
@@ -52,12 +55,12 @@ class FacilityRequestQueryServiceTest {
     when(request.getLocation()).thenReturn(location);
     when(request.getRequestStatus()).thenReturn("IN_PROGRESS");
     when(request.getCreatedAt()).thenReturn(createdAt);
-    var page = new PageImpl<>(
+    Page<FacilityRequest> page = new PageImpl<>(
         List.of(request),
         PageRequest.of(0, 20),
         1
     );
-    when(facilityRequestRepository.searchPublicRequests(
+    when(facilityRequestRepository.searchRequests(
         eq(1L),
         eq(2L),
         eq("IN_PROGRESS"),
@@ -66,7 +69,7 @@ class FacilityRequestQueryServiceTest {
         eq(LocalDateTime.of(2026, 8, 2, 0, 0)),
         any(Pageable.class)
     )).thenReturn(page);
-    var condition = new FacilityRequestSearchCondition(
+    FacilityRequestSearchCondition condition = new FacilityRequestSearchCondition(
         1L,
         2L,
         FacilityRequestStatus.IN_PROGRESS,
@@ -77,10 +80,11 @@ class FacilityRequestQueryServiceTest {
         20
     );
 
-    var response = facilityRequestQueryService.getFacilityRequests(condition);
+    FacilityRequestListResponse response =
+        facilityRequestQueryService.getFacilityRequests(condition);
 
     assertThat(response.data().content()).hasSize(1);
-    var item = response.data().content().getFirst();
+    FacilityRequestListItemResponse item = response.data().content().getFirst();
     assertThat(item.facilityRequestId()).isEqualTo(25L);
     assertThat(item.title()).isEqualTo("학생회관 1층 조명 깜빡임");
     assertThat(item.categoryName()).isEqualTo("전기/조명");
@@ -94,7 +98,7 @@ class FacilityRequestQueryServiceTest {
     assertThat(response.data().totalElements()).isEqualTo(1);
     assertThat(response.data().totalPages()).isEqualTo(1);
     assertThat(response.data().hasNext()).isFalse();
-    verify(facilityRequestRepository).searchPublicRequests(
+    verify(facilityRequestRepository).searchRequests(
         eq(1L),
         eq(2L),
         eq("IN_PROGRESS"),
@@ -107,12 +111,12 @@ class FacilityRequestQueryServiceTest {
 
   @Test
   void noSearchResultReturnsEmptyPage() {
-    var page = new PageImpl<FacilityRequest>(
+    Page<FacilityRequest> page = new PageImpl<>(
         List.of(),
         PageRequest.of(0, 20),
         0
     );
-    when(facilityRequestRepository.searchPublicRequests(
+    when(facilityRequestRepository.searchRequests(
         eq(null),
         eq(null),
         eq(null),
@@ -121,7 +125,7 @@ class FacilityRequestQueryServiceTest {
         eq(null),
         any(Pageable.class)
     )).thenReturn(page);
-    var condition = new FacilityRequestSearchCondition(
+    FacilityRequestSearchCondition condition = new FacilityRequestSearchCondition(
         null,
         null,
         null,
@@ -132,7 +136,8 @@ class FacilityRequestQueryServiceTest {
         20
     );
 
-    var response = facilityRequestQueryService.getFacilityRequests(condition);
+    FacilityRequestListResponse response =
+        facilityRequestQueryService.getFacilityRequests(condition);
 
     assertThat(response.data().content()).isEmpty();
     assertThat(response.data().totalElements()).isZero();
@@ -142,7 +147,7 @@ class FacilityRequestQueryServiceTest {
 
   @Test
   void startDateAfterEndDateIsRejected() {
-    var condition = new FacilityRequestSearchCondition(
+    FacilityRequestSearchCondition condition = new FacilityRequestSearchCondition(
         null,
         null,
         null,

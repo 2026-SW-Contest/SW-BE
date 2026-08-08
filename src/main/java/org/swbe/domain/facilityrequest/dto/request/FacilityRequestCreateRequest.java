@@ -20,16 +20,12 @@ public record FacilityRequestCreateRequest(
 
     @NotBlank(message = "description is required")
     @Size(max = 500, message = "description must not exceed 500 characters")
-    String description,
-
-    @Size(max = 150, message = "equipmentName must not exceed 150 characters")
-    String equipmentName
+    String description
 ) {
 
   public FacilityRequestCreateRequest {
     title = stripNullable(title);
     description = stripNullable(description);
-    equipmentName = stripNullable(equipmentName);
   }
 
   private static String stripNullable(String value) {

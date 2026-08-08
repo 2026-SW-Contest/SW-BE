@@ -79,8 +79,7 @@ class FacilityRequestControllerTest {
               "categoryId": 1,
               "locationId": 2,
               "title": "Flickering hallway light",
-              "description": "The hallway light keeps flickering.",
-              "equipmentName": "LED light"
+              "description": "The hallway light keeps flickering."
             }
             """
     );
@@ -93,7 +92,6 @@ class FacilityRequestControllerTest {
     FacilityRequestCreateDataResponse data =
         new FacilityRequestCreateDataResponse(
             25L,
-            "FR-20260801-0001",
             "RECEIVED",
             1,
             LocalDateTime.of(2026, 8, 1, 16, 0)
@@ -111,8 +109,7 @@ class FacilityRequestControllerTest {
             .with(csrf()))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.data.facilityRequestId").value(25))
-        .andExpect(jsonPath("$.data.receiptNumber")
-            .value("FR-20260801-0001"))
+        .andExpect(jsonPath("$.data.receiptNumber").doesNotExist())
         .andExpect(jsonPath("$.data.requestStatus").value("RECEIVED"))
         .andExpect(jsonPath("$.data.attachmentCount").value(1));
   }
@@ -157,7 +154,7 @@ class FacilityRequestControllerTest {
 
   @Test
   void anonymousUserCanGetFilteredFacilityRequestList() throws Exception {
-    var item = new FacilityRequestListItemResponse(
+    FacilityRequestListItemResponse item = new FacilityRequestListItemResponse(
         25L,
         "학생회관 1층 조명 깜빡임",
         "전기/조명",
@@ -219,13 +216,11 @@ class FacilityRequestControllerTest {
   }
 
   @Test
-  void anonymousUserCanGetPublicFacilityRequestDetail() throws Exception {
-    var data = new FacilityRequestDetailDataResponse(
+  void anonymousUserCanGetFacilityRequestDetail() throws Exception {
+    FacilityRequestDetailDataResponse data = new FacilityRequestDetailDataResponse(
         25L,
-        "SR-20260801-0001",
         "Flickering hallway light",
         "The hallway light keeps flickering.",
-        "LED light",
         new FacilityCategoryResponse(1L, "Electricity/Lighting"),
         new FacilityRequestLocationDetailResponse(2L, "Student Center"),
         "IN_PROGRESS",
@@ -236,14 +231,14 @@ class FacilityRequestControllerTest {
         LocalDateTime.of(2026, 8, 1, 16, 0),
         LocalDateTime.of(2026, 8, 1, 16, 10)
     );
-    when(facilityRequestDetailService.getFacilityRequest(25L, null, false))
+    when(facilityRequestDetailService.getFacilityRequest(25L, null))
         .thenReturn(new FacilityRequestDetailResponse(data));
 
     mockMvc.perform(get("/api/facility-requests/25"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.facilityRequestId").value(25))
-        .andExpect(jsonPath("$.data.receiptNumber")
-            .value("SR-20260801-0001"))
+        .andExpect(jsonPath("$.data.receiptNumber").doesNotExist())
+        .andExpect(jsonPath("$.data.equipmentName").doesNotExist())
         .andExpect(jsonPath("$.data.category.categoryId").value(1))
         .andExpect(jsonPath("$.data.location.locationId").value(2))
         .andExpect(jsonPath("$.data.attachments.length()").value(0))

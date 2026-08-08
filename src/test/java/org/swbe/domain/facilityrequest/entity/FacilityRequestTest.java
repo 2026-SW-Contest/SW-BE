@@ -13,7 +13,7 @@ import org.swbe.domain.user.entity.AppUser;
 class FacilityRequestTest {
 
   @Test
-  void createsReceivedPrivateFacilityRequest() {
+  void createsReceivedFacilityRequest() {
     FacilityCategory category = mock(FacilityCategory.class);
     Location location = mock(Location.class);
     AppUser requester = mock(AppUser.class);
@@ -23,10 +23,8 @@ class FacilityRequestTest {
         category,
         location,
         requester,
-        "FR-20260801-0001",
         "  Flickering light  ",
         "  The hallway light keeps flickering.  ",
-        "  LED light  ",
         createdAt
     );
 
@@ -36,8 +34,6 @@ class FacilityRequestTest {
     assertThat(request.getTitle()).isEqualTo("Flickering light");
     assertThat(request.getDescription())
         .isEqualTo("The hallway light keeps flickering.");
-    assertThat(request.getEquipmentName()).isEqualTo("LED light");
-    assertThat(request.getVisibility()).isEqualTo("PRIVATE");
     assertThat(request.getRequestStatus()).isEqualTo("RECEIVED");
     assertThat(request.getCreatedAt()).isEqualTo(createdAt);
     assertThat(request.getUpdatedAt()).isEqualTo(createdAt);

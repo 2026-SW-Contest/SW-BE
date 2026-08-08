@@ -43,21 +43,12 @@ public class FacilityRequest {
   @JoinColumn(name = "requester_user_id")
   private AppUser requester;
 
-  @Column(name = "receipt_number", nullable = false, unique = true, length = 50)
-  private String receiptNumber;
-
   @Column(nullable = false, length = 200)
   private String title;
 
   @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @Column(nullable = false)
   private String description;
-
-  @Column(name = "equipment_name", length = 150)
-  private String equipmentName;
-
-  @Column(nullable = false, length = 20)
-  private String visibility = "PRIVATE";
 
   @Column(name = "request_status", nullable = false, length = 30)
   private String requestStatus = "RECEIVED";
@@ -78,20 +69,15 @@ public class FacilityRequest {
       FacilityCategory facilityCategory,
       Location location,
       AppUser requester,
-      String receiptNumber,
       String title,
       String description,
-      String equipmentName,
       LocalDateTime createdAt
   ) {
     this.facilityCategory = Objects.requireNonNull(facilityCategory);
     this.location = Objects.requireNonNull(location);
     this.requester = Objects.requireNonNull(requester);
-    this.receiptNumber = requireText(receiptNumber, "receiptNumber");
     this.title = requireText(title, "title");
     this.description = requireText(description, "description");
-    this.equipmentName = stripNullable(equipmentName);
-    this.visibility = "PRIVATE";
     this.requestStatus = FacilityRequestStatus.RECEIVED.name();
     this.createdAt = Objects.requireNonNull(createdAt);
     this.updatedAt = createdAt;
@@ -101,20 +87,16 @@ public class FacilityRequest {
       FacilityCategory facilityCategory,
       Location location,
       AppUser requester,
-      String receiptNumber,
       String title,
       String description,
-      String equipmentName,
       LocalDateTime createdAt
   ) {
     return new FacilityRequest(
         facilityCategory,
         location,
         requester,
-        receiptNumber,
         title,
         description,
-        equipmentName,
         createdAt
     );
   }

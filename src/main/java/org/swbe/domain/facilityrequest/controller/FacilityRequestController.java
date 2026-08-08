@@ -10,7 +10,6 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -100,15 +99,9 @@ public class FacilityRequestController {
       @AuthenticationPrincipal AppUserPrincipal principal
   ) {
     Long viewerUserId = principal == null ? null : principal.getUserId();
-    boolean administrator = principal != null
-        && principal.getAuthorities().stream()
-        .map(GrantedAuthority::getAuthority)
-        .anyMatch("ROLE_ADMIN"::equals);
-
     return facilityRequestDetailService.getFacilityRequest(
         facilityRequestId,
-        viewerUserId,
-        administrator
+        viewerUserId
     );
   }
 }

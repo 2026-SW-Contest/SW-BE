@@ -71,9 +71,6 @@ class FacilityRequestCreateServiceTest {
   @Mock
   private FileStorage fileStorage;
 
-  @Mock
-  private FacilityRequestReceiptNumberGenerator receiptNumberGenerator;
-
   private FacilityRequestCreateService createService;
 
   @BeforeEach
@@ -86,7 +83,6 @@ class FacilityRequestCreateServiceTest {
         appUserRepository,
         fileResourceRepository,
         fileStorage,
-        receiptNumberGenerator,
         FIXED_CLOCK
     );
   }
@@ -111,8 +107,6 @@ class FacilityRequestCreateServiceTest {
         .findByIdAndActiveTrueAndBuilding_ActiveTrue(2L))
         .thenReturn(Optional.of(location));
     when(appUserRepository.findById(7L)).thenReturn(Optional.of(requester));
-    when(receiptNumberGenerator.next(any()))
-        .thenReturn("FR-20260801-0001");
     when(fileStorage.store(image)).thenReturn(storedFile);
     when(facilityRequestRepository.save(any())).thenAnswer(invocation -> {
       FacilityRequest facilityRequest = invocation.getArgument(0);
@@ -127,8 +121,6 @@ class FacilityRequestCreateServiceTest {
     );
 
     assertThat(response.data().facilityRequestId()).isEqualTo(25L);
-    assertThat(response.data().receiptNumber())
-        .isEqualTo("FR-20260801-0001");
     assertThat(response.data().requestStatus()).isEqualTo("RECEIVED");
     assertThat(response.data().attachmentCount()).isEqualTo(1);
 
@@ -139,7 +131,9 @@ class FacilityRequestCreateServiceTest {
     assertThat(savedRequest.getFacilityCategory()).isSameAs(category);
     assertThat(savedRequest.getLocation()).isSameAs(location);
     assertThat(savedRequest.getRequester()).isSameAs(requester);
-    assertThat(savedRequest.getVisibility()).isEqualTo("PRIVATE");
+    assertThat(savedRequest.getTitle()).isEqualTo("Flickering hallway light");
+    assertThat(savedRequest.getDescription())
+        .isEqualTo("The hallway light keeps flickering.");
     verify(fileResourceRepository).save(any());
     verify(attachmentRepository).saveAll(any());
   }
@@ -252,8 +246,6 @@ class FacilityRequestCreateServiceTest {
         .thenReturn(Optional.of(mock(Location.class)));
     when(appUserRepository.findById(7L))
         .thenReturn(Optional.of(mock(AppUser.class)));
-    when(receiptNumberGenerator.next(any()))
-        .thenReturn("FR-20260801-0001");
   }
 
   private FacilityRequestCreateRequest validRequest() {
@@ -261,8 +253,7 @@ class FacilityRequestCreateServiceTest {
         1L,
         2L,
         "Flickering hallway light",
-        "The hallway light keeps flickering.",
-        "LED light"
+        "The hallway light keeps flickering."
     );
   }
 
