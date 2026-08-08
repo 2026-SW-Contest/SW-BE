@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -53,4 +54,59 @@ public class FileResource {
 
   @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
+
+  private FileResource(
+      String storageProvider,
+      String storageKey,
+      String originalFilename,
+      String mimeType,
+      long fileSize,
+      String checksum,
+      AppUser uploadedBy,
+      LocalDateTime createdAt
+  ) {
+    this.storageProvider = requireText(storageProvider, "storageProvider");
+    this.storageKey = requireText(storageKey, "storageKey");
+    this.originalFilename = requireText(
+        originalFilename,
+        "originalFilename"
+    );
+    this.mimeType = requireText(mimeType, "mimeType");
+    if (fileSize < 0) {
+      throw new IllegalArgumentException("fileSize must not be negative");
+    }
+    this.fileSize = fileSize;
+    this.checksum = checksum;
+    this.uploadedBy = Objects.requireNonNull(uploadedBy);
+    this.createdAt = Objects.requireNonNull(createdAt);
+  }
+
+  public static FileResource create(
+      String storageProvider,
+      String storageKey,
+      String originalFilename,
+      String mimeType,
+      long fileSize,
+      String checksum,
+      AppUser uploadedBy,
+      LocalDateTime createdAt
+  ) {
+    return new FileResource(
+        storageProvider,
+        storageKey,
+        originalFilename,
+        mimeType,
+        fileSize,
+        checksum,
+        uploadedBy,
+        createdAt
+    );
+  }
+
+  private static String requireText(String value, String fieldName) {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException(fieldName + " must not be blank");
+    }
+    return value;
+  }
 }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.swbe.domain.facilityrequest.dto.response.FacilityCategoryListResponse;
 import org.swbe.domain.facilityrequest.entity.FacilityCategory;
 import org.swbe.domain.facilityrequest.repository.FacilityCategoryRepository;
 
@@ -30,7 +31,8 @@ class FacilityCategoryQueryServiceTest {
     when(facilityCategoryRepository.findAllByActiveTrueOrderByIdAsc())
         .thenReturn(List.of(electrical, temperature, other));
 
-    var response = facilityCategoryQueryService.getCategories();
+    FacilityCategoryListResponse response =
+        facilityCategoryQueryService.getCategories();
 
     assertThat(response.data())
         .extracting(category -> category.categoryId())
@@ -45,7 +47,8 @@ class FacilityCategoryQueryServiceTest {
     when(facilityCategoryRepository.findAllByActiveTrueOrderByIdAsc())
         .thenReturn(List.of());
 
-    var response = facilityCategoryQueryService.getCategories();
+    FacilityCategoryListResponse response =
+        facilityCategoryQueryService.getCategories();
 
     assertThat(response.data()).isEmpty();
   }

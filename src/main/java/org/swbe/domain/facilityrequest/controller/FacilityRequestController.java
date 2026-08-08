@@ -1,23 +1,33 @@
 package org.swbe.domain.facilityrequest.controller;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.swbe.domain.facilityrequest.dto.request.FacilityRequestCreateRequest;
 import org.swbe.domain.facilityrequest.dto.request.FacilityRequestSearchCondition;
+import org.swbe.domain.facilityrequest.dto.response.FacilityRequestCreateResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestStatus;
+import org.swbe.domain.facilityrequest.service.FacilityRequestCreateService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDetailService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestQueryService;
 import org.swbe.global.security.AppUserPrincipal;
@@ -29,13 +39,31 @@ public class FacilityRequestController {
 
   private final FacilityRequestQueryService facilityRequestQueryService;
   private final FacilityRequestDetailService facilityRequestDetailService;
+  private final FacilityRequestCreateService facilityRequestCreateService;
 
   public FacilityRequestController(
       FacilityRequestQueryService facilityRequestQueryService,
-      FacilityRequestDetailService facilityRequestDetailService
+      FacilityRequestDetailService facilityRequestDetailService,
+      FacilityRequestCreateService facilityRequestCreateService
   ) {
     this.facilityRequestQueryService = facilityRequestQueryService;
     this.facilityRequestDetailService = facilityRequestDetailService;
+    this.facilityRequestCreateService = facilityRequestCreateService;
+  }
+
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @ResponseStatus(HttpStatus.CREATED)
+  public FacilityRequestCreateResponse createFacilityRequest(
+      @Valid @RequestPart("request") FacilityRequestCreateRequest request,
+      @RequestPart(name = "files", required = false)
+      List<MultipartFile> files,
+      @AuthenticationPrincipal AppUserPrincipal principal
+  ) {
+    return facilityRequestCreateService.create(
+        request,
+        files == null ? List.of() : files,
+        principal.getUserId()
+    );
   }
 
   @GetMapping
@@ -71,15 +99,9 @@ public class FacilityRequestController {
       @AuthenticationPrincipal AppUserPrincipal principal
   ) {
     Long viewerUserId = principal == null ? null : principal.getUserId();
-    boolean administrator = principal != null
-        && principal.getAuthorities().stream()
-        .map(GrantedAuthority::getAuthority)
-        .anyMatch("ROLE_ADMIN"::equals);
-
     return facilityRequestDetailService.getFacilityRequest(
         facilityRequestId,
-        viewerUserId,
-        administrator
+        viewerUserId
     );
   }
 }

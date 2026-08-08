@@ -8,7 +8,32 @@ public enum FacilityRequestErrorCode implements ErrorCode {
   NOT_FOUND(
       HttpStatus.NOT_FOUND,
       "FACILITY_REQUEST_NOT_FOUND",
-      "시설·기자재 문의를 찾을 수 없습니다."
+      "The facility request was not found."
+  ),
+  CATEGORY_NOT_FOUND(
+      HttpStatus.NOT_FOUND,
+      "FACILITY_CATEGORY_NOT_FOUND",
+      "The active facility category was not found."
+  ),
+  LOCATION_NOT_FOUND(
+      HttpStatus.NOT_FOUND,
+      "LOCATION_NOT_FOUND",
+      "The active location was not found."
+  ),
+  FILE_LIMIT_EXCEEDED(
+      HttpStatus.BAD_REQUEST,
+      "FILE_LIMIT_EXCEEDED",
+      "A maximum of five images can be attached."
+  ),
+  INVALID_FILE_TYPE(
+      HttpStatus.BAD_REQUEST,
+      "INVALID_FILE_TYPE",
+      "Only image files can be attached."
+  ),
+  FILE_STORAGE_ERROR(
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      "FILE_STORAGE_ERROR",
+      "The attachment could not be stored."
   );
 
   private final HttpStatus status;

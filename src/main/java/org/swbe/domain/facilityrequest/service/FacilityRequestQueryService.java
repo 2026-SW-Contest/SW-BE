@@ -1,6 +1,8 @@
 package org.swbe.domain.facilityrequest.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -52,7 +54,7 @@ public class FacilityRequestQueryService {
         DEFAULT_SORT
     );
 
-    var result = facilityRequestRepository.searchPublicRequests(
+    Page<FacilityRequest> result = facilityRequestRepository.searchRequests(
         condition.categoryId(),
         condition.locationId(),
         status,
@@ -61,10 +63,10 @@ public class FacilityRequestQueryService {
         toDateTimeExclusive,
         pageable
     );
-    var content = result.getContent().stream()
+    List<FacilityRequestListItemResponse> content = result.getContent().stream()
         .map(this::toListItemResponse)
         .toList();
-    var page = new FacilityRequestPageResponse(
+    FacilityRequestPageResponse page = new FacilityRequestPageResponse(
         content,
         result.getNumber(),
         result.getSize(),

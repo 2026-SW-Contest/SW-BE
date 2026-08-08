@@ -45,6 +45,9 @@ server:
         same-site: ${SESSION_COOKIE_SAME_SITE:lax}
 
 app:
+  file:
+    storage-directory: ${FILE_STORAGE_DIRECTORY:uploads}
+
   security:
     frontend-origins: ${FRONTEND_ORIGINS:http://localhost:3000}
 
