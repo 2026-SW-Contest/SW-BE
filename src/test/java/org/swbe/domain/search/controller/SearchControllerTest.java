@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -15,7 +16,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.swbe.domain.search.dto.response.SearchSummaryDataResponse;
 import org.swbe.domain.search.dto.response.SearchSummaryResponse;
+import org.swbe.domain.search.dto.response.SearchSuggestionListResponse;
 import org.swbe.domain.search.service.IntegratedSearchService;
+import org.swbe.domain.search.service.SearchSuggestionService;
 import org.swbe.global.security.RestAccessDeniedHandler;
 import org.swbe.global.security.RestAuthenticationEntryPoint;
 import org.swbe.global.security.RestSessionInformationExpiredStrategy;
@@ -42,7 +45,36 @@ class SearchControllerTest {
   private IntegratedSearchService integratedSearchService;
 
   @MockitoBean
+  private SearchSuggestionService searchSuggestionService;
+
+  @MockitoBean
   private UserDetailsService userDetailsService;
+
+  @Test
+  void anonymousUserCanGetSearchSuggestions() throws Exception {
+    when(searchSuggestionService.getSuggestions("에어", 8))
+        .thenReturn(new SearchSuggestionListResponse(List.of(
+            "에어팟 프로",
+            "천장형 에어컨"
+        )));
+
+    mockMvc.perform(get("/api/search/suggestions")
+            .queryParam("query", "에어"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.length()").value(2))
+        .andExpect(jsonPath("$.data[0]").value("에어팟 프로"))
+        .andExpect(jsonPath("$.data[1]").value("천장형 에어컨"));
+  }
+
+  @Test
+  void oversizedSuggestionLimitIsRejected() throws Exception {
+    mockMvc.perform(get("/api/search/suggestions")
+            .queryParam("query", "에어")
+            .queryParam("size", "21"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code")
+            .value("COMMON_VALIDATION_FAILED"));
+  }
 
   @Test
   void anonymousUserCanGetIntegratedSearchSummary() throws Exception {

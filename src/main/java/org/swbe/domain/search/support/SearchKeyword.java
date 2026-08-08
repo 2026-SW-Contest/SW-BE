@@ -7,7 +7,8 @@ import org.swbe.global.error.CommonErrorCode;
 public record SearchKeyword(
     String value,
     String normalized,
-    String containsPattern
+    String containsPattern,
+    String prefixPattern
 ) {
 
   private static final int MAX_LENGTH = 100;
@@ -23,10 +24,12 @@ public record SearchKeyword(
     }
 
     String normalized = value.toLowerCase(Locale.ROOT);
+    String escaped = escape(normalized);
     return new SearchKeyword(
         value,
         normalized,
-        "%" + escape(normalized) + "%"
+        "%" + escaped + "%",
+        escaped + "%"
     );
   }
 

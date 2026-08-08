@@ -17,6 +17,8 @@ class SearchKeywordTest {
     assertThat(keyword.normalized()).isEqualTo("air%_!");
     assertThat(keyword.containsPattern())
         .isEqualTo("%air!%!_!!%");
+    assertThat(keyword.prefixPattern())
+        .isEqualTo("air!%!_!!%");
   }
 
   @Test

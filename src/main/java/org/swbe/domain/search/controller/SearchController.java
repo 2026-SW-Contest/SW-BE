@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.swbe.domain.search.dto.response.FacilityRequestSearchResponse;
 import org.swbe.domain.search.dto.response.LostItemSearchResponse;
+import org.swbe.domain.search.dto.response.SearchSuggestionListResponse;
 import org.swbe.domain.search.dto.response.SearchSummaryResponse;
 import org.swbe.domain.search.service.IntegratedSearchService;
+import org.swbe.domain.search.service.SearchSuggestionService;
 
 @RestController
 @RequestMapping("/api/search")
@@ -22,6 +24,16 @@ import org.swbe.domain.search.service.IntegratedSearchService;
 public class SearchController {
 
   private final IntegratedSearchService integratedSearchService;
+  private final SearchSuggestionService searchSuggestionService;
+
+  @GetMapping("/suggestions")
+  public SearchSuggestionListResponse getSuggestions(
+      @RequestParam @NotBlank @Size(max = 100) String query,
+      @RequestParam(defaultValue = "8")
+      @Min(1) @Max(20) int size
+  ) {
+    return searchSuggestionService.getSuggestions(query, size);
+  }
 
   @GetMapping("/summary")
   public SearchSummaryResponse getSummary(
