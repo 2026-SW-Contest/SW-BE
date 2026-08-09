@@ -3,6 +3,7 @@ package org.swbe.domain.user.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
@@ -14,6 +15,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.swbe.domain.search.repository.RecentSearchRepository;
 import org.swbe.domain.user.entity.AccountStatus;
 import org.swbe.domain.user.entity.AppRole;
 import org.swbe.domain.user.entity.AppUser;
@@ -31,12 +33,14 @@ class AccountWithdrawalServiceTest {
 
   private AppUserRepository appUserRepository;
   private UserRoleRepository userRoleRepository;
+  private RecentSearchRepository recentSearchRepository;
   private AccountWithdrawalService service;
 
   @BeforeEach
   void setUp() {
     appUserRepository = mock(AppUserRepository.class);
     userRoleRepository = mock(UserRoleRepository.class);
+    recentSearchRepository = mock(RecentSearchRepository.class);
     Clock clock = Clock.fixed(
         Instant.parse("2026-08-01T12:00:00Z"),
         ZoneOffset.UTC
@@ -44,6 +48,7 @@ class AccountWithdrawalServiceTest {
     service = new AccountWithdrawalService(
         appUserRepository,
         userRoleRepository,
+        recentSearchRepository,
         clock
     );
   }
@@ -64,6 +69,7 @@ class AccountWithdrawalServiceTest {
     assertThat(user.getEmail()).isEqualTo("withdrawn-10@users.invalid");
     assertThat(firstRole.getRevokedAt()).isEqualTo(NOW);
     assertThat(secondRole.getRevokedAt()).isEqualTo(NOW);
+    verify(recentSearchRepository).deleteAllByUserId(USER_ID);
   }
 
   @Test

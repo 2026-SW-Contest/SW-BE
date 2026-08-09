@@ -68,7 +68,8 @@ public class SecurityConfig {
                 "/api/locations",
                 "/api/facility-categories",
                 "/api/facility-requests",
-                "/api/facility-requests/*"
+                "/api/facility-requests/*",
+                "/api/search/**"
             ).permitAll()
             .requestMatchers(
                 HttpMethod.POST,
