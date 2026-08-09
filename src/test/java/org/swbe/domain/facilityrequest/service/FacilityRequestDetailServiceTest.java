@@ -71,6 +71,7 @@ class FacilityRequestDetailServiceTest {
   void ownerCanEditAndDeleteReceivedRequest() {
     FacilityRequest request = request(10L, "RECEIVED");
     when(request.isRequestedBy(7L)).thenReturn(true);
+    when(request.isEditable()).thenReturn(true);
     when(facilityRequestRepository.findDetailById(10L))
         .thenReturn(Optional.of(request));
     when(attachmentRepository

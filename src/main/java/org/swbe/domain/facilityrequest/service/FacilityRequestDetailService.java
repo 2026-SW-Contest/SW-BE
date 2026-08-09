@@ -51,7 +51,7 @@ public class FacilityRequestDetailService {
     FacilityRequestStatus status = FacilityRequestStatus.valueOf(
         request.getRequestStatus()
     );
-    boolean editable = owner && status == FacilityRequestStatus.RECEIVED;
+    boolean editable = owner && request.isEditable();
 
     FacilityRequestDetailDataResponse data =
         new FacilityRequestDetailDataResponse(

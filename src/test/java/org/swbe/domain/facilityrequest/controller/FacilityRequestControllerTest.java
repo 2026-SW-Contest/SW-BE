@@ -32,9 +32,12 @@ import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListItemRespo
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestLocationDetailResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestPageResponse;
+import org.swbe.domain.facilityrequest.dto.response.FacilityRequestUpdateDataResponse;
+import org.swbe.domain.facilityrequest.dto.response.FacilityRequestUpdateResponse;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDetailService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestCreateService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestQueryService;
+import org.swbe.domain.facilityrequest.service.FacilityRequestUpdateService;
 import org.swbe.domain.user.entity.AccountStatus;
 import org.swbe.global.security.AppUserPrincipal;
 import org.swbe.global.security.RestAccessDeniedHandler;
@@ -67,6 +70,9 @@ class FacilityRequestControllerTest {
 
   @MockitoBean
   private FacilityRequestCreateService facilityRequestCreateService;
+
+  @MockitoBean
+  private FacilityRequestUpdateService facilityRequestUpdateService;
 
   @MockitoBean
   private UserDetailsService userDetailsService;
@@ -244,6 +250,90 @@ class FacilityRequestControllerTest {
         .andExpect(jsonPath("$.data.attachments.length()").value(0))
         .andExpect(jsonPath("$.data.editable").value(false))
         .andExpect(jsonPath("$.data.deletable").value(false));
+  }
+
+  @Test
+  void studentCanUpdateOwnReceivedFacilityRequest() throws Exception {
+    MockMultipartFile requestPart = requestPart(
+        """
+            {
+              "title": "Updated hallway light",
+              "keepFileIds": [15]
+            }
+            """
+    );
+    MockMultipartFile image = new MockMultipartFile(
+        "files",
+        "updated-light.jpg",
+        "image/jpeg",
+        "image".getBytes(StandardCharsets.UTF_8)
+    );
+    FacilityRequestUpdateDataResponse data =
+        new FacilityRequestUpdateDataResponse(
+            25L,
+            "RECEIVED",
+            2,
+            LocalDateTime.of(2026, 8, 9, 16, 30)
+        );
+    when(facilityRequestUpdateService.update(
+        eq(25L),
+        any(),
+        any(),
+        eq(7L)
+    )).thenReturn(new FacilityRequestUpdateResponse(data));
+
+    mockMvc.perform(multipart("/api/facility-requests/25")
+            .file(requestPart)
+            .file(image)
+            .with(request -> {
+              request.setMethod("PATCH");
+              return request;
+            })
+            .with(user(principal("ROLE_STUDENT")))
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.facilityRequestId").value(25))
+        .andExpect(jsonPath("$.data.requestStatus").value("RECEIVED"))
+        .andExpect(jsonPath("$.data.attachmentCount").value(2));
+  }
+
+  @Test
+  void anonymousUserCannotUpdateFacilityRequest() throws Exception {
+    mockMvc.perform(multipart("/api/facility-requests/25")
+            .file(requestPart("{\"title\":\"Updated title\"}"))
+            .with(request -> {
+              request.setMethod("PATCH");
+              return request;
+            })
+            .with(csrf()))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void nonStudentCannotUpdateFacilityRequest() throws Exception {
+    mockMvc.perform(multipart("/api/facility-requests/25")
+            .file(requestPart("{\"title\":\"Updated title\"}"))
+            .with(request -> {
+              request.setMethod("PATCH");
+              return request;
+            })
+            .with(user(principal("ROLE_FACILITY_STAFF")))
+            .with(csrf()))
+        .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void blankUpdateTitleIsRejected() throws Exception {
+    mockMvc.perform(multipart("/api/facility-requests/25")
+            .file(requestPart("{\"title\":\"   \"}"))
+            .with(request -> {
+              request.setMethod("PATCH");
+              return request;
+            })
+            .with(user(principal("ROLE_STUDENT")))
+            .with(csrf()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("COMMON_VALIDATION_FAILED"));
   }
 
   private MockMultipartFile requestPart(String json) {
