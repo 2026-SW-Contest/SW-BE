@@ -82,8 +82,7 @@ public interface FacilityRequestRepository
           FROM FacilityRequest request
           JOIN FETCH request.facilityCategory category
           JOIN FETCH request.location location
-          WHERE request.visibility = 'PUBLIC'
-            AND (:categoryId IS NULL OR category.id = :categoryId)
+          WHERE (:categoryId IS NULL OR category.id = :categoryId)
             AND (:locationId IS NULL OR location.id = :locationId)
             AND (:status IS NULL OR request.requestStatus = :status)
             AND (
@@ -97,8 +96,7 @@ public interface FacilityRequestRepository
       countQuery = """
           SELECT COUNT(request)
           FROM FacilityRequest request
-          WHERE request.visibility = 'PUBLIC'
-            AND (:categoryId IS NULL OR request.facilityCategory.id = :categoryId)
+          WHERE (:categoryId IS NULL OR request.facilityCategory.id = :categoryId)
             AND (:locationId IS NULL OR request.location.id = :locationId)
             AND (:status IS NULL OR request.requestStatus = :status)
             AND (
@@ -110,7 +108,7 @@ public interface FacilityRequestRepository
             AND (:toDateTimeExclusive IS NULL OR request.createdAt < :toDateTimeExclusive)
           """
   )
-  Page<FacilityRequest> searchPublicRequests(
+  Page<FacilityRequest> searchRequests(
       @Param("categoryId") Long categoryId,
       @Param("locationId") Long locationId,
       @Param("status") String status,

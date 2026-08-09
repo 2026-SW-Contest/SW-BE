@@ -5,10 +5,8 @@ import java.util.List;
 
 public record FacilityRequestDetailDataResponse(
     Long facilityRequestId,
-    String receiptNumber,
     String title,
     String description,
-    String equipmentName,
     FacilityCategoryResponse category,
     FacilityRequestLocationDetailResponse location,
     String requestStatus,
