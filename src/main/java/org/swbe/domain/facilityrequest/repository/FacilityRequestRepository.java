@@ -17,18 +17,13 @@ public interface FacilityRequestRepository
   @Query("""
       SELECT COUNT(request)
       FROM FacilityRequest request
-      WHERE request.visibility = 'PUBLIC'
-        AND (
-          LOWER(request.title) LIKE :pattern ESCAPE '!'
-          OR LOWER(request.description)
-              LIKE :pattern ESCAPE '!'
-          OR LOWER(COALESCE(request.equipmentName, ''))
-              LIKE :pattern ESCAPE '!'
-          OR LOWER(request.facilityCategory.name)
-              LIKE :pattern ESCAPE '!'
-          OR LOWER(request.location.name)
-              LIKE :pattern ESCAPE '!'
-        )
+      WHERE LOWER(request.title) LIKE :pattern ESCAPE '!'
+        OR LOWER(request.description)
+            LIKE :pattern ESCAPE '!'
+        OR LOWER(request.facilityCategory.name)
+            LIKE :pattern ESCAPE '!'
+        OR LOWER(request.location.name)
+            LIKE :pattern ESCAPE '!'
       """)
   long countIntegratedSearchMatches(
       @Param("pattern") String pattern
@@ -39,18 +34,15 @@ public interface FacilityRequestRepository
       FROM FacilityRequest request
       JOIN FETCH request.facilityCategory
       JOIN FETCH request.location
-      WHERE request.visibility = 'PUBLIC'
-        AND (
-          LOWER(request.title) LIKE :pattern ESCAPE '!'
-          OR LOWER(request.description)
-              LIKE :pattern ESCAPE '!'
-          OR LOWER(COALESCE(request.equipmentName, ''))
-              LIKE :pattern ESCAPE '!'
-          OR LOWER(request.facilityCategory.name)
-              LIKE :pattern ESCAPE '!'
-          OR LOWER(request.location.name)
-              LIKE :pattern ESCAPE '!'
-        )
+      WHERE (
+        LOWER(request.title) LIKE :pattern ESCAPE '!'
+        OR LOWER(request.description)
+            LIKE :pattern ESCAPE '!'
+        OR LOWER(request.facilityCategory.name)
+            LIKE :pattern ESCAPE '!'
+        OR LOWER(request.location.name)
+            LIKE :pattern ESCAPE '!'
+      )
         AND (
           :cursorCreatedAt IS NULL
           OR request.createdAt < :cursorCreatedAt

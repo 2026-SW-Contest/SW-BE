@@ -24,25 +24,12 @@ public class SearchSuggestionQueryRepository {
         UNION ALL
 
         SELECT
-          request.equipment_name AS candidate,
-          0 AS source_priority,
-          request.created_at AS created_at
-        FROM facility_request request
-        WHERE request.visibility = 'PUBLIC'
-          AND request.equipment_name IS NOT NULL
-          AND LOWER(request.equipment_name)
-              LIKE :containsPattern ESCAPE '!'
-
-        UNION ALL
-
-        SELECT
           request.title AS candidate,
           1 AS source_priority,
           request.created_at AS created_at
         FROM facility_request request
-        WHERE request.visibility = 'PUBLIC'
-          AND LOWER(request.title)
-              LIKE :containsPattern ESCAPE '!'
+        WHERE LOWER(request.title)
+            LIKE :containsPattern ESCAPE '!'
       ) candidates
       GROUP BY candidate
       ORDER BY

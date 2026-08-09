@@ -140,7 +140,6 @@ class IntegratedSearchServiceTest {
     when(request.getId()).thenReturn(40L);
     when(request.getTitle()).thenReturn("에어컨 고장");
     when(request.getDescription()).thenReturn("찬 바람이 나오지 않습니다.");
-    when(request.getEquipmentName()).thenReturn("천장형 에어컨");
     when(request.getFacilityCategory()).thenReturn(category);
     when(request.getLocation()).thenReturn(location);
     when(request.getRequestStatus()).thenReturn("IN_PROGRESS");

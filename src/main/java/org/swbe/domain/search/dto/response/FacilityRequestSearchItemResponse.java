@@ -6,7 +6,6 @@ public record FacilityRequestSearchItemResponse(
     Long facilityRequestId,
     String title,
     String description,
-    String equipmentName,
     String categoryName,
     String locationName,
     String requestStatus,

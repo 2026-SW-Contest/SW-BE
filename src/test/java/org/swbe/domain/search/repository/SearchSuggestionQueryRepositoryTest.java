@@ -22,7 +22,7 @@ class SearchSuggestionQueryRepositoryTest {
         .thenReturn(query);
     when(query.getResultList()).thenReturn(List.of(
         "에어팟 프로",
-        "천장형 에어컨"
+        "에어컨 소음 점검 요청"
     ));
     SearchSuggestionQueryRepository repository =
         new SearchSuggestionQueryRepository(entityManager);
@@ -36,7 +36,7 @@ class SearchSuggestionQueryRepositoryTest {
 
     assertThat(result).containsExactly(
         "에어팟 프로",
-        "천장형 에어컨"
+        "에어컨 소음 점검 요청"
     );
     verify(query).setParameter("normalizedQuery", "에어");
     verify(query).setParameter("containsPattern", "%에어%");
@@ -49,8 +49,8 @@ class SearchSuggestionQueryRepositoryTest {
     assertThat(sqlCaptor.getValue())
         .contains("UNION ALL")
         .contains("item.item_name")
-        .contains("request.equipment_name")
         .contains("request.title")
-        .contains("request.visibility = 'PUBLIC'");
+        .doesNotContain("request.equipment_name")
+        .doesNotContain("request.visibility");
   }
 }

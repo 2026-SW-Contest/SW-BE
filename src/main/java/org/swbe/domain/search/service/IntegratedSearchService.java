@@ -176,7 +176,6 @@ public class IntegratedSearchService {
         request.getId(),
         request.getTitle(),
         request.getDescription(),
-        request.getEquipmentName(),
         request.getFacilityCategory().getName(),
         request.getLocation().getName(),
         request.getRequestStatus(),

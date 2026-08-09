@@ -55,7 +55,7 @@ class SearchControllerTest {
     when(searchSuggestionService.getSuggestions("에어", 8))
         .thenReturn(new SearchSuggestionListResponse(List.of(
             "에어팟 프로",
-            "천장형 에어컨"
+            "에어컨 소음 점검 요청"
         )));
 
     mockMvc.perform(get("/api/search/suggestions")
@@ -63,7 +63,8 @@ class SearchControllerTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.length()").value(2))
         .andExpect(jsonPath("$.data[0]").value("에어팟 프로"))
-        .andExpect(jsonPath("$.data[1]").value("천장형 에어컨"));
+        .andExpect(jsonPath("$.data[1]")
+            .value("에어컨 소음 점검 요청"));
   }
 
   @Test
