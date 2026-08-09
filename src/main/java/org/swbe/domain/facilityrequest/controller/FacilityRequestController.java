@@ -13,6 +13,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +29,7 @@ import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailRespons
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestStatus;
 import org.swbe.domain.facilityrequest.service.FacilityRequestCreateService;
+import org.swbe.domain.facilityrequest.service.FacilityRequestCancelService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDetailService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestQueryService;
 import org.swbe.global.security.AppUserPrincipal;
@@ -40,15 +42,18 @@ public class FacilityRequestController {
   private final FacilityRequestQueryService facilityRequestQueryService;
   private final FacilityRequestDetailService facilityRequestDetailService;
   private final FacilityRequestCreateService facilityRequestCreateService;
+  private final FacilityRequestCancelService facilityRequestCancelService;
 
   public FacilityRequestController(
       FacilityRequestQueryService facilityRequestQueryService,
       FacilityRequestDetailService facilityRequestDetailService,
-      FacilityRequestCreateService facilityRequestCreateService
+      FacilityRequestCreateService facilityRequestCreateService,
+      FacilityRequestCancelService facilityRequestCancelService
   ) {
     this.facilityRequestQueryService = facilityRequestQueryService;
     this.facilityRequestDetailService = facilityRequestDetailService;
     this.facilityRequestCreateService = facilityRequestCreateService;
+    this.facilityRequestCancelService = facilityRequestCancelService;
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -102,6 +107,19 @@ public class FacilityRequestController {
     return facilityRequestDetailService.getFacilityRequest(
         facilityRequestId,
         viewerUserId
+    );
+  }
+
+  // 로그인한 학생이 작성한 접수 상태의 문의를 취소한다.
+  @DeleteMapping("/{facilityRequestId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void cancelFacilityRequest(
+      @PathVariable @Positive Long facilityRequestId,
+      @AuthenticationPrincipal AppUserPrincipal principal
+  ) {
+    facilityRequestCancelService.cancel(
+        facilityRequestId,
+        principal.getUserId()
     );
   }
 }

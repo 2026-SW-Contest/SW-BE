@@ -50,4 +50,18 @@ class FacilityRequestTest {
     assertThat(request.isRequestedBy(8L)).isFalse();
     assertThat(request.isRequestedBy(null)).isFalse();
   }
+
+  @Test
+  void onlyReceivedFacilityRequestIsCancelable() {
+    FacilityRequest request = new FacilityRequest();
+
+    ReflectionTestUtils.setField(request, "requestStatus", "RECEIVED");
+    assertThat(request.isCancelable()).isTrue();
+
+    ReflectionTestUtils.setField(request, "requestStatus", "IN_PROGRESS");
+    assertThat(request.isCancelable()).isFalse();
+
+    ReflectionTestUtils.setField(request, "requestStatus", "COMPLETED");
+    assertThat(request.isCancelable()).isFalse();
+  }
 }

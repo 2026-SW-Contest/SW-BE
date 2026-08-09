@@ -13,4 +13,10 @@ public interface FacilityRequestAttachmentRepository
       findAllByFacilityRequest_IdAndFile_DeletedAtIsNullOrderByIdAsc(
           Long facilityRequestId
       );
+
+  @EntityGraph(attributePaths = "file")
+  // 문의 취소 시 삭제할 첨부파일 정보까지 함께 조회한다.
+  List<FacilityRequestAttachment> findAllByFacilityRequest_IdOrderByIdAsc(
+      Long facilityRequestId
+  );
 }

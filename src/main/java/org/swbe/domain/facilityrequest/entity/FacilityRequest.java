@@ -105,6 +105,11 @@ public class FacilityRequest {
     return userId != null && userId.equals(requester.getId());
   }
 
+  // 문의가 아직 접수 상태여서 작성자가 취소할 수 있는지 확인한다.
+  public boolean isCancelable() {
+    return FacilityRequestStatus.RECEIVED.name().equals(requestStatus);
+  }
+
   private static String requireText(String value, String fieldName) {
     String stripped = stripNullable(value);
     if (stripped == null || stripped.isBlank()) {

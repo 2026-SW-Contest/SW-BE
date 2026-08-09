@@ -74,6 +74,10 @@ public class SecurityConfig {
                 HttpMethod.POST,
                 "/api/facility-requests"
             ).hasRole("STUDENT")
+            .requestMatchers(
+                HttpMethod.DELETE,
+                "/api/facility-requests/*"
+            ).hasRole("STUDENT")
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers(

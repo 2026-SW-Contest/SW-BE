@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -33,6 +34,7 @@ import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestLocationDetailResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestPageResponse;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDetailService;
+import org.swbe.domain.facilityrequest.service.FacilityRequestCancelService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestCreateService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestQueryService;
 import org.swbe.domain.user.entity.AccountStatus;
@@ -67,6 +69,9 @@ class FacilityRequestControllerTest {
 
   @MockitoBean
   private FacilityRequestCreateService facilityRequestCreateService;
+
+  @MockitoBean
+  private FacilityRequestCancelService facilityRequestCancelService;
 
   @MockitoBean
   private UserDetailsService userDetailsService;
@@ -244,6 +249,29 @@ class FacilityRequestControllerTest {
         .andExpect(jsonPath("$.data.attachments.length()").value(0))
         .andExpect(jsonPath("$.data.editable").value(false))
         .andExpect(jsonPath("$.data.deletable").value(false));
+  }
+
+  @Test
+  void studentCanCancelOwnReceivedFacilityRequest() throws Exception {
+    mockMvc.perform(delete("/api/facility-requests/25")
+            .with(user(principal("ROLE_STUDENT")))
+            .with(csrf()))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void anonymousUserCannotCancelFacilityRequest() throws Exception {
+    mockMvc.perform(delete("/api/facility-requests/25")
+            .with(csrf()))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void nonStudentCannotCancelFacilityRequest() throws Exception {
+    mockMvc.perform(delete("/api/facility-requests/25")
+            .with(user(principal("ROLE_FACILITY_STAFF")))
+            .with(csrf()))
+        .andExpect(status().isForbidden());
   }
 
   private MockMultipartFile requestPart(String json) {

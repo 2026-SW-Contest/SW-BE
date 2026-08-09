@@ -20,6 +20,16 @@ public enum FacilityRequestErrorCode implements ErrorCode {
       "LOCATION_NOT_FOUND",
       "The active location was not found."
   ),
+  ACCESS_DENIED(
+      HttpStatus.FORBIDDEN,
+      "FACILITY_REQUEST_ACCESS_DENIED",
+      "Only the author can cancel the facility request."
+  ),
+  NOT_CANCELABLE(
+      HttpStatus.CONFLICT,
+      "FACILITY_REQUEST_NOT_CANCELABLE",
+      "Only received facility requests can be canceled."
+  ),
   FILE_LIMIT_EXCEEDED(
       HttpStatus.BAD_REQUEST,
       "FILE_LIMIT_EXCEEDED",
