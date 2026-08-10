@@ -15,24 +15,38 @@ class SearchSuggestionServiceTest {
   void queryIsNormalizedBeforeSuggestionsAreRetrieved() {
     SearchSuggestionQueryRepository repository =
         mock(SearchSuggestionQueryRepository.class);
-    when(repository.findSuggestions(
+    when(repository.findLostItemSuggestions(
         "air",
         "%air%",
         "air%",
-        8
+        5
     )).thenReturn(List.of("AirPods Pro"));
+    when(repository.findFacilityRequestSuggestions(
+        "air",
+        "%air%",
+        "air%",
+        5
+    )).thenReturn(List.of("Air conditioner inspection"));
     SearchSuggestionService service =
         new SearchSuggestionService(repository);
 
-    var response = service.getSuggestions(" AIR ", 8);
+    var response = service.getSuggestions(" AIR ", 5);
 
-    assertThat(response.data())
+    assertThat(response.data().lostItemSuggestions())
         .containsExactly("AirPods Pro");
-    verify(repository).findSuggestions(
+    assertThat(response.data().facilityRequestSuggestions())
+        .containsExactly("Air conditioner inspection");
+    verify(repository).findLostItemSuggestions(
         "air",
         "%air%",
         "air%",
-        8
+        5
+    );
+    verify(repository).findFacilityRequestSuggestions(
+        "air",
+        "%air%",
+        "air%",
+        5
     );
   }
 }

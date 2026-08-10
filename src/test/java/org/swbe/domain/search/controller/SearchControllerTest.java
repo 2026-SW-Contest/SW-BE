@@ -16,6 +16,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.swbe.domain.search.dto.response.SearchSummaryDataResponse;
 import org.swbe.domain.search.dto.response.SearchSummaryResponse;
+import org.swbe.domain.search.dto.response.SearchSuggestionDataResponse;
 import org.swbe.domain.search.dto.response.SearchSuggestionListResponse;
 import org.swbe.domain.search.service.IntegratedSearchService;
 import org.swbe.domain.search.service.SearchSuggestionService;
@@ -52,18 +53,20 @@ class SearchControllerTest {
 
   @Test
   void anonymousUserCanGetSearchSuggestions() throws Exception {
-    when(searchSuggestionService.getSuggestions("에어", 8))
-        .thenReturn(new SearchSuggestionListResponse(List.of(
-            "에어팟 프로",
-            "에어컨 소음 점검 요청"
-        )));
+    when(searchSuggestionService.getSuggestions("에어", 5))
+        .thenReturn(new SearchSuggestionListResponse(
+            new SearchSuggestionDataResponse(
+                List.of("에어팟 프로"),
+                List.of("에어컨 소음 점검 요청")
+            )
+        ));
 
     mockMvc.perform(get("/api/search/suggestions")
             .queryParam("query", "에어"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.length()").value(2))
-        .andExpect(jsonPath("$.data[0]").value("에어팟 프로"))
-        .andExpect(jsonPath("$.data[1]")
+        .andExpect(jsonPath("$.data.lostItemSuggestions[0]")
+            .value("에어팟 프로"))
+        .andExpect(jsonPath("$.data.facilityRequestSuggestions[0]")
             .value("에어컨 소음 점검 요청"));
   }
 

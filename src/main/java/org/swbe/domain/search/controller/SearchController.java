@@ -29,7 +29,7 @@ public class SearchController {
   @GetMapping("/suggestions")
   public SearchSuggestionListResponse getSuggestions(
       @RequestParam @NotBlank @Size(max = 100) String query,
-      @RequestParam(defaultValue = "8")
+      @RequestParam(defaultValue = "5")
       @Min(1) @Max(20) int size
   ) {
     return searchSuggestionService.getSuggestions(query, size);
