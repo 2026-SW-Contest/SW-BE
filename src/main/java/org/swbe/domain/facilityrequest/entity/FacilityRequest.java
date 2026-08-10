@@ -105,6 +105,34 @@ public class FacilityRequest {
     return userId != null && userId.equals(requester.getId());
   }
 
+  // 문의가 아직 접수 상태여서 작성자가 수정할 수 있는지 확인한다.
+  public boolean isEditable() {
+    return FacilityRequestStatus.RECEIVED.name().equals(requestStatus);
+  }
+
+  // 전달된 값만 변경하고 마지막 수정 시각을 갱신한다.
+  public void update(
+      FacilityCategory facilityCategory,
+      Location location,
+      String title,
+      String description,
+      LocalDateTime updatedAt
+  ) {
+    if (facilityCategory != null) {
+      this.facilityCategory = facilityCategory;
+    }
+    if (location != null) {
+      this.location = location;
+    }
+    if (title != null) {
+      this.title = requireText(title, "title");
+    }
+    if (description != null) {
+      this.description = requireText(description, "description");
+    }
+    this.updatedAt = Objects.requireNonNull(updatedAt);
+  }
+
   private static String requireText(String value, String fieldName) {
     String stripped = stripNullable(value);
     if (stripped == null || stripped.isBlank()) {
