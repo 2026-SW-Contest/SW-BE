@@ -47,6 +47,11 @@ server:
 app:
   file:
     storage-directory: ${FILE_STORAGE_DIRECTORY:uploads}
+    storage-provider: ${FILE_STORAGE_PROVIDER:LOCAL}
+    s3:
+      bucket: ${S3_BUCKET:}
+      region: ${AWS_REGION:ap-northeast-2}
+      cloudfront-base-url: ${CLOUDFRONT_BASE_URL:}
 
   security:
     frontend-origins: ${FRONTEND_ORIGINS:http://localhost:3000}

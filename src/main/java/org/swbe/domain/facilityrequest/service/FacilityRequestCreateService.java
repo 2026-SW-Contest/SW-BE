@@ -23,8 +23,8 @@ import org.swbe.domain.facilityrequest.repository.FacilityRequestAttachmentRepos
 import org.swbe.domain.facilityrequest.repository.FacilityRequestRepository;
 import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.repository.FileResourceRepository;
-import org.swbe.domain.file.storage.FileStorage;
 import org.swbe.domain.file.storage.FileStorageException;
+import org.swbe.domain.file.storage.FileStorageRegistry;
 import org.swbe.domain.file.storage.StoredFile;
 import org.swbe.domain.user.entity.AppUser;
 import org.swbe.domain.user.exception.AuthErrorCode;
@@ -49,7 +49,7 @@ public class FacilityRequestCreateService {
   private final LocationRepository locationRepository;
   private final AppUserRepository appUserRepository;
   private final FileResourceRepository fileResourceRepository;
-  private final FileStorage fileStorage;
+  private final FileStorageRegistry fileStorageRegistry;
   private final Clock clock;
 
   @Transactional
@@ -123,7 +123,9 @@ public class FacilityRequestCreateService {
   ) {
     List<FacilityRequestAttachment> attachments = new ArrayList<>();
     for (MultipartFile file : files) {
-      StoredFile storedFile = fileStorage.store(file);
+      StoredFile storedFile = fileStorageRegistry
+          .writeStorage()
+          .store(file);
       storedFiles.add(storedFile);
 
       FileResource fileResource = FileResource.create(
@@ -166,7 +168,9 @@ public class FacilityRequestCreateService {
   private void deleteStoredFiles(List<StoredFile> storedFiles) {
     for (StoredFile storedFile : storedFiles) {
       try {
-        fileStorage.delete(storedFile.storageKey());
+        fileStorageRegistry
+            .get(storedFile.storageProvider())
+            .delete(storedFile.storageKey());
       } catch (FileStorageException ignored) {
         // Preserve the exception that caused the transaction rollback.
       }

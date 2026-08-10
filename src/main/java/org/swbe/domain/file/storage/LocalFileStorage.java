@@ -38,6 +38,11 @@ public class LocalFileStorage implements FileStorage {
   }
 
   @Override
+  public String provider() {
+    return STORAGE_PROVIDER;
+  }
+
+  @Override
   public StoredFile store(MultipartFile file) {
     String originalFilename = safeOriginalFilename(
         file.getOriginalFilename()
