@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swbe.domain.file.entity.FileResource;
+import org.swbe.domain.file.service.FilePublicUrlResolver;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestAttachmentResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityCategoryResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailDataResponse;
@@ -23,13 +24,16 @@ public class FacilityRequestDetailService {
 
   private final FacilityRequestRepository facilityRequestRepository;
   private final FacilityRequestAttachmentRepository attachmentRepository;
+  private final FilePublicUrlResolver filePublicUrlResolver;
 
   public FacilityRequestDetailService(
       FacilityRequestRepository facilityRequestRepository,
-      FacilityRequestAttachmentRepository attachmentRepository
+      FacilityRequestAttachmentRepository attachmentRepository,
+      FilePublicUrlResolver filePublicUrlResolver
   ) {
     this.facilityRequestRepository = facilityRequestRepository;
     this.attachmentRepository = attachmentRepository;
+    this.filePublicUrlResolver = filePublicUrlResolver;
   }
 
   public FacilityRequestDetailResponse getFacilityRequest(
@@ -85,7 +89,7 @@ public class FacilityRequestDetailService {
     return new FacilityRequestAttachmentResponse(
         file.getId(),
         file.getOriginalFilename(),
-        null
+        filePublicUrlResolver.resolve(file)
     );
   }
 

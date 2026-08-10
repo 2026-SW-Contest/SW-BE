@@ -1,6 +1,7 @@
 package org.swbe.domain.search.service;
 
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -8,8 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestStatus;
 import org.swbe.domain.facilityrequest.repository.FacilityRequestRepository;
+import org.swbe.domain.facilityrequest.service.FacilityRequestThumbnailService;
 import org.swbe.domain.lostitem.entity.StoredItem;
 import org.swbe.domain.lostitem.repository.StoredItemRepository;
+import org.swbe.domain.lostitem.service.StoredItemThumbnailService;
 import org.swbe.domain.search.cursor.SearchCursor;
 import org.swbe.domain.search.cursor.SearchCursorCodec;
 import org.swbe.domain.search.dto.response.CursorSliceResponse;
@@ -29,6 +32,9 @@ public class IntegratedSearchService {
   private final StoredItemRepository storedItemRepository;
   private final FacilityRequestRepository facilityRequestRepository;
   private final SearchCursorCodec searchCursorCodec;
+  private final StoredItemThumbnailService storedItemThumbnailService;
+  private final FacilityRequestThumbnailService
+      facilityRequestThumbnailService;
 
   public SearchSummaryResponse getSummary(String rawKeyword) {
     SearchKeyword keyword = SearchKeyword.from(rawKeyword);
@@ -65,8 +71,16 @@ public class IntegratedSearchService {
     List<StoredItem> content = hasNext
         ? matches.subList(0, size)
         : matches;
+    Map<Long, String> thumbnailUrls = content.isEmpty()
+        ? Map.of()
+        : storedItemThumbnailService.resolveAll(
+            content.stream().map(StoredItem::getId).toList()
+        );
     List<LostItemSearchItemResponse> responses = content.stream()
-        .map(this::toLostItemResponse)
+        .map(item -> toLostItemResponse(
+            item,
+            thumbnailUrls.get(item.getId())
+        ))
         .toList();
 
     return new LostItemSearchResponse(
@@ -97,9 +111,17 @@ public class IntegratedSearchService {
     List<FacilityRequest> content = hasNext
         ? matches.subList(0, size)
         : matches;
+    Map<Long, String> thumbnailUrls = content.isEmpty()
+        ? Map.of()
+        : facilityRequestThumbnailService.resolveAll(
+            content.stream().map(FacilityRequest::getId).toList()
+        );
     List<FacilityRequestSearchItemResponse> responses =
         content.stream()
-            .map(this::toFacilityRequestResponse)
+            .map(request -> toFacilityRequestResponse(
+                request,
+                thumbnailUrls.get(request.getId())
+            ))
             .toList();
 
     return new FacilityRequestSearchResponse(
@@ -148,7 +170,8 @@ public class IntegratedSearchService {
   }
 
   private LostItemSearchItemResponse toLostItemResponse(
-      StoredItem item
+      StoredItem item,
+      String thumbnailUrl
   ) {
     return new LostItemSearchItemResponse(
         item.getId(),
@@ -160,13 +183,16 @@ public class IntegratedSearchService {
             : item.getFoundLocation().getName(),
         item.getFoundDate(),
         item.getPublicStatus(),
-        null,
+        thumbnailUrl,
         item.getCreatedAt()
     );
   }
 
   private FacilityRequestSearchItemResponse
-      toFacilityRequestResponse(FacilityRequest request) {
+      toFacilityRequestResponse(
+          FacilityRequest request,
+          String thumbnailUrl
+      ) {
     FacilityRequestStatus status =
         FacilityRequestStatus.valueOf(
             request.getRequestStatus()
@@ -180,7 +206,7 @@ public class IntegratedSearchService {
         request.getLocation().getName(),
         request.getRequestStatus(),
         status.getDisplayName(),
-        null,
+        thumbnailUrl,
         request.getCreatedAt()
     );
   }

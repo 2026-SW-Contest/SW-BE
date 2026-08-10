@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,6 +38,9 @@ class FacilityRequestQueryServiceTest {
 
   @Mock
   private FacilityRequestRepository facilityRequestRepository;
+
+  @Mock
+  private FacilityRequestThumbnailService thumbnailService;
 
   @InjectMocks
   private FacilityRequestQueryService facilityRequestQueryService;
@@ -69,6 +73,9 @@ class FacilityRequestQueryServiceTest {
         eq(LocalDateTime.of(2026, 8, 2, 0, 0)),
         any(Pageable.class)
     )).thenReturn(page);
+    when(thumbnailService.resolveAll(List.of(25L))).thenReturn(
+        Map.of(25L, "https://cdn.example.com/image.jpg")
+    );
     FacilityRequestSearchCondition condition = new FacilityRequestSearchCondition(
         1L,
         2L,
@@ -91,7 +98,8 @@ class FacilityRequestQueryServiceTest {
     assertThat(item.locationName()).isEqualTo("학생회관");
     assertThat(item.requestStatus()).isEqualTo("IN_PROGRESS");
     assertThat(item.requestStatusName()).isEqualTo("진행중");
-    assertThat(item.thumbnailUrl()).isNull();
+    assertThat(item.thumbnailUrl())
+        .isEqualTo("https://cdn.example.com/image.jpg");
     assertThat(item.createdAt()).isEqualTo(createdAt);
     assertThat(response.data().page()).isZero();
     assertThat(response.data().size()).isEqualTo(20);

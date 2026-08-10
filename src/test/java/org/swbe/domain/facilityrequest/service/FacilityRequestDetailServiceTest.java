@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.swbe.domain.campus.entity.Location;
 import org.swbe.domain.file.entity.FileResource;
+import org.swbe.domain.file.service.FilePublicUrlResolver;
 import org.swbe.domain.facilityrequest.entity.FacilityCategory;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestAttachment;
@@ -34,6 +35,9 @@ class FacilityRequestDetailServiceTest {
   @Mock
   private FacilityRequestAttachmentRepository attachmentRepository;
 
+  @Mock
+  private FilePublicUrlResolver filePublicUrlResolver;
+
   @InjectMocks
   private FacilityRequestDetailService facilityRequestDetailService;
 
@@ -43,6 +47,8 @@ class FacilityRequestDetailServiceTest {
     FileResource file = mock(FileResource.class);
     when(file.getId()).thenReturn(15L);
     when(file.getOriginalFilename()).thenReturn("broken-light.jpg");
+    when(filePublicUrlResolver.resolve(file))
+        .thenReturn("https://cdn.example.com/image.jpg");
     FacilityRequestAttachment attachment = mock(FacilityRequestAttachment.class);
     when(attachment.getFile()).thenReturn(file);
     when(facilityRequestRepository.findDetailById(10L))
@@ -62,7 +68,8 @@ class FacilityRequestDetailServiceTest {
     assertThat(response.data().attachments()).hasSize(1);
     assertThat(response.data().attachments().getFirst().fileId())
         .isEqualTo(15L);
-    assertThat(response.data().attachments().getFirst().fileUrl()).isNull();
+    assertThat(response.data().attachments().getFirst().fileUrl())
+        .isEqualTo("https://cdn.example.com/image.jpg");
     assertThat(response.data().editable()).isFalse();
     assertThat(response.data().deletable()).isFalse();
   }
