@@ -23,12 +23,12 @@ public enum FacilityRequestErrorCode implements ErrorCode {
   ACCESS_DENIED(
       HttpStatus.FORBIDDEN,
       "FACILITY_REQUEST_ACCESS_DENIED",
-      "Only the author can cancel the facility request."
+      "Only the author can delete the facility request."
   ),
-  NOT_CANCELABLE(
+  NOT_DELETABLE(
       HttpStatus.CONFLICT,
-      "FACILITY_REQUEST_NOT_CANCELABLE",
-      "Only received facility requests can be canceled."
+      "FACILITY_REQUEST_NOT_DELETABLE",
+      "Only received facility requests can be deleted."
   ),
   FILE_LIMIT_EXCEEDED(
       HttpStatus.BAD_REQUEST,

@@ -15,15 +15,15 @@ import org.swbe.domain.file.storage.FileStorageException;
 import org.swbe.global.error.BusinessException;
 
 @Service
-public class FacilityRequestCancelService {
+public class FacilityRequestDeleteService {
 
   private final FacilityRequestRepository facilityRequestRepository;
   private final FacilityRequestAttachmentRepository attachmentRepository;
   private final FileResourceRepository fileResourceRepository;
   private final FileStorage fileStorage;
 
-  // 문의 취소에 필요한 JPA 저장소와 실제 파일 저장소를 주입받는다.
-  public FacilityRequestCancelService(
+  // 문의 삭제에 필요한 JPA 저장소와 실제 파일 저장소를 주입받는다.
+  public FacilityRequestDeleteService(
       FacilityRequestRepository facilityRequestRepository,
       FacilityRequestAttachmentRepository attachmentRepository,
       FileResourceRepository fileResourceRepository,
@@ -35,9 +35,9 @@ public class FacilityRequestCancelService {
     this.fileStorage = fileStorage;
   }
 
-  // 문의 존재 여부, 작성자, 상태를 검증한 뒤 문의와 첨부파일을 삭제한다.
+  // 문의 존재 여부, 작성자, 삭제 가능 상태를 검증한 뒤 문의와 첨부파일을 삭제한다.
   @Transactional
-  public void cancel(Long facilityRequestId, Long requesterUserId) {
+  public void delete(Long facilityRequestId, Long requesterUserId) {
     FacilityRequest facilityRequest = facilityRequestRepository
         .findDetailById(facilityRequestId)
         .orElseThrow(() -> new BusinessException(
@@ -45,7 +45,7 @@ public class FacilityRequestCancelService {
         ));
 
     validateAuthor(facilityRequest, requesterUserId);
-    validateCancelable(facilityRequest);
+    validateDeletable(facilityRequest);
 
     List<FacilityRequestAttachment> attachments = attachmentRepository
         .findAllByFacilityRequest_IdOrderByIdAsc(facilityRequestId);
@@ -71,11 +71,11 @@ public class FacilityRequestCancelService {
     }
   }
 
-  // 문의 상태가 취소 가능한 접수 상태인지 확인한다.
-  private void validateCancelable(FacilityRequest facilityRequest) {
-    if (!facilityRequest.isCancelable()) {
+  // 문의 상태가 삭제 가능한 접수 상태인지 확인한다.
+  private void validateDeletable(FacilityRequest facilityRequest) {
+    if (!facilityRequest.isDeletable()) {
       throw new BusinessException(
-          FacilityRequestErrorCode.NOT_CANCELABLE
+          FacilityRequestErrorCode.NOT_DELETABLE
       );
     }
   }

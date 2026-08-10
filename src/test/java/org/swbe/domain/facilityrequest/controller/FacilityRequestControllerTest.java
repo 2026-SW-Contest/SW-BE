@@ -34,7 +34,7 @@ import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestLocationDetailResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestPageResponse;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDetailService;
-import org.swbe.domain.facilityrequest.service.FacilityRequestCancelService;
+import org.swbe.domain.facilityrequest.service.FacilityRequestDeleteService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestCreateService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestQueryService;
 import org.swbe.domain.user.entity.AccountStatus;
@@ -71,7 +71,7 @@ class FacilityRequestControllerTest {
   private FacilityRequestCreateService facilityRequestCreateService;
 
   @MockitoBean
-  private FacilityRequestCancelService facilityRequestCancelService;
+  private FacilityRequestDeleteService facilityRequestDeleteService;
 
   @MockitoBean
   private UserDetailsService userDetailsService;
@@ -252,7 +252,7 @@ class FacilityRequestControllerTest {
   }
 
   @Test
-  void studentCanCancelOwnReceivedFacilityRequest() throws Exception {
+  void studentCanDeleteOwnReceivedFacilityRequest() throws Exception {
     mockMvc.perform(delete("/api/facility-requests/25")
             .with(user(principal("ROLE_STUDENT")))
             .with(csrf()))
@@ -260,14 +260,14 @@ class FacilityRequestControllerTest {
   }
 
   @Test
-  void anonymousUserCannotCancelFacilityRequest() throws Exception {
+  void anonymousUserCannotDeleteFacilityRequest() throws Exception {
     mockMvc.perform(delete("/api/facility-requests/25")
             .with(csrf()))
         .andExpect(status().isUnauthorized());
   }
 
   @Test
-  void nonStudentCannotCancelFacilityRequest() throws Exception {
+  void nonStudentCannotDeleteFacilityRequest() throws Exception {
     mockMvc.perform(delete("/api/facility-requests/25")
             .with(user(principal("ROLE_FACILITY_STAFF")))
             .with(csrf()))

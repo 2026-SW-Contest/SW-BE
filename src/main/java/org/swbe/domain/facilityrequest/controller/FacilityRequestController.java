@@ -29,7 +29,7 @@ import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailRespons
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestStatus;
 import org.swbe.domain.facilityrequest.service.FacilityRequestCreateService;
-import org.swbe.domain.facilityrequest.service.FacilityRequestCancelService;
+import org.swbe.domain.facilityrequest.service.FacilityRequestDeleteService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDetailService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestQueryService;
 import org.swbe.global.security.AppUserPrincipal;
@@ -42,18 +42,18 @@ public class FacilityRequestController {
   private final FacilityRequestQueryService facilityRequestQueryService;
   private final FacilityRequestDetailService facilityRequestDetailService;
   private final FacilityRequestCreateService facilityRequestCreateService;
-  private final FacilityRequestCancelService facilityRequestCancelService;
+  private final FacilityRequestDeleteService facilityRequestDeleteService;
 
   public FacilityRequestController(
       FacilityRequestQueryService facilityRequestQueryService,
       FacilityRequestDetailService facilityRequestDetailService,
       FacilityRequestCreateService facilityRequestCreateService,
-      FacilityRequestCancelService facilityRequestCancelService
+      FacilityRequestDeleteService facilityRequestDeleteService
   ) {
     this.facilityRequestQueryService = facilityRequestQueryService;
     this.facilityRequestDetailService = facilityRequestDetailService;
     this.facilityRequestCreateService = facilityRequestCreateService;
-    this.facilityRequestCancelService = facilityRequestCancelService;
+    this.facilityRequestDeleteService = facilityRequestDeleteService;
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -110,14 +110,14 @@ public class FacilityRequestController {
     );
   }
 
-  // 로그인한 학생이 작성한 접수 상태의 문의를 취소한다.
+  // 로그인한 학생이 작성한 접수 상태의 문의를 삭제한다.
   @DeleteMapping("/{facilityRequestId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
-  public void cancelFacilityRequest(
+  public void deleteFacilityRequest(
       @PathVariable @Positive Long facilityRequestId,
       @AuthenticationPrincipal AppUserPrincipal principal
   ) {
-    facilityRequestCancelService.cancel(
+    facilityRequestDeleteService.delete(
         facilityRequestId,
         principal.getUserId()
     );

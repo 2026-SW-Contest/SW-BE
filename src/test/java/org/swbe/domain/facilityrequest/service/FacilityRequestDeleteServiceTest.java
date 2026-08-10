@@ -21,13 +21,13 @@ import org.swbe.domain.file.storage.FileStorage;
 import org.swbe.domain.file.storage.FileStorageException;
 import org.swbe.global.error.BusinessException;
 
-class FacilityRequestCancelServiceTest {
+class FacilityRequestDeleteServiceTest {
 
   private FacilityRequestRepository facilityRequestRepository;
   private FacilityRequestAttachmentRepository attachmentRepository;
   private FileResourceRepository fileResourceRepository;
   private FileStorage fileStorage;
-  private FacilityRequestCancelService service;
+  private FacilityRequestDeleteService service;
 
   @BeforeEach
   void setUp() {
@@ -37,7 +37,7 @@ class FacilityRequestCancelServiceTest {
     );
     fileResourceRepository = mock(FileResourceRepository.class);
     fileStorage = mock(FileStorage.class);
-    service = new FacilityRequestCancelService(
+    service = new FacilityRequestDeleteService(
         facilityRequestRepository,
         attachmentRepository,
         fileResourceRepository,
@@ -46,8 +46,8 @@ class FacilityRequestCancelServiceTest {
   }
 
   @Test
-  void authorCanCancelReceivedFacilityRequestWithAttachments() {
-    FacilityRequest request = cancelableRequest(true, true);
+  void authorCanDeleteReceivedFacilityRequestWithAttachments() {
+    FacilityRequest request = deletableRequest(true, true);
     FacilityRequestAttachment attachment =
         mock(FacilityRequestAttachment.class);
     FileResource file = mock(FileResource.class);
@@ -59,7 +59,7 @@ class FacilityRequestCancelServiceTest {
         .findAllByFacilityRequest_IdOrderByIdAsc(25L))
         .thenReturn(List.of(attachment));
 
-    service.cancel(25L, 7L);
+    service.delete(25L, 7L);
 
     verify(fileStorage).delete("2026/08/09/image.jpg");
     verify(attachmentRepository).deleteAllInBatch(List.of(attachment));
@@ -68,45 +68,45 @@ class FacilityRequestCancelServiceTest {
   }
 
   @Test
-  void missingFacilityRequestCannotBeCanceled() {
+  void missingFacilityRequestCannotBeDeleted() {
     when(facilityRequestRepository.findDetailById(25L))
         .thenReturn(Optional.empty());
 
     assertBusinessError(
-        () -> service.cancel(25L, 7L),
+        () -> service.delete(25L, 7L),
         FacilityRequestErrorCode.NOT_FOUND
     );
   }
 
   @Test
-  void userWhoIsNotAuthorCannotCancelFacilityRequest() {
-    FacilityRequest request = cancelableRequest(false, true);
+  void userWhoIsNotAuthorCannotDeleteFacilityRequest() {
+    FacilityRequest request = deletableRequest(false, true);
     when(facilityRequestRepository.findDetailById(25L))
         .thenReturn(Optional.of(request));
 
     assertBusinessError(
-        () -> service.cancel(25L, 8L),
+        () -> service.delete(25L, 8L),
         FacilityRequestErrorCode.ACCESS_DENIED
     );
     verify(facilityRequestRepository, never()).delete(request);
   }
 
   @Test
-  void nonReceivedFacilityRequestCannotBeCanceled() {
-    FacilityRequest request = cancelableRequest(true, false);
+  void nonReceivedFacilityRequestCannotBeDeleted() {
+    FacilityRequest request = deletableRequest(true, false);
     when(facilityRequestRepository.findDetailById(25L))
         .thenReturn(Optional.of(request));
 
     assertBusinessError(
-        () -> service.cancel(25L, 7L),
-        FacilityRequestErrorCode.NOT_CANCELABLE
+        () -> service.delete(25L, 7L),
+        FacilityRequestErrorCode.NOT_DELETABLE
     );
     verify(facilityRequestRepository, never()).delete(request);
   }
 
   @Test
   void storageFailureStopsFacilityRequestDeletion() {
-    FacilityRequest request = cancelableRequest(true, true);
+    FacilityRequest request = deletableRequest(true, true);
     FacilityRequestAttachment attachment =
         mock(FacilityRequestAttachment.class);
     FileResource file = mock(FileResource.class);
@@ -125,20 +125,20 @@ class FacilityRequestCancelServiceTest {
         .delete("2026/08/09/image.jpg");
 
     assertBusinessError(
-        () -> service.cancel(25L, 7L),
+        () -> service.delete(25L, 7L),
         FacilityRequestErrorCode.FILE_STORAGE_ERROR
     );
     verify(facilityRequestRepository, never()).delete(request);
   }
 
-  private FacilityRequest cancelableRequest(
+  private FacilityRequest deletableRequest(
       boolean author,
-      boolean cancelable
+      boolean deletable
   ) {
     FacilityRequest request = mock(FacilityRequest.class);
     when(request.isRequestedBy(7L)).thenReturn(author);
     when(request.isRequestedBy(8L)).thenReturn(author);
-    when(request.isCancelable()).thenReturn(cancelable);
+    when(request.isDeletable()).thenReturn(deletable);
     return request;
   }
 

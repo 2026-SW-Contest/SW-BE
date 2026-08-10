@@ -52,16 +52,16 @@ class FacilityRequestTest {
   }
 
   @Test
-  void onlyReceivedFacilityRequestIsCancelable() {
+  void onlyReceivedFacilityRequestIsDeletable() {
     FacilityRequest request = new FacilityRequest();
 
     ReflectionTestUtils.setField(request, "requestStatus", "RECEIVED");
-    assertThat(request.isCancelable()).isTrue();
+    assertThat(request.isDeletable()).isTrue();
 
     ReflectionTestUtils.setField(request, "requestStatus", "IN_PROGRESS");
-    assertThat(request.isCancelable()).isFalse();
+    assertThat(request.isDeletable()).isFalse();
 
     ReflectionTestUtils.setField(request, "requestStatus", "COMPLETED");
-    assertThat(request.isCancelable()).isFalse();
+    assertThat(request.isDeletable()).isFalse();
   }
 }
