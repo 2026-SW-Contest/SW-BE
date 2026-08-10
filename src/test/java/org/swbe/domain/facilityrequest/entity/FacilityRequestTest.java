@@ -64,4 +64,50 @@ class FacilityRequestTest {
     ReflectionTestUtils.setField(request, "requestStatus", "COMPLETED");
     assertThat(request.isDeletable()).isFalse();
   }
+  
+  @Test
+  void onlyReceivedFacilityRequestIsEditable() {
+    FacilityRequest request = new FacilityRequest();
+
+    ReflectionTestUtils.setField(request, "requestStatus", "RECEIVED");
+    assertThat(request.isEditable()).isTrue();
+
+    ReflectionTestUtils.setField(request, "requestStatus", "IN_PROGRESS");
+    assertThat(request.isEditable()).isFalse();
+
+    ReflectionTestUtils.setField(request, "requestStatus", "COMPLETED");
+    assertThat(request.isEditable()).isFalse();
+  }
+
+  @Test
+  void updatesOnlyProvidedFacilityRequestFields() {
+    FacilityCategory originalCategory = mock(FacilityCategory.class);
+    FacilityCategory updatedCategory = mock(FacilityCategory.class);
+    Location location = mock(Location.class);
+    AppUser requester = mock(AppUser.class);
+    LocalDateTime createdAt = LocalDateTime.of(2026, 8, 1, 16, 0);
+    LocalDateTime updatedAt = LocalDateTime.of(2026, 8, 9, 16, 30);
+    FacilityRequest request = FacilityRequest.create(
+        originalCategory,
+        location,
+        requester,
+        "Original title",
+        "Original description",
+        createdAt
+    );
+
+    request.update(
+        updatedCategory,
+        null,
+        "  Updated title  ",
+        null,
+        updatedAt
+    );
+
+    assertThat(request.getFacilityCategory()).isSameAs(updatedCategory);
+    assertThat(request.getLocation()).isSameAs(location);
+    assertThat(request.getTitle()).isEqualTo("Updated title");
+    assertThat(request.getDescription()).isEqualTo("Original description");
+    assertThat(request.getUpdatedAt()).isEqualTo(updatedAt);
+  }
 }

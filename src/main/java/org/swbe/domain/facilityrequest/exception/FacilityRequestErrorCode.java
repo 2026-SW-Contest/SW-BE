@@ -20,15 +20,30 @@ public enum FacilityRequestErrorCode implements ErrorCode {
       "LOCATION_NOT_FOUND",
       "The active location was not found."
   ),
-  ACCESS_DENIED(
-      HttpStatus.FORBIDDEN,
-      "FACILITY_REQUEST_ACCESS_DENIED",
-      "Only the author can delete the facility request."
-  ),
-  NOT_DELETABLE(
+ACCESS_DENIED(
+    HttpStatus.FORBIDDEN,
+    "FACILITY_REQUEST_ACCESS_DENIED",
+    "Only the author can modify the facility request."
+),
+NOT_DELETABLE(
+    HttpStatus.CONFLICT,
+    "FACILITY_REQUEST_NOT_DELETABLE",
+    "Only received facility requests can be deleted."
+),
+  NOT_EDITABLE(
       HttpStatus.CONFLICT,
-      "FACILITY_REQUEST_NOT_DELETABLE",
-      "Only received facility requests can be deleted."
+      "FACILITY_REQUEST_NOT_EDITABLE",
+      "Only received facility requests can be updated."
+  ),
+  INVALID_REQUEST(
+      HttpStatus.BAD_REQUEST,
+      "INVALID_REQUEST",
+      "At least one field or attachment must be updated."
+  ),
+  INVALID_ATTACHMENT(
+      HttpStatus.BAD_REQUEST,
+      "INVALID_ATTACHMENT",
+      "An attachment does not belong to the facility request."
   ),
   FILE_LIMIT_EXCEEDED(
       HttpStatus.BAD_REQUEST,
@@ -43,7 +58,7 @@ public enum FacilityRequestErrorCode implements ErrorCode {
   FILE_STORAGE_ERROR(
       HttpStatus.INTERNAL_SERVER_ERROR,
       "FILE_STORAGE_ERROR",
-      "The attachment could not be stored."
+      "The attachment could not be processed."
   );
 
   private final HttpStatus status;

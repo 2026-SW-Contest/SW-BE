@@ -15,6 +15,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,14 +25,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.swbe.domain.facilityrequest.dto.request.FacilityRequestCreateRequest;
 import org.swbe.domain.facilityrequest.dto.request.FacilityRequestSearchCondition;
+import org.swbe.domain.facilityrequest.dto.request.FacilityRequestUpdateRequest;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestCreateResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
+import org.swbe.domain.facilityrequest.dto.response.FacilityRequestUpdateResponse;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestStatus;
 import org.swbe.domain.facilityrequest.service.FacilityRequestCreateService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDeleteService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDetailService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestQueryService;
+import org.swbe.domain.facilityrequest.service.FacilityRequestUpdateService;
 import org.swbe.global.security.AppUserPrincipal;
 
 @RestController
@@ -42,18 +46,22 @@ public class FacilityRequestController {
   private final FacilityRequestQueryService facilityRequestQueryService;
   private final FacilityRequestDetailService facilityRequestDetailService;
   private final FacilityRequestCreateService facilityRequestCreateService;
+
   private final FacilityRequestDeleteService facilityRequestDeleteService;
+  private final FacilityRequestUpdateService facilityRequestUpdateService;
 
   public FacilityRequestController(
       FacilityRequestQueryService facilityRequestQueryService,
       FacilityRequestDetailService facilityRequestDetailService,
       FacilityRequestCreateService facilityRequestCreateService,
-      FacilityRequestDeleteService facilityRequestDeleteService
+      FacilityRequestDeleteService facilityRequestDeleteService,
+      FacilityRequestUpdateService facilityRequestUpdateService
   ) {
     this.facilityRequestQueryService = facilityRequestQueryService;
     this.facilityRequestDetailService = facilityRequestDetailService;
     this.facilityRequestCreateService = facilityRequestCreateService;
     this.facilityRequestDeleteService = facilityRequestDeleteService;
+    this.facilityRequestUpdateService = facilityRequestUpdateService;
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -119,6 +127,26 @@ public class FacilityRequestController {
   ) {
     facilityRequestDeleteService.delete(
         facilityRequestId,
+         principal.getUserId()
+);
+  }
+  // 로그인한 학생이 작성한 접수 상태의 문의를 부분 수정한다.
+  @PatchMapping(
+      value = "/{facilityRequestId}",
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+  )
+  public FacilityRequestUpdateResponse updateFacilityRequest(
+      @PathVariable @Positive Long facilityRequestId,
+      @Valid @RequestPart(name = "request", required = false)
+      FacilityRequestUpdateRequest request,
+      @RequestPart(name = "files", required = false)
+      List<MultipartFile> files,
+      @AuthenticationPrincipal AppUserPrincipal principal
+  ) {
+    return facilityRequestUpdateService.update(
+        facilityRequestId,
+        request,
+        files,
         principal.getUserId()
     );
   }
