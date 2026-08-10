@@ -52,9 +52,11 @@ public class FileStorageRegistry {
         || s3.bucket() == null
         || s3.bucket().isBlank()
         || s3.region() == null
-        || s3.region().isBlank()) {
+        || s3.region().isBlank()
+        || s3.cloudfrontBaseUrl() == null
+        || s3.cloudfrontBaseUrl().isBlank()) {
       throw new IllegalStateException(
-          "S3_BUCKET and AWS_REGION are required for S3 storage"
+          "S3_BUCKET, AWS_REGION and CLOUDFRONT_BASE_URL are required"
       );
     }
   }

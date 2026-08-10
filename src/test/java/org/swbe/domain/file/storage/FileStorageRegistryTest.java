@@ -41,6 +41,25 @@ class FileStorageRegistryTest {
         .hasMessageContaining("S3_BUCKET");
   }
 
+  @Test
+  void missingCloudFrontUrlFailsFastWhenS3IsWriteStorage() {
+    FileStorageProperties properties = new FileStorageProperties(
+        "S3",
+        new FileStorageProperties.S3(
+            "bucket",
+            "ap-northeast-2",
+            ""
+        )
+    );
+
+    assertThatThrownBy(() -> new FileStorageRegistry(
+        List.of(storage("LOCAL"), storage("S3")),
+        properties
+    ))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("CLOUDFRONT_BASE_URL");
+  }
+
   private FileStorage storage(String provider) {
     FileStorage storage = mock(FileStorage.class);
     when(storage.provider()).thenReturn(provider);
