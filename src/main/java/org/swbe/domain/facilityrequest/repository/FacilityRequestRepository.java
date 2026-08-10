@@ -1,7 +1,6 @@
 package org.swbe.domain.facilityrequest.repository;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,54 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 
-public interface FacilityRequestRepository
-    extends JpaRepository<FacilityRequest, Long> {
-
-  @Query("""
-      SELECT COUNT(request)
-      FROM FacilityRequest request
-      WHERE LOWER(request.title) LIKE :pattern ESCAPE '!'
-        OR LOWER(request.description)
-            LIKE :pattern ESCAPE '!'
-        OR LOWER(request.facilityCategory.name)
-            LIKE :pattern ESCAPE '!'
-        OR LOWER(request.location.name)
-            LIKE :pattern ESCAPE '!'
-      """)
-  long countIntegratedSearchMatches(
-      @Param("pattern") String pattern
-  );
-
-  @Query("""
-      SELECT request
-      FROM FacilityRequest request
-      JOIN FETCH request.facilityCategory
-      JOIN FETCH request.location
-      WHERE (
-        LOWER(request.title) LIKE :pattern ESCAPE '!'
-        OR LOWER(request.description)
-            LIKE :pattern ESCAPE '!'
-        OR LOWER(request.facilityCategory.name)
-            LIKE :pattern ESCAPE '!'
-        OR LOWER(request.location.name)
-            LIKE :pattern ESCAPE '!'
-      )
-        AND (
-          :cursorCreatedAt IS NULL
-          OR request.createdAt < :cursorCreatedAt
-          OR (
-            request.createdAt = :cursorCreatedAt
-            AND request.id < :cursorId
-          )
-        )
-      ORDER BY request.createdAt DESC, request.id DESC
-      """)
-  List<FacilityRequest> searchIntegratedByCursor(
-      @Param("pattern") String pattern,
-      @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
-      @Param("cursorId") Long cursorId,
-      Pageable pageable
-  );
+public interface FacilityRequestRepository extends JpaRepository<FacilityRequest, Long>, FacilityRequestIntegratedSearchRepository {
 
   @EntityGraph(attributePaths = {
       "facilityCategory",
