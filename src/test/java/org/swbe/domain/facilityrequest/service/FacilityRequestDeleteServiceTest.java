@@ -67,8 +67,10 @@ class FacilityRequestDeleteServiceTest {
     service.delete(25L, 7L);
 
     verify(fileStorage).delete("2026/08/09/image.jpg");
-    verify(attachmentRepository).deleteAllInBatch(List.of(attachment));
-    verify(fileResourceRepository).deleteAllInBatch(List.of(file));
+    verify(attachmentRepository).deleteAll(List.of(attachment));
+    verify(attachmentRepository).flush();
+    verify(fileResourceRepository).deleteAll(List.of(file));
+    verify(fileResourceRepository).flush();
     verify(facilityRequestRepository).delete(request);
   }
 

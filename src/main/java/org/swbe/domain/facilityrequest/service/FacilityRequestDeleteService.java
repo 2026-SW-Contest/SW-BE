@@ -55,8 +55,13 @@ public class FacilityRequestDeleteService {
         .toList();
 
     deleteStoredFiles(files);
-    attachmentRepository.deleteAllInBatch(attachments);
-    fileResourceRepository.deleteAllInBatch(files);
+
+    attachmentRepository.deleteAll(attachments);
+    attachmentRepository.flush();
+
+    fileResourceRepository.deleteAll(files);
+    fileResourceRepository.flush();
+
     facilityRequestRepository.delete(facilityRequest);
   }
 
