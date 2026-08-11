@@ -28,15 +28,11 @@ public class FacilityRequestQueryService {
 
   private final FacilityRequestRepository facilityRequestRepository;
 
-  public FacilityRequestQueryService(
-      FacilityRequestRepository facilityRequestRepository
-  ) {
+  public FacilityRequestQueryService(FacilityRequestRepository facilityRequestRepository) {
     this.facilityRequestRepository = facilityRequestRepository;
   }
 
-  public FacilityRequestListResponse getFacilityRequests(
-      FacilityRequestSearchCondition condition
-  ) {
+  public FacilityRequestListResponse getFacilityRequests(FacilityRequestSearchCondition condition) {
     validateDateRange(condition);
 
     LocalDateTime fromDateTime = condition.from() == null
@@ -78,9 +74,7 @@ public class FacilityRequestQueryService {
     return new FacilityRequestListResponse(page);
   }
 
-  private FacilityRequestListItemResponse toListItemResponse(
-      FacilityRequest request
-  ) {
+  private FacilityRequestListItemResponse toListItemResponse(FacilityRequest request) {
     FacilityRequestStatus status = FacilityRequestStatus.valueOf(
         request.getRequestStatus()
     );
