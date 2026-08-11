@@ -20,6 +20,7 @@ import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 import org.swbe.domain.facilityrequest.repository.FacilityRequestRepository;
 import org.swbe.domain.lostitem.entity.ItemCategory;
 import org.swbe.domain.lostitem.entity.StoredItem;
+import org.swbe.domain.lostitem.entity.StoredItemStatus;
 import org.swbe.domain.lostitem.repository.StoredItemRepository;
 import org.swbe.domain.search.cursor.SearchCursorCodec;
 
@@ -124,7 +125,7 @@ class IntegratedSearchServiceTest {
     when(item.getItemName()).thenReturn(name);
     when(item.getItemCategory()).thenReturn(category);
     when(item.getFoundDate()).thenReturn(LocalDate.of(2026, 8, 8));
-    when(item.getPublicStatus()).thenReturn("STORED");
+    when(item.getPublicStatus()).thenReturn(StoredItemStatus.STORED);
     when(item.getCreatedAt()).thenReturn(
         LocalDateTime.of(2026, 8, 8, 12, minute)
     );
