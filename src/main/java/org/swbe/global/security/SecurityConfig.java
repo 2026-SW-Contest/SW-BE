@@ -67,6 +67,7 @@ public class SecurityConfig {
                 "/actuator/health/**",
                 "/api/locations",
                 "/api/facility-categories",
+                "/api/item-categories",
                 "/api/facility-requests",
                 "/api/facility-requests/*",
                 "/api/files/*",
@@ -75,6 +76,10 @@ public class SecurityConfig {
             .requestMatchers(
                 HttpMethod.POST,
                 "/api/facility-requests"
+            ).hasRole("STUDENT")
+            .requestMatchers(
+                HttpMethod.DELETE,
+                "/api/facility-requests/*"
             ).hasRole("STUDENT")
             .requestMatchers(
                 HttpMethod.PATCH,

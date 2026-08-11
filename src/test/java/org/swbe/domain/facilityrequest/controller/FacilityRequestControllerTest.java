@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -35,6 +36,7 @@ import org.swbe.domain.facilityrequest.dto.response.FacilityRequestPageResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestUpdateDataResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestUpdateResponse;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDetailService;
+import org.swbe.domain.facilityrequest.service.FacilityRequestDeleteService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestCreateService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestQueryService;
 import org.swbe.domain.facilityrequest.service.FacilityRequestUpdateService;
@@ -70,6 +72,9 @@ class FacilityRequestControllerTest {
 
   @MockitoBean
   private FacilityRequestCreateService facilityRequestCreateService;
+
+  @MockitoBean
+  private FacilityRequestDeleteService facilityRequestDeleteService;
 
   @MockitoBean
   private FacilityRequestUpdateService facilityRequestUpdateService;
@@ -253,6 +258,20 @@ class FacilityRequestControllerTest {
   }
 
   @Test
+  void studentCanDeleteOwnReceivedFacilityRequest() throws Exception {
+    mockMvc.perform(delete("/api/facility-requests/25")
+            .with(user(principal("ROLE_STUDENT")))
+            .with(csrf()))
+        .andExpect(status().isNoContent());
+  }
+
+  @Test
+  void anonymousUserCannotDeleteFacilityRequest() throws Exception {
+    mockMvc.perform(delete("/api/facility-requests/25")
+                        .with(csrf()))
+      .andExpect(status().isUnauthorized());
+}
+  @Test
   void studentCanUpdateOwnReceivedFacilityRequest() throws Exception {
     MockMultipartFile requestPart = requestPart(
         """
@@ -308,6 +327,14 @@ class FacilityRequestControllerTest {
             .with(csrf()))
         .andExpect(status().isUnauthorized());
   }
+
+  @Test
+  void nonStudentCannotDeleteFacilityRequest() throws Exception {
+    mockMvc.perform(delete("/api/facility-requests/25")
+                      .with(user(principal("ROLE_FACILITY_STAFF")))
+          .with(csrf()))
+      .andExpect(status().isForbidden());
+}
 
   @Test
   void nonStudentCannotUpdateFacilityRequest() throws Exception {

@@ -182,7 +182,7 @@ public class IntegratedSearchService {
             ? null
             : item.getFoundLocation().getName(),
         item.getFoundDate(),
-        item.getPublicStatus(),
+        item.getPublicStatus().name(),
         thumbnailUrl,
         item.getCreatedAt()
     );

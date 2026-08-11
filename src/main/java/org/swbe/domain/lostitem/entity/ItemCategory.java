@@ -30,6 +30,4 @@ public class ItemCategory {
   @Column(name = "default_storage_days", nullable = false)
   private int defaultStorageDays = 90;
 
-  @Column(name = "is_active", nullable = false)
-  private boolean active = true;
 }
