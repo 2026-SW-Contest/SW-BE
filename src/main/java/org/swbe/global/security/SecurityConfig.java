@@ -76,9 +76,13 @@ public class SecurityConfig {
                 "/api/facility-requests"
             ).hasRole("STUDENT")
             .requestMatchers(
-                HttpMethod.PATCH,
-                "/api/facility-requests/*"
-            ).hasRole("STUDENT")
+     HttpMethod.DELETE,
+    "/api/facility-requests/*"
+).hasRole("STUDENT")
+.requestMatchers(
+    HttpMethod.PATCH,
+    "/api/facility-requests/*"
+).hasRole("STUDENT")
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers(
