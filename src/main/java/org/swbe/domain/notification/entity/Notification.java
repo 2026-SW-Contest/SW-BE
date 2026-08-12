@@ -127,6 +127,13 @@ public class Notification {
     );
   }
 
+  public void markAsRead(LocalDateTime readAt) {
+    if (this.readAt != null) {
+      return;
+    }
+    this.readAt = Objects.requireNonNull(readAt);
+  }
+
   private static String requireText(String value, String fieldName) {
     if (value == null || value.isBlank()) {
       throw new IllegalArgumentException(fieldName + " must not be blank");
