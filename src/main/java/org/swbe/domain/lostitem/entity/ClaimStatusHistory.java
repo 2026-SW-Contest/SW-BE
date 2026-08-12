@@ -89,6 +89,42 @@ public class ClaimStatusHistory {
     );
   }
 
+  public static ClaimStatusHistory recordTransition(
+      ItemClaim itemClaim,
+      AppUser changedBy,
+      ItemClaimStatus previousStatus,
+      ItemClaimStatus newStatus,
+      String changeReason,
+      LocalDateTime changedAt
+  ) {
+    return new ClaimStatusHistory(
+        itemClaim,
+        changedBy,
+        previousStatus,
+        newStatus,
+        changeReason,
+        changedAt
+    );
+  }
+
+  public static ClaimStatusHistory recordSystemTransition(
+      ItemClaim itemClaim,
+      ItemClaimStatus previousStatus,
+      ItemClaimStatus newStatus,
+      String changeReason,
+      LocalDateTime changedAt
+  ) {
+    ClaimStatusHistory history = new ClaimStatusHistory();
+    history.itemClaim = Objects.requireNonNull(itemClaim);
+    history.changedBy = null;
+    history.actorType = "SYSTEM";
+    history.previousStatus = previousStatus;
+    history.newStatus = Objects.requireNonNull(newStatus);
+    history.changeReason = stripNullable(changeReason);
+    history.changedAt = Objects.requireNonNull(changedAt);
+    return history;
+  }
+
   private static String stripNullable(String value) {
     if (value == null) {
       return null;

@@ -11,10 +11,8 @@ class ItemClaimStatusTest {
     assertThat(ItemClaimStatus.values())
         .containsExactly(
             ItemClaimStatus.WAITING,
-            ItemClaimStatus.IN_PROGRESS,
             ItemClaimStatus.APPROVED,
-            ItemClaimStatus.REJECTED,
-            ItemClaimStatus.CLOSED_BY_OTHER_COLLECTION
+            ItemClaimStatus.REJECTED
         );
   }
 
@@ -22,9 +20,14 @@ class ItemClaimStatusTest {
   void activeStatusesExcludeTerminalStatuses() {
     assertThat(ItemClaimStatus.activeStatuses())
         .containsExactlyInAnyOrder(
-            ItemClaimStatus.WAITING,
-            ItemClaimStatus.IN_PROGRESS,
-            ItemClaimStatus.APPROVED
+            ItemClaimStatus.WAITING
         );
+  }
+
+  @Test
+  void onlyApprovedAndRejectedAreDecisions() {
+    assertThat(ItemClaimStatus.APPROVED.isDecision()).isTrue();
+    assertThat(ItemClaimStatus.REJECTED.isDecision()).isTrue();
+    assertThat(ItemClaimStatus.WAITING.isDecision()).isFalse();
   }
 }

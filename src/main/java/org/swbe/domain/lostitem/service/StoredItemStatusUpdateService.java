@@ -29,6 +29,7 @@ public class StoredItemStatusUpdateService {
   private final ItemStatusHistoryRepository statusHistoryRepository;
   private final OfficeStaffAssignmentRepository assignmentRepository;
   private final AppUserRepository appUserRepository;
+  private final ItemClaimClosureService closureService;
   private final Clock clock;
 
   @Transactional
@@ -71,6 +72,14 @@ public class StoredItemStatusUpdateService {
           request.changeReason(),
           now
       ));
+      if (newStatus == StoredItemStatus.COMPLETED) {
+        closureService.rejectWaitingClaims(
+            item,
+            null,
+            changer,
+            now
+        );
+      }
       storedItemRepository.flush();
       return response(item, previousStatus, true, now);
     } catch (OptimisticLockingFailureException exception) {
