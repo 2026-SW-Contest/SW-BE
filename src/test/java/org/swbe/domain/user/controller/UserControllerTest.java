@@ -1,7 +1,13 @@
 package org.swbe.domain.user.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,12 +36,14 @@ import org.swbe.domain.user.dto.response.CurrentUserDepartmentResponse;
 import org.swbe.domain.user.dto.response.CurrentUserResponse;
 import org.swbe.domain.user.entity.AccountStatus;
 import org.swbe.domain.user.service.CurrentUserQueryService;
+import org.swbe.domain.user.service.PasswordChangeService;
 import org.swbe.global.security.AppUserPrincipal;
 import org.swbe.global.security.RestAccessDeniedHandler;
 import org.swbe.global.security.RestAuthenticationEntryPoint;
 import org.swbe.global.security.RestSessionInformationExpiredStrategy;
 import org.swbe.global.security.SecurityConfig;
 import org.swbe.global.security.SecurityErrorResponseWriter;
+import org.swbe.global.security.UserSessionTerminator;
 
 @WebMvcTest(UserController.class)
 @Import({
@@ -56,6 +64,12 @@ class UserControllerTest {
 
   @MockitoBean
   private CurrentUserQueryService currentUserQueryService;
+
+  @MockitoBean
+  private PasswordChangeService passwordChangeService;
+
+  @MockitoBean
+  private UserSessionTerminator userSessionTerminator;
 
   @MockitoBean
   private UserDetailsService userDetailsService;
@@ -92,6 +106,87 @@ class UserControllerTest {
         .andExpect(status().isUnauthorized())
         .andExpect(jsonPath("$.code")
             .value("SECURITY_AUTHENTICATION_REQUIRED"));
+  }
+
+  @Test
+  void authenticatedUserCanChangeOwnPassword() throws Exception {
+    mockMvc.perform(patch("/api/users/me/password")
+            .contentType("application/json")
+            .content("""
+                {
+                  "currentPassword": "Current12!@",
+                  "newPassword": "Changed34#$",
+                  "newPasswordConfirm": "Changed34#$"
+                }
+                """)
+            .session(authenticatedSession("ROLE_STUDENT"))
+            .with(csrf()))
+        .andExpect(status().isNoContent());
+
+    verify(passwordChangeService).changePassword(eq(10L), any());
+    verify(userSessionTerminator).terminateAll(
+        any(),
+        any(),
+        any(),
+        any()
+    );
+  }
+
+  @Test
+  void administratorCanChangeOwnPassword() throws Exception {
+    mockMvc.perform(patch("/api/users/me/password")
+            .contentType("application/json")
+            .content("""
+                {
+                  "currentPassword": "Current12!@",
+                  "newPassword": "Changed34#$",
+                  "newPasswordConfirm": "Changed34#$"
+                }
+                """)
+            .session(authenticatedSession("ROLE_ADMIN"))
+            .with(csrf()))
+        .andExpect(status().isNoContent());
+
+    verify(passwordChangeService).changePassword(eq(10L), any());
+  }
+
+  @Test
+  void anonymousUserCannotChangePassword() throws Exception {
+    mockMvc.perform(patch("/api/users/me/password")
+            .contentType("application/json")
+            .content("""
+                {
+                  "currentPassword": "Current12!@",
+                  "newPassword": "Changed34#$",
+                  "newPasswordConfirm": "Changed34#$"
+                }
+                """)
+            .with(csrf()))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.code")
+            .value("SECURITY_AUTHENTICATION_REQUIRED"));
+
+    verifyNoInteractions(passwordChangeService);
+  }
+
+  @Test
+  void weakNewPasswordIsRejected() throws Exception {
+    mockMvc.perform(patch("/api/users/me/password")
+            .contentType("application/json")
+            .content("""
+                {
+                  "currentPassword": "Current12!@",
+                  "newPassword": "password1",
+                  "newPasswordConfirm": "password1"
+                }
+                """)
+            .session(authenticatedSession("ROLE_STUDENT"))
+            .with(csrf()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code")
+            .value("COMMON_VALIDATION_FAILED"));
+
+    verifyNoInteractions(passwordChangeService);
   }
 
   @Test

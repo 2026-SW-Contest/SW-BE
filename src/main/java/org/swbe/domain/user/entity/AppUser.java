@@ -135,6 +135,19 @@ public class AppUser {
     );
   }
 
+  // 검증과 암호화가 완료된 새 비밀번호 해시를 저장한다.
+  public void changePasswordHash(
+      String newPasswordHash,
+      LocalDateTime changedAt
+  ) {
+    requireText(newPasswordHash, "newPasswordHash");
+    this.passwordHash = newPasswordHash;
+    this.updatedAt = Objects.requireNonNull(
+        changedAt,
+        "changedAt must not be null"
+    );
+  }
+
   private static void validateStudentRegistration(
       String email,
       String passwordHash,
