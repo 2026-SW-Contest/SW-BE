@@ -10,7 +10,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 
-public interface FacilityRequestRepository extends JpaRepository<FacilityRequest, Long>, FacilityRequestIntegratedSearchRepository {
+public interface FacilityRequestRepository extends
+    JpaRepository<FacilityRequest, Long>,
+    FacilityRequestIntegratedSearchRepository,
+    AdminFacilityRequestSearchRepository {
 
   @EntityGraph(attributePaths = {
       "facilityCategory",
