@@ -21,8 +21,12 @@ import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestListItem
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestLocationResponse;
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestPageResponse;
+import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestDetailDataResponse;
+import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestDetailResponse;
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestRequesterResponse;
+import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestRequesterDetailResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityCategoryResponse;
+import org.swbe.domain.facilityrequest.service.AdminFacilityRequestDetailService;
 import org.swbe.domain.facilityrequest.service.AdminFacilityRequestQueryService;
 import org.swbe.global.security.RestAccessDeniedHandler;
 import org.swbe.global.security.RestAuthenticationEntryPoint;
@@ -48,6 +52,9 @@ class AdminFacilityRequestControllerTest {
 
   @MockitoBean
   private AdminFacilityRequestQueryService queryService;
+
+  @MockitoBean
+  private AdminFacilityRequestDetailService detailService;
 
   @MockitoBean
   private UserDetailsService userDetailsService;
@@ -103,6 +110,63 @@ class AdminFacilityRequestControllerTest {
   void invalidPageSizeIsRejected() throws Exception {
     mockMvc.perform(get("/api/admin/facility-requests")
             .param("size", "101")
+            .with(user("admin").roles("ADMIN")))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code")
+            .value("COMMON_VALIDATION_FAILED"));
+  }
+
+  @Test
+  void adminCanGetFacilityRequestDetail() throws Exception {
+    AdminFacilityRequestDetailDataResponse data =
+        new AdminFacilityRequestDetailDataResponse(
+            25L,
+            "Hallway light issue",
+            "The hallway light keeps flickering.",
+            new AdminFacilityRequestRequesterDetailResponse(
+                7L,
+                "Hong",
+                "60241234",
+                "student@mju.ac.kr"
+            ),
+            new FacilityCategoryResponse(1L, "Lighting"),
+            new AdminFacilityRequestLocationResponse(
+                2L,
+                "S2",
+                "Student Hall"
+            ),
+            "IN_PROGRESS",
+            "In Progress",
+            List.of(),
+            List.of(),
+            LocalDateTime.of(2026, 8, 12, 14, 30),
+            LocalDateTime.of(2026, 8, 12, 15, 30)
+        );
+    when(detailService.getFacilityRequest(25L))
+        .thenReturn(new AdminFacilityRequestDetailResponse(data));
+
+    mockMvc.perform(get("/api/admin/facility-requests/25")
+            .with(user("admin").roles("ADMIN")))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.facilityRequestId").value(25))
+        .andExpect(jsonPath("$.data.requester.email")
+            .value("student@mju.ac.kr"))
+        .andExpect(jsonPath("$.data.attachments").isArray())
+        .andExpect(jsonPath("$.data.adminResponses").isArray());
+  }
+
+  @Test
+  void studentCannotGetAdminFacilityRequestDetail() throws Exception {
+    mockMvc.perform(get("/api/admin/facility-requests/25")
+            .with(user("student").roles("STUDENT")))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code")
+            .value("SECURITY_ACCESS_DENIED"));
+  }
+
+  @Test
+  void invalidFacilityRequestIdIsRejected() throws Exception {
+    mockMvc.perform(get("/api/admin/facility-requests/0")
             .with(user("admin").roles("ADMIN")))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code")

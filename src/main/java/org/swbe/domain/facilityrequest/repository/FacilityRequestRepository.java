@@ -23,6 +23,15 @@ public interface FacilityRequestRepository extends
   @Query("SELECT request FROM FacilityRequest request WHERE request.id = :id")
   Optional<FacilityRequest> findDetailById(@Param("id") Long id);
 
+  @EntityGraph(attributePaths = {
+      "facilityCategory",
+      "location",
+      "location.building",
+      "requester"
+  })
+  @Query("SELECT request FROM FacilityRequest request WHERE request.id = :id")
+  Optional<FacilityRequest> findAdminDetailById(@Param("id") Long id);
+
   @Query(
       value = """
           SELECT request
