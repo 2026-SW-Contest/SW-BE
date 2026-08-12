@@ -164,6 +164,9 @@ jobs:
               "FRONTEND_ORIGINS",
               "SESSION_COOKIE_SECURE",
               "SESSION_COOKIE_SAME_SITE",
+              "AWS_REGION",
+              "S3_BUCKET",
+              "CLOUDFRONT_BASE_URL",
           ]
 
           missing = [key for key in keys if not os.environ.get(key)]
