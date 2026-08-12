@@ -9,6 +9,25 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 class AppUserTest {
 
+  @Test
+  void changesEncodedPasswordAndUpdatedAt() {
+    LocalDateTime registeredAt = LocalDateTime.of(2026, 8, 1, 12, 0);
+    LocalDateTime changedAt = LocalDateTime.of(2026, 8, 12, 18, 0);
+    AppUser user = AppUser.registerStudent(
+        "student@mju.ac.kr",
+        "{bcrypt}old-password-hash",
+        "홍길동",
+        "60241234",
+        registeredAt
+    );
+
+    user.changePasswordHash("{bcrypt}new-password-hash", changedAt);
+
+    assertThat(user.getPasswordHash())
+        .isEqualTo("{bcrypt}new-password-hash");
+    assertThat(user.getUpdatedAt()).isEqualTo(changedAt);
+  }
+
   private static final LocalDateTime REGISTERED_AT =
       LocalDateTime.of(2026, 7, 31, 12, 0);
 
