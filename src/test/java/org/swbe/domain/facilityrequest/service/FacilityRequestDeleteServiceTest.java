@@ -19,6 +19,7 @@ import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.repository.FileResourceRepository;
 import org.swbe.domain.file.storage.FileStorage;
 import org.swbe.domain.file.storage.FileStorageException;
+import org.swbe.domain.file.storage.FileStorageRegistry;
 import org.swbe.global.error.BusinessException;
 
 class FacilityRequestDeleteServiceTest {
@@ -26,6 +27,7 @@ class FacilityRequestDeleteServiceTest {
   private FacilityRequestRepository facilityRequestRepository;
   private FacilityRequestAttachmentRepository attachmentRepository;
   private FileResourceRepository fileResourceRepository;
+  private FileStorageRegistry fileStorageRegistry;
   private FileStorage fileStorage;
   private FacilityRequestDeleteService service;
 
@@ -36,12 +38,13 @@ class FacilityRequestDeleteServiceTest {
         FacilityRequestAttachmentRepository.class
     );
     fileResourceRepository = mock(FileResourceRepository.class);
+    fileStorageRegistry = mock(FileStorageRegistry.class);
     fileStorage = mock(FileStorage.class);
     service = new FacilityRequestDeleteService(
         facilityRequestRepository,
         attachmentRepository,
         fileResourceRepository,
-        fileStorage
+        fileStorageRegistry
     );
   }
 
@@ -51,7 +54,9 @@ class FacilityRequestDeleteServiceTest {
     FacilityRequestAttachment attachment =
         mock(FacilityRequestAttachment.class);
     FileResource file = mock(FileResource.class);
+    when(file.getStorageProvider()).thenReturn("S3");
     when(file.getStorageKey()).thenReturn("2026/08/09/image.jpg");
+    when(fileStorageRegistry.get("S3")).thenReturn(fileStorage);
     when(attachment.getFile()).thenReturn(file);
     when(facilityRequestRepository.findDetailById(25L))
         .thenReturn(Optional.of(request));
@@ -62,8 +67,10 @@ class FacilityRequestDeleteServiceTest {
     service.delete(25L, 7L);
 
     verify(fileStorage).delete("2026/08/09/image.jpg");
-    verify(attachmentRepository).deleteAllInBatch(List.of(attachment));
-    verify(fileResourceRepository).deleteAllInBatch(List.of(file));
+    verify(attachmentRepository).deleteAll(List.of(attachment));
+    verify(attachmentRepository).flush();
+    verify(fileResourceRepository).deleteAll(List.of(file));
+    verify(fileResourceRepository).flush();
     verify(facilityRequestRepository).delete(request);
   }
 
@@ -110,7 +117,9 @@ class FacilityRequestDeleteServiceTest {
     FacilityRequestAttachment attachment =
         mock(FacilityRequestAttachment.class);
     FileResource file = mock(FileResource.class);
+    when(file.getStorageProvider()).thenReturn("LOCAL");
     when(file.getStorageKey()).thenReturn("2026/08/09/image.jpg");
+    when(fileStorageRegistry.get("LOCAL")).thenReturn(fileStorage);
     when(attachment.getFile()).thenReturn(file);
     when(facilityRequestRepository.findDetailById(25L))
         .thenReturn(Optional.of(request));

@@ -23,8 +23,8 @@ import org.swbe.domain.facilityrequest.repository.FacilityRequestAttachmentRepos
 import org.swbe.domain.facilityrequest.repository.FacilityRequestRepository;
 import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.repository.FileResourceRepository;
-import org.swbe.domain.file.storage.FileStorage;
 import org.swbe.domain.file.storage.FileStorageException;
+import org.swbe.domain.file.storage.FileStorageRegistry;
 import org.swbe.domain.file.storage.StoredFile;
 import org.swbe.domain.user.entity.AppUser;
 import org.swbe.global.error.BusinessException;
@@ -45,7 +45,7 @@ public class FacilityRequestUpdateService {
   private final FacilityCategoryRepository facilityCategoryRepository;
   private final LocationRepository locationRepository;
   private final FileResourceRepository fileResourceRepository;
-  private final FileStorage fileStorage;
+  private final FileStorageRegistry fileStorageRegistry;
   private final Clock clock;
 
   // 문의 수정에 필요한 JPA 저장소와 실제 파일 저장소를 주입받는다.
@@ -55,7 +55,7 @@ public class FacilityRequestUpdateService {
       FacilityCategoryRepository facilityCategoryRepository,
       LocationRepository locationRepository,
       FileResourceRepository fileResourceRepository,
-      FileStorage fileStorage,
+      FileStorageRegistry fileStorageRegistry,
       Clock clock
   ) {
     this.facilityRequestRepository = facilityRequestRepository;
@@ -63,7 +63,7 @@ public class FacilityRequestUpdateService {
     this.facilityCategoryRepository = facilityCategoryRepository;
     this.locationRepository = locationRepository;
     this.fileResourceRepository = fileResourceRepository;
-    this.fileStorage = fileStorage;
+    this.fileStorageRegistry = fileStorageRegistry;
     this.clock = clock;
   }
 
@@ -268,7 +268,9 @@ public class FacilityRequestUpdateService {
   ) {
     List<FacilityRequestAttachment> newAttachments = new ArrayList<>();
     for (MultipartFile file : files) {
-      StoredFile storedFile = fileStorage.store(file);
+      StoredFile storedFile = fileStorageRegistry
+          .writeStorage()
+          .store(file);
       newlyStoredFiles.add(storedFile);
 
       FileResource fileResource = FileResource.create(
@@ -302,7 +304,9 @@ public class FacilityRequestUpdateService {
         .map(FacilityRequestAttachment::getFile)
         .toList();
     for (FileResource file : removedFiles) {
-      fileStorage.delete(file.getStorageKey());
+      fileStorageRegistry
+          .get(file.getStorageProvider())
+          .delete(file.getStorageKey());
     }
     attachmentRepository.deleteAllInBatch(removedAttachments);
     fileResourceRepository.deleteAllInBatch(removedFiles);
@@ -312,7 +316,9 @@ public class FacilityRequestUpdateService {
   private void deleteNewlyStoredFiles(List<StoredFile> newlyStoredFiles) {
     for (StoredFile storedFile : newlyStoredFiles) {
       try {
-        fileStorage.delete(storedFile.storageKey());
+        fileStorageRegistry
+            .get(storedFile.storageProvider())
+            .delete(storedFile.storageKey());
       } catch (FileStorageException ignored) {
         // 원래 발생한 수정 실패 예외를 유지한다.
       }

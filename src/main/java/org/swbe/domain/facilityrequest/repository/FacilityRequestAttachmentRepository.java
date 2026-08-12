@@ -3,6 +3,8 @@ package org.swbe.domain.facilityrequest.repository;
 import java.util.List;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestAttachment;
 
 public interface FacilityRequestAttachmentRepository
@@ -14,9 +16,22 @@ public interface FacilityRequestAttachmentRepository
           Long facilityRequestId
       );
 
-  @EntityGraph(attributePaths = "file")
-  // 문의 삭제 시 정리할 첨부파일 정보까지 함께 조회한다.
-  List<FacilityRequestAttachment> findAllByFacilityRequest_IdOrderByIdAsc(
-      Long facilityRequestId
+  @Query("""
+      SELECT attachment
+      FROM FacilityRequestAttachment attachment
+      JOIN FETCH attachment.facilityRequest request
+      JOIN FETCH attachment.file file
+      WHERE request.id IN :facilityRequestIds
+        AND file.deletedAt IS NULL
+      ORDER BY request.id, attachment.id
+      """)
+  List<FacilityRequestAttachment> findPublicImagesByFacilityRequestIds(
+      @Param("facilityRequestIds") List<Long> facilityRequestIds
   );
+
+  @EntityGraph(attributePaths = "file")
+  List<FacilityRequestAttachment>
+      findAllByFacilityRequest_IdOrderByIdAsc(
+          Long facilityRequestId
+      );
 }

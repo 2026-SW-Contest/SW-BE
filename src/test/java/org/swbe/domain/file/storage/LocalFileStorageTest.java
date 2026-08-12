@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
 
 class LocalFileStorageTest {
@@ -43,6 +44,10 @@ class LocalFileStorageTest {
     assertThat(storedFile.mimeType()).isEqualTo("image/jpeg");
     assertThat(storedFile.checksum()).hasSize(64);
     assertThat(Files.readString(storedPath)).isEqualTo("image-content");
+
+    Resource resource = storage.load(storedFile.storageKey());
+    assertThat(resource.getContentAsString(StandardCharsets.UTF_8))
+        .isEqualTo("image-content");
 
     storage.delete(storedFile.storageKey());
 

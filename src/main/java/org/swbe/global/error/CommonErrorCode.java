@@ -39,6 +39,11 @@ public enum CommonErrorCode implements ErrorCode {
       "COMMON_UNSUPPORTED_MEDIA_TYPE",
       "지원하지 않는 Content-Type입니다."
   ),
+  UPLOAD_SIZE_EXCEEDED(
+      HttpStatus.CONTENT_TOO_LARGE,
+      "COMMON_UPLOAD_SIZE_EXCEEDED",
+      "업로드 가능한 파일 용량을 초과했습니다."
+  ),
   INTERNAL_SERVER_ERROR(
       HttpStatus.INTERNAL_SERVER_ERROR,
       "COMMON_INTERNAL_SERVER_ERROR",

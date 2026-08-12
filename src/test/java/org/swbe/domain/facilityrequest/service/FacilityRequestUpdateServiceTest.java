@@ -37,6 +37,7 @@ import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.repository.FileResourceRepository;
 import org.swbe.domain.file.storage.FileStorage;
 import org.swbe.domain.file.storage.FileStorageException;
+import org.swbe.domain.file.storage.FileStorageRegistry;
 import org.swbe.domain.file.storage.StoredFile;
 import org.swbe.domain.user.entity.AppUser;
 import org.swbe.global.error.BusinessException;
@@ -54,6 +55,7 @@ class FacilityRequestUpdateServiceTest {
   private LocationRepository locationRepository;
   private FileResourceRepository fileResourceRepository;
   private FileStorage fileStorage;
+  private FileStorageRegistry fileStorageRegistry;
   private FacilityRequestUpdateService updateService;
 
   @BeforeEach
@@ -66,13 +68,16 @@ class FacilityRequestUpdateServiceTest {
     locationRepository = mock(LocationRepository.class);
     fileResourceRepository = mock(FileResourceRepository.class);
     fileStorage = mock(FileStorage.class);
+    fileStorageRegistry = mock(FileStorageRegistry.class);
+    when(fileStorageRegistry.writeStorage()).thenReturn(fileStorage);
+    when(fileStorageRegistry.get("LOCAL")).thenReturn(fileStorage);
     updateService = new FacilityRequestUpdateService(
         facilityRequestRepository,
         attachmentRepository,
         facilityCategoryRepository,
         locationRepository,
         fileResourceRepository,
-        fileStorage,
+        fileStorageRegistry,
         FIXED_CLOCK
     );
   }
@@ -331,6 +336,7 @@ class FacilityRequestUpdateServiceTest {
   ) {
     FileResource file = mock(FileResource.class);
     when(file.getId()).thenReturn(fileId);
+    when(file.getStorageProvider()).thenReturn("LOCAL");
     when(file.getStorageKey()).thenReturn(storageKey);
     FacilityRequestAttachment attachment =
         mock(FacilityRequestAttachment.class);

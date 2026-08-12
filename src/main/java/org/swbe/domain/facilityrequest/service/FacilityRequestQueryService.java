@@ -2,6 +2,7 @@ package org.swbe.domain.facilityrequest.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -27,12 +28,19 @@ public class FacilityRequestQueryService {
   );
 
   private final FacilityRequestRepository facilityRequestRepository;
+  private final FacilityRequestThumbnailService thumbnailService;
 
-  public FacilityRequestQueryService(FacilityRequestRepository facilityRequestRepository) {
+  public FacilityRequestQueryService(
+      FacilityRequestRepository facilityRequestRepository,
+      FacilityRequestThumbnailService thumbnailService
+  ) {
     this.facilityRequestRepository = facilityRequestRepository;
+    this.thumbnailService = thumbnailService;
   }
 
-  public FacilityRequestListResponse getFacilityRequests(FacilityRequestSearchCondition condition) {
+  public FacilityRequestListResponse getFacilityRequests(
+      FacilityRequestSearchCondition condition
+  ) {
     validateDateRange(condition);
 
     LocalDateTime fromDateTime = condition.from() == null
@@ -59,8 +67,17 @@ public class FacilityRequestQueryService {
         toDateTimeExclusive,
         pageable
     );
-    List<FacilityRequestListItemResponse> content = result.getContent().stream()
-        .map(this::toListItemResponse)
+    List<FacilityRequest> requests = result.getContent();
+    Map<Long, String> thumbnailUrls = requests.isEmpty()
+        ? Map.of()
+        : thumbnailService.resolveAll(
+            requests.stream().map(FacilityRequest::getId).toList()
+        );
+    List<FacilityRequestListItemResponse> content = requests.stream()
+        .map(request -> toListItemResponse(
+            request,
+            thumbnailUrls.get(request.getId())
+        ))
         .toList();
     FacilityRequestPageResponse page = new FacilityRequestPageResponse(
         content,
@@ -74,7 +91,10 @@ public class FacilityRequestQueryService {
     return new FacilityRequestListResponse(page);
   }
 
-  private FacilityRequestListItemResponse toListItemResponse(FacilityRequest request) {
+  private FacilityRequestListItemResponse toListItemResponse(
+      FacilityRequest request,
+      String thumbnailUrl
+  ) {
     FacilityRequestStatus status = FacilityRequestStatus.valueOf(
         request.getRequestStatus()
     );
@@ -86,7 +106,7 @@ public class FacilityRequestQueryService {
         request.getLocation().getName(),
         request.getRequestStatus(),
         status.getDisplayName(),
-        null,
+        thumbnailUrl,
         request.getCreatedAt()
     );
   }

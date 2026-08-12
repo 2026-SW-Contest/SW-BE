@@ -15,12 +15,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
 import java.util.Objects;
 import java.util.UUID;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
-public class LocalFileStorage implements FileStorage {
+public class LocalFileStorage implements ReadableFileStorage {
 
   private static final String STORAGE_PROVIDER = "LOCAL";
   private static final DateTimeFormatter DIRECTORY_FORMATTER =
@@ -35,6 +37,11 @@ public class LocalFileStorage implements FileStorage {
   ) {
     this.rootDirectory = Path.of(directory).toAbsolutePath().normalize();
     this.clock = clock;
+  }
+
+  @Override
+  public String provider() {
+    return STORAGE_PROVIDER;
   }
 
   @Override
@@ -77,6 +84,18 @@ public class LocalFileStorage implements FileStorage {
       deleteQuietly(target);
       throw new FileStorageException("Failed to store file", exception);
     }
+  }
+
+  @Override
+  public Resource load(String storageKey) {
+    Path target = resolveStorageKey(storageKey);
+    if (!Files.isRegularFile(target)) {
+      throw new FileStorageException(
+          "Stored file does not exist",
+          new java.nio.file.NoSuchFileException(target.toString())
+      );
+    }
+    return new FileSystemResource(target);
   }
 
   @Override
