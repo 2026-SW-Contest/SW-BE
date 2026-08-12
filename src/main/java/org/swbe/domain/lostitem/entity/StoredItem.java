@@ -15,6 +15,7 @@ import jakarta.persistence.Version;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,9 @@ public class StoredItem {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "found_location_id")
   private Location foundLocation;
+
+  @Column(name = "found_location_text", length = 255)
+  private String foundLocationText;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "registered_by")
@@ -80,7 +84,7 @@ public class StoredItem {
   @Column(name = "storage_position", length = 255)
   private String storagePosition;
 
-  @Column(name = "storage_deadline", nullable = false)
+  @Column(name = "storage_deadline")
   private LocalDate storageDeadline;
 
   @Column(name = "collected_at")
@@ -100,4 +104,160 @@ public class StoredItem {
 
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
+
+  private StoredItem(
+      LostItemOffice office,
+      Location foundLocation,
+      String foundLocationText,
+      AppUser registeredBy,
+      ItemCategory itemCategory,
+      String itemName,
+      String publicDescription,
+      String privateDescription,
+      LocalDate foundDate,
+      LocalDateTime registeredAt
+  ) {
+    this.office = Objects.requireNonNull(office);
+    this.foundLocation = foundLocation;
+    this.foundLocationText = stripNullable(foundLocationText);
+    validateFoundLocation(foundLocation, this.foundLocationText);
+    this.registeredBy = Objects.requireNonNull(registeredBy);
+    this.itemCategory = Objects.requireNonNull(itemCategory);
+    this.itemName = requireText(itemName, "itemName");
+    this.publicStatus = StoredItemStatus.STORED;
+    this.publicDescription = requireText(
+        publicDescription,
+        "publicDescription"
+    );
+    this.privateDescription = stripNullable(privateDescription);
+    this.foundDate = Objects.requireNonNull(foundDate);
+    this.foundTime = null;
+    this.foundTimeUnknown = true;
+    this.receivedAt = Objects.requireNonNull(registeredAt);
+    this.storagePosition = null;
+    this.storageDeadline = null;
+    this.createdAt = registeredAt;
+    this.updatedAt = registeredAt;
+  }
+
+  public static StoredItem create(
+      LostItemOffice office,
+      Location foundLocation,
+      String foundLocationText,
+      AppUser registeredBy,
+      ItemCategory itemCategory,
+      String itemName,
+      String publicDescription,
+      String privateDescription,
+      LocalDate foundDate,
+      LocalDateTime registeredAt
+  ) {
+    return new StoredItem(
+        office,
+        foundLocation,
+        foundLocationText,
+        registeredBy,
+        itemCategory,
+        itemName,
+        publicDescription,
+        privateDescription,
+        foundDate,
+        registeredAt
+    );
+  }
+
+  public String getFoundLocationName() {
+    return foundLocation == null
+        ? foundLocationText
+        : foundLocation.getName();
+  }
+
+  public void update(
+      LostItemOffice office,
+      ItemCategory itemCategory,
+      Location foundLocation,
+      String foundLocationText,
+      boolean foundLocationChanged,
+      String itemName,
+      String publicDescription,
+      String privateDescription,
+      boolean privateDescriptionChanged,
+      LocalDate foundDate,
+      LocalDateTime updatedAt
+  ) {
+    if (office != null) {
+      this.office = office;
+    }
+    if (itemCategory != null) {
+      this.itemCategory = itemCategory;
+    }
+    if (foundLocationChanged) {
+      String normalizedLocationText = stripNullable(foundLocationText);
+      validateFoundLocation(foundLocation, normalizedLocationText);
+      this.foundLocation = foundLocation;
+      this.foundLocationText = normalizedLocationText;
+    }
+    if (itemName != null) {
+      this.itemName = requireText(itemName, "itemName");
+    }
+    if (publicDescription != null) {
+      this.publicDescription = requireText(
+          publicDescription,
+          "publicDescription"
+      );
+    }
+    if (privateDescriptionChanged) {
+      this.privateDescription = stripNullable(privateDescription);
+    }
+    if (foundDate != null) {
+      this.foundDate = foundDate;
+    }
+    this.updatedAt = Objects.requireNonNull(updatedAt);
+  }
+
+  public boolean changeStatus(
+      StoredItemStatus newStatus,
+      LocalDateTime changedAt
+  ) {
+    Objects.requireNonNull(newStatus, "newStatus must not be null");
+    if (publicStatus == newStatus) {
+      return false;
+    }
+    if (!publicStatus.canTransitionTo(newStatus)) {
+      throw new IllegalStateException(
+          "Invalid stored item status transition: "
+              + publicStatus + " -> " + newStatus
+      );
+    }
+    this.publicStatus = newStatus;
+    this.updatedAt = Objects.requireNonNull(changedAt);
+    return true;
+  }
+
+  private static void validateFoundLocation(
+      Location foundLocation,
+      String foundLocationText
+  ) {
+    if ((foundLocation == null) == (foundLocationText == null)) {
+      throw new IllegalArgumentException(
+          "Exactly one found location must be provided"
+      );
+    }
+  }
+
+  private static String requireText(String value, String fieldName) {
+    String stripped = stripNullable(value);
+    if (stripped == null || stripped.isBlank()) {
+      throw new IllegalArgumentException(fieldName + " must not be blank");
+    }
+    return stripped;
+  }
+
+  private static String stripNullable(String value) {
+    if (value == null) {
+      return null;
+    }
+    String stripped = value.strip();
+    return stripped.isEmpty() ? null : stripped;
+  }
 }

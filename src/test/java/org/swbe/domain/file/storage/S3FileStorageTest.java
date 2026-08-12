@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.Duration;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,8 @@ class S3FileStorageTest {
         new FileStorageProperties.S3(
             "test-bucket",
             "ap-northeast-2",
-            "https://example.cloudfront.net"
+            "https://example.cloudfront.net",
+            Duration.ofMinutes(10)
         )
     );
     Clock clock = Clock.fixed(
@@ -62,7 +64,7 @@ class S3FileStorageTest {
 
     assertThat(storedFile.storageProvider()).isEqualTo("S3");
     assertThat(storedFile.storageKey())
-        .startsWith("2026/08/10/")
+        .startsWith("public/2026/08/10/")
         .endsWith(".jpg");
     assertThat(storedFile.originalFilename()).isEqualTo("airpods.JPG");
     assertThat(storedFile.mimeType()).isEqualTo("image/jpeg");

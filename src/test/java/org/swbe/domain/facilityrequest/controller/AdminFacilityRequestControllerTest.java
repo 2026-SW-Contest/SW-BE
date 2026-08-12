@@ -190,7 +190,7 @@ class AdminFacilityRequestControllerTest {
     AdminFacilityRequestProcessDataResponse data =
         new AdminFacilityRequestProcessDataResponse(
             25L,
-            "RECEIVED",
+            "WAITING",
             "IN_PROGRESS",
             "진행 중",
             null,
@@ -211,7 +211,7 @@ class AdminFacilityRequestControllerTest {
             .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.previousStatus")
-            .value("RECEIVED"))
+            .value("WAITING"))
         .andExpect(jsonPath("$.data.requestStatus")
             .value("IN_PROGRESS"));
   }

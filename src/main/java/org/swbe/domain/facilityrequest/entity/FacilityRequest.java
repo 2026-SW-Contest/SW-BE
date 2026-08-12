@@ -51,7 +51,7 @@ public class FacilityRequest {
   private String description;
 
   @Column(name = "request_status", nullable = false, length = 30)
-  private String requestStatus = "RECEIVED";
+  private String requestStatus = "WAITING";
 
   @Version
   private long version;
@@ -78,7 +78,7 @@ public class FacilityRequest {
     this.requester = Objects.requireNonNull(requester);
     this.title = requireText(title, "title");
     this.description = requireText(description, "description");
-    this.requestStatus = FacilityRequestStatus.RECEIVED.name();
+    this.requestStatus = FacilityRequestStatus.WAITING.name();
     this.createdAt = Objects.requireNonNull(createdAt);
     this.updatedAt = createdAt;
   }
@@ -105,14 +105,14 @@ public class FacilityRequest {
     return userId != null && userId.equals(requester.getId());
   }
 
-  // 문의가 아직 접수 상태여서 작성자가 삭제할 수 있는지 확인한다.
+  // 문의가 아직 대기 상태여서 작성자가 삭제할 수 있는지 확인한다.
   public boolean isDeletable() {
-    return FacilityRequestStatus.RECEIVED.name().equals(requestStatus);
+    return FacilityRequestStatus.WAITING.name().equals(requestStatus);
   }
 
-  // 문의가 아직 접수 상태여서 작성자가 수정할 수 있는지 확인한다.
+  // 문의가 아직 대기 상태여서 작성자가 수정할 수 있는지 확인한다.
   public boolean isEditable() {
-    return FacilityRequestStatus.RECEIVED.name().equals(requestStatus);
+    return FacilityRequestStatus.WAITING.name().equals(requestStatus);
   }
 
   // 전달된 값만 변경하고 마지막 수정 시각을 갱신한다.
@@ -148,9 +148,11 @@ public class FacilityRequest {
     );
 
     return switch (currentStatus) {
-      case RECEIVED -> nextStatus == FacilityRequestStatus.IN_PROGRESS
-          || nextStatus == FacilityRequestStatus.COMPLETED;
-      case IN_PROGRESS -> nextStatus == FacilityRequestStatus.COMPLETED;
+      case WAITING -> nextStatus == FacilityRequestStatus.IN_PROGRESS
+          || nextStatus == FacilityRequestStatus.COMPLETED
+          || nextStatus == FacilityRequestStatus.REJECTED;
+      case IN_PROGRESS -> nextStatus == FacilityRequestStatus.COMPLETED
+          || nextStatus == FacilityRequestStatus.REJECTED;
       default -> false;
     };
   }

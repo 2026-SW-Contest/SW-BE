@@ -66,7 +66,7 @@ class AdminFacilityRequestProcessServiceTest {
   void changesStatusAndCreatesResponseAndNotification() {
     AppUser requester = mock(AppUser.class);
     AppUser administrator = mock(AppUser.class);
-    FacilityRequest facilityRequest = request(requester, "RECEIVED");
+    FacilityRequest facilityRequest = request(requester, "WAITING");
     when(facilityRequestRepository.findAdminDetailById(25L))
         .thenReturn(Optional.of(facilityRequest));
     when(appUserRepository.findById(7L))
@@ -89,9 +89,9 @@ class AdminFacilityRequestProcessServiceTest {
         7L
     );
 
-    assertThat(response.data().previousStatus()).isEqualTo("RECEIVED");
+    assertThat(response.data().previousStatus()).isEqualTo("WAITING");
     assertThat(response.data().requestStatus()).isEqualTo("IN_PROGRESS");
-    assertThat(response.data().requestStatusName()).isEqualTo("진행 중");
+    assertThat(response.data().requestStatusName()).isEqualTo("진행중");
     assertThat(response.data().adminResponse().responseId()).isEqualTo(3L);
     assertThat(response.data().adminResponse().content())
         .isEqualTo("Inspection started.");
@@ -100,8 +100,8 @@ class AdminFacilityRequestProcessServiceTest {
   }
 
   @Test
-  void completesReceivedFacilityRequestWithoutResponse() {
-    FacilityRequest facilityRequest = request(mock(AppUser.class), "RECEIVED");
+  void completesWaitingFacilityRequestWithoutResponse() {
+    FacilityRequest facilityRequest = request(mock(AppUser.class), "WAITING");
     when(facilityRequestRepository.findAdminDetailById(25L))
         .thenReturn(Optional.of(facilityRequest));
 
@@ -115,7 +115,7 @@ class AdminFacilityRequestProcessServiceTest {
     );
 
     assertThat(response.data().requestStatus()).isEqualTo("COMPLETED");
-    assertThat(response.data().requestStatusName()).isEqualTo("해결 완료");
+    assertThat(response.data().requestStatusName()).isEqualTo("완료");
     assertThat(response.data().adminResponse()).isNull();
     assertThat(facilityRequest.getCompletedAt()).isEqualTo(NOW);
     verifyNoInteractions(appUserRepository);
@@ -168,7 +168,7 @@ class AdminFacilityRequestProcessServiceTest {
     assertThatThrownBy(() -> service.process(
         25L,
         new AdminFacilityRequestProcessRequest(
-            FacilityRequestStatus.RECEIVED,
+            FacilityRequestStatus.WAITING,
             null
         ),
         7L

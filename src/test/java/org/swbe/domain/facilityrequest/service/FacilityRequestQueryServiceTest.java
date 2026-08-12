@@ -97,7 +97,7 @@ class FacilityRequestQueryServiceTest {
     assertThat(item.categoryName()).isEqualTo("전기/조명");
     assertThat(item.locationName()).isEqualTo("학생회관");
     assertThat(item.requestStatus()).isEqualTo("IN_PROGRESS");
-    assertThat(item.requestStatusName()).isEqualTo("진행 중");
+    assertThat(item.requestStatusName()).isEqualTo("진행중");
     assertThat(item.thumbnailUrl())
         .isEqualTo("https://cdn.example.com/image.jpg");
     assertThat(item.createdAt()).isEqualTo(createdAt);

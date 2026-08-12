@@ -2,6 +2,8 @@ package org.swbe.domain.lostitem.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,8 +51,9 @@ public class ItemClaim {
   @Column(name = "request_method", nullable = false, length = 30)
   private String requestMethod;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "claim_status", nullable = false, length = 40)
-  private String claimStatus = "PENDING";
+  private ItemClaimStatus claimStatus = ItemClaimStatus.WAITING;
 
   @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @Column(name = "ownership_description")
@@ -86,4 +90,45 @@ public class ItemClaim {
 
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
+
+  private ItemClaim(
+      StoredItem storedItem,
+      AppUser claimantUser,
+      String ownershipDescription,
+      LocalDateTime createdAt
+  ) {
+    this.storedItem = Objects.requireNonNull(storedItem);
+    this.claimantUser = Objects.requireNonNull(claimantUser);
+    this.temporaryClaimant = null;
+    this.reviewedBy = null;
+    this.requestMethod = "ONLINE";
+    this.claimStatus = ItemClaimStatus.WAITING;
+    this.ownershipDescription = requireText(
+        ownershipDescription,
+        "ownershipDescription"
+    );
+    this.createdAt = Objects.requireNonNull(createdAt);
+    this.updatedAt = createdAt;
+  }
+
+  public static ItemClaim createOnline(
+      StoredItem storedItem,
+      AppUser claimantUser,
+      String ownershipDescription,
+      LocalDateTime createdAt
+  ) {
+    return new ItemClaim(
+        storedItem,
+        claimantUser,
+        ownershipDescription,
+        createdAt
+    );
+  }
+
+  private static String requireText(String value, String fieldName) {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException(fieldName + " must not be blank");
+    }
+    return value.strip();
+  }
 }

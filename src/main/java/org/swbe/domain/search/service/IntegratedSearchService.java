@@ -178,9 +178,7 @@ public class IntegratedSearchService {
         item.getItemName(),
         item.getItemCategory().getName(),
         item.getPublicDescription(),
-        item.getFoundLocation() == null
-            ? null
-            : item.getFoundLocation().getName(),
+        item.getFoundLocationName(),
         item.getFoundDate(),
         item.getPublicStatus().name(),
         thumbnailUrl,

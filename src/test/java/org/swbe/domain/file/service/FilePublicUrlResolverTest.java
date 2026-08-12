@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.swbe.domain.file.config.FileStorageProperties;
 import org.swbe.domain.file.entity.FileResource;
@@ -19,7 +20,8 @@ class FilePublicUrlResolverTest {
           new FileStorageProperties.S3(
               "bucket",
               "ap-northeast-2",
-              "https://cdn.example.com/"
+              "https://cdn.example.com/",
+              Duration.ofMinutes(10)
           )
       )
   );
@@ -47,6 +49,22 @@ class FilePublicUrlResolverTest {
   @Test
   void rejectsUnknownStorageProvider() {
     FileResource file = file(1L, "UNKNOWN", "image.jpg");
+
+    assertThatThrownBy(() -> resolver.resolve(file))
+        .isInstanceOfSatisfying(
+            BusinessException.class,
+            exception -> assertThat(exception.getErrorCode())
+                .isEqualTo(FileErrorCode.STORAGE_PROVIDER_NOT_SUPPORTED)
+        );
+  }
+
+  @Test
+  void rejectsPrivateS3File() {
+    FileResource file = file(
+        1L,
+        "S3_PRIVATE",
+        "private/item-claims/2026/08/12/proof.jpg"
+    );
 
     assertThatThrownBy(() -> resolver.resolve(file))
         .isInstanceOfSatisfying(

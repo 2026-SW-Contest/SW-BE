@@ -92,7 +92,7 @@ public class S3FileStorage implements FileStorage {
   private String createStorageKey(String originalFilename) {
     String extension = extensionOf(originalFilename);
     String directory = LocalDate.now(clock).format(DIRECTORY_FORMATTER);
-    return directory + "/" + UUID.randomUUID() + extension;
+    return "public/" + directory + "/" + UUID.randomUUID() + extension;
   }
 
   private String safeOriginalFilename(String originalFilename) {

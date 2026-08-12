@@ -1,6 +1,5 @@
 package org.swbe.domain.facilityrequest.service;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import org.springframework.data.domain.Page;
@@ -23,13 +22,6 @@ import org.swbe.global.error.CommonErrorCode;
 @Service
 @Transactional(readOnly = true)
 public class AdminFacilityRequestQueryService {
-
-  private static final EnumSet<FacilityRequestStatus> MANAGEMENT_STATUSES =
-      EnumSet.of(
-          FacilityRequestStatus.RECEIVED,
-          FacilityRequestStatus.IN_PROGRESS,
-          FacilityRequestStatus.COMPLETED
-      );
 
   private final FacilityRequestRepository facilityRequestRepository;
   private final FacilityRequestThumbnailService thumbnailService;
@@ -90,10 +82,6 @@ public class AdminFacilityRequestQueryService {
     if (condition.from() != null
         && condition.to() != null
         && condition.from().isAfter(condition.to())) {
-      throw new BusinessException(CommonErrorCode.VALIDATION_FAILED);
-    }
-    if (condition.status() != null
-        && !MANAGEMENT_STATUSES.contains(condition.status())) {
       throw new BusinessException(CommonErrorCode.VALIDATION_FAILED);
     }
   }

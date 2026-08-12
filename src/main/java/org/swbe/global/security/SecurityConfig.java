@@ -70,21 +70,48 @@ public class SecurityConfig {
                 "/api/item-categories",
                 "/api/facility-requests",
                 "/api/facility-requests/*",
+                "/api/stored-items",
+                "/api/stored-items/*",
                 "/api/files/*",
                 "/api/search/**"
             ).permitAll()
+            .requestMatchers(
+                HttpMethod.GET,
+                "/api/stored-items/*/claims",
+                "/api/item-claims/*"
+            ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
             .requestMatchers(
                 HttpMethod.POST,
                 "/api/facility-requests"
             ).hasRole("STUDENT")
             .requestMatchers(
+                HttpMethod.POST,
+                "/api/stored-items/*/claims"
+            ).hasRole("STUDENT")
+            .requestMatchers(
+                HttpMethod.POST,
+                "/api/lost-item"
+            ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
+            .requestMatchers(
                 HttpMethod.DELETE,
                 "/api/facility-requests/*"
             ).hasRole("STUDENT")
             .requestMatchers(
+                HttpMethod.DELETE,
+                "/api/stored-items/*"
+            ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
+            .requestMatchers(
                 HttpMethod.PATCH,
                 "/api/facility-requests/*"
             ).hasRole("STUDENT")
+            .requestMatchers(
+                HttpMethod.PATCH,
+                "/api/stored-items/*/status"
+            ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
+            .requestMatchers(
+                HttpMethod.PATCH,
+                "/api/stored-items/*"
+            ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers(

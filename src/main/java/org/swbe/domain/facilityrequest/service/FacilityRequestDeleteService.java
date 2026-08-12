@@ -77,7 +77,7 @@ public class FacilityRequestDeleteService {
     }
   }
 
-  // 문의 상태가 삭제 가능한 접수 상태인지 확인한다.
+  // 문의 상태가 삭제 가능한 대기 상태인지 확인한다.
   private void validateDeletable(FacilityRequest facilityRequest) {
     if (!facilityRequest.isDeletable()) {
       throw new BusinessException(
