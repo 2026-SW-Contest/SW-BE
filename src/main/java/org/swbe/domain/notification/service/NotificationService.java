@@ -12,6 +12,8 @@ import org.swbe.domain.notification.cursor.NotificationCursorCodec;
 import org.swbe.domain.notification.dto.response.NotificationListItemResponse;
 import org.swbe.domain.notification.dto.response.NotificationListResponse;
 import org.swbe.domain.notification.dto.response.NotificationSliceResponse;
+import org.swbe.domain.notification.dto.response.NotificationUnreadCountDataResponse;
+import org.swbe.domain.notification.dto.response.NotificationUnreadCountResponse;
 import org.swbe.domain.notification.entity.Notification;
 import org.swbe.domain.notification.exception.NotificationErrorCode;
 import org.swbe.domain.notification.repository.NotificationRepository;
@@ -60,6 +62,25 @@ public class NotificationService {
             NotificationErrorCode.NOT_FOUND
         ));
     notification.markAsRead(LocalDateTime.now(clock));
+  }
+
+  @Transactional(readOnly = true)
+  public NotificationUnreadCountResponse getUnreadCount(
+      Long recipientUserId
+  ) {
+    long unreadCount = notificationRepository
+        .countByRecipient_IdAndReadAtIsNull(recipientUserId);
+    return new NotificationUnreadCountResponse(
+        new NotificationUnreadCountDataResponse(unreadCount)
+    );
+  }
+
+  @Transactional
+  public void readAll(Long recipientUserId) {
+    notificationRepository.markAllAsRead(
+        recipientUserId,
+        LocalDateTime.now(clock)
+    );
   }
 
   private NotificationListItemResponse toResponse(

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.swbe.domain.notification.dto.response.NotificationListResponse;
+import org.swbe.domain.notification.dto.response.NotificationUnreadCountResponse;
 import org.swbe.domain.notification.service.NotificationService;
 import org.swbe.global.security.AppUserPrincipal;
 
@@ -38,6 +39,21 @@ public class NotificationController {
         cursor,
         size
     );
+  }
+
+  @GetMapping("/unread-count")
+  public NotificationUnreadCountResponse getUnreadCount(
+      @AuthenticationPrincipal AppUserPrincipal principal
+  ) {
+    return notificationService.getUnreadCount(principal.getUserId());
+  }
+
+  @PatchMapping("/read-all")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void readAll(
+      @AuthenticationPrincipal AppUserPrincipal principal
+  ) {
+    notificationService.readAll(principal.getUserId());
   }
 
   @PatchMapping("/{notificationId}/read")

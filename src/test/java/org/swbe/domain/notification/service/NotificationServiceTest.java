@@ -158,6 +158,48 @@ class NotificationServiceTest {
         ).isEqualTo(NotificationErrorCode.NOT_FOUND));
   }
 
+  @Test
+  void returnsUnreadCountForCurrentRecipient() {
+    when(notificationRepository
+        .countByRecipient_IdAndReadAtIsNull(USER_ID))
+        .thenReturn(3L);
+
+    var response = service.getUnreadCount(USER_ID);
+
+    assertThat(response.data().unreadCount()).isEqualTo(3L);
+  }
+
+  @Test
+  void returnsZeroWhenRecipientHasNoUnreadNotifications() {
+    when(notificationRepository
+        .countByRecipient_IdAndReadAtIsNull(USER_ID))
+        .thenReturn(0L);
+
+    var response = service.getUnreadCount(USER_ID);
+
+    assertThat(response.data().unreadCount()).isZero();
+  }
+
+  @Test
+  void marksAllUnreadNotificationsAtSameCurrentTime() {
+    when(notificationRepository.markAllAsRead(USER_ID, NOW))
+        .thenReturn(3);
+
+    service.readAll(USER_ID);
+
+    verify(notificationRepository).markAllAsRead(USER_ID, NOW);
+  }
+
+  @Test
+  void readAllSucceedsWhenThereAreNoUnreadNotifications() {
+    when(notificationRepository.markAllAsRead(USER_ID, NOW))
+        .thenReturn(0);
+
+    service.readAll(USER_ID);
+
+    verify(notificationRepository).markAllAsRead(USER_ID, NOW);
+  }
+
   private Notification notification(
       Long id,
       LocalDateTime createdAt

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.swbe.domain.notification.entity.Notification;
@@ -36,5 +37,22 @@ public interface NotificationRepository
   Optional<Notification> findByIdAndRecipient_Id(
       Long notificationId,
       Long recipientUserId
+  );
+
+  long countByRecipient_IdAndReadAtIsNull(Long recipientUserId);
+
+  @Modifying(
+      flushAutomatically = true,
+      clearAutomatically = true
+  )
+  @Query("""
+      UPDATE Notification notification
+      SET notification.readAt = :readAt
+      WHERE notification.recipient.id = :recipientUserId
+        AND notification.readAt IS NULL
+      """)
+  int markAllAsRead(
+      @Param("recipientUserId") Long recipientUserId,
+      @Param("readAt") LocalDateTime readAt
   );
 }
