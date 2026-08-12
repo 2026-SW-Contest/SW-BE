@@ -81,6 +81,10 @@ public class SecurityConfig {
             ).hasRole("STUDENT")
             .requestMatchers(
                 HttpMethod.POST,
+                "/api/stored-items/*/claims"
+            ).hasRole("STUDENT")
+            .requestMatchers(
+                HttpMethod.POST,
                 "/api/lost-item"
             ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
             .requestMatchers(

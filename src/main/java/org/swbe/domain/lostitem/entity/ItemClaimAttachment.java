@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,4 +33,19 @@ public class ItemClaimAttachment {
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "file_id")
   private FileResource file;
+
+  private ItemClaimAttachment(
+      ItemClaim itemClaim,
+      FileResource file
+  ) {
+    this.itemClaim = Objects.requireNonNull(itemClaim);
+    this.file = Objects.requireNonNull(file);
+  }
+
+  public static ItemClaimAttachment attach(
+      ItemClaim itemClaim,
+      FileResource file
+  ) {
+    return new ItemClaimAttachment(itemClaim, file);
+  }
 }
