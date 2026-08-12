@@ -148,9 +148,11 @@ public class FacilityRequest {
     );
 
     return switch (currentStatus) {
-      case RECEIVED -> nextStatus == FacilityRequestStatus.IN_PROGRESS
-          || nextStatus == FacilityRequestStatus.COMPLETED;
-      case IN_PROGRESS -> nextStatus == FacilityRequestStatus.COMPLETED;
+      case WAITING -> nextStatus == FacilityRequestStatus.IN_PROGRESS
+          || nextStatus == FacilityRequestStatus.COMPLETED
+          || nextStatus == FacilityRequestStatus.REJECTED;
+      case IN_PROGRESS -> nextStatus == FacilityRequestStatus.COMPLETED
+          || nextStatus == FacilityRequestStatus.REJECTED;
       default -> false;
     };
   }

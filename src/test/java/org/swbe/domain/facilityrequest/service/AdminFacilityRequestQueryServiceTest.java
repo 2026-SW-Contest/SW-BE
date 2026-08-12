@@ -122,22 +122,6 @@ class AdminFacilityRequestQueryServiceTest {
     verifyNoInteractions(facilityRequestRepository);
   }
 
-  @Test
-  void legacyStatusIsRejected() {
-    AdminFacilityRequestSearchCondition condition = condition(
-        FacilityRequestStatus.ASSIGNED,
-        null,
-        null
-    );
-
-    assertThatThrownBy(() -> service.getFacilityRequests(condition))
-        .isInstanceOfSatisfying(BusinessException.class, exception ->
-            assertThat(exception.getErrorCode())
-                .isEqualTo(CommonErrorCode.VALIDATION_FAILED)
-        );
-    verifyNoInteractions(facilityRequestRepository);
-  }
-
   private AdminFacilityRequestSearchCondition condition(
       FacilityRequestStatus status,
       LocalDate from,

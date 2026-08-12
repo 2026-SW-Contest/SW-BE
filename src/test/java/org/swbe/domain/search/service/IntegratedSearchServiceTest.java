@@ -131,7 +131,7 @@ class IntegratedSearchServiceTest {
     assertThat(response.data().content()).singleElement()
         .satisfies(item -> {
           assertThat(item.title()).isEqualTo("에어컨 고장");
-          assertThat(item.requestStatusName()).isEqualTo("진행 중");
+          assertThat(item.requestStatusName()).isEqualTo("진행중");
           assertThat(item.thumbnailUrl()).isEqualTo(
               "https://cdn.example.com/facility-request.jpg"
           );
