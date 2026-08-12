@@ -83,7 +83,7 @@ public class ClaimStatusHistory {
         itemClaim,
         changedBy,
         null,
-        ItemClaimStatus.IN_PROGRESS,
+        ItemClaimStatus.WAITING,
         null,
         changedAt
     );

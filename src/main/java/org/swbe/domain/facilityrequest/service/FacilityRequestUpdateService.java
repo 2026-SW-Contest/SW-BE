@@ -175,7 +175,7 @@ public class FacilityRequestUpdateService {
     }
   }
 
-  // 문의가 접수 상태여서 수정 가능한지 엔티티를 통해 확인한다.
+  // 문의가 대기 상태여서 수정 가능한지 엔티티를 통해 확인한다.
   private void validateEditable(FacilityRequest facilityRequest) {
     if (!facilityRequest.isEditable()) {
       throw new BusinessException(

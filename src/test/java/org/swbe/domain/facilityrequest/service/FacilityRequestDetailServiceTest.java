@@ -75,8 +75,8 @@ class FacilityRequestDetailServiceTest {
   }
 
   @Test
-  void ownerCanEditAndDeleteReceivedRequest() {
-    FacilityRequest request = request(10L, "RECEIVED");
+  void ownerCanEditAndDeleteWaitingRequest() {
+    FacilityRequest request = request(10L, "WAITING");
     when(request.isRequestedBy(7L)).thenReturn(true);
     when(request.isEditable()).thenReturn(true);
     when(facilityRequestRepository.findDetailById(10L))
@@ -97,7 +97,7 @@ class FacilityRequestDetailServiceTest {
 
   @Test
   void nonOwnerCanViewRequestButCannotEditOrDelete() {
-    FacilityRequest request = request(10L, "CHECKING");
+    FacilityRequest request = request(10L, "IN_PROGRESS");
     when(facilityRequestRepository.findDetailById(10L))
         .thenReturn(Optional.of(request));
     when(attachmentRepository

@@ -130,7 +130,7 @@ class FacilityRequestCreateServiceTest {
     );
 
     assertThat(response.data().facilityRequestId()).isEqualTo(25L);
-    assertThat(response.data().requestStatus()).isEqualTo("RECEIVED");
+    assertThat(response.data().requestStatus()).isEqualTo("WAITING");
     assertThat(response.data().attachmentCount()).isEqualTo(1);
 
     ArgumentCaptor<FacilityRequest> requestCaptor =
