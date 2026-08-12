@@ -11,11 +11,15 @@ import org.swbe.domain.lostitem.dto.response.StoredItemCategoryResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemDetailDataResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemDetailResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemLocationResponse;
+import org.swbe.domain.lostitem.dto.response.MyItemClaimResultResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemOfficeResponse;
+import org.swbe.domain.lostitem.entity.ItemClaim;
+import org.swbe.domain.lostitem.entity.ItemClaimStatus;
 import org.swbe.domain.lostitem.entity.StoredItem;
 import org.swbe.domain.lostitem.entity.StoredItemAttachment;
 import org.swbe.domain.lostitem.exception.StoredItemErrorCode;
 import org.swbe.domain.lostitem.repository.StoredItemAttachmentRepository;
+import org.swbe.domain.lostitem.repository.ItemClaimRepository;
 import org.swbe.domain.lostitem.repository.StoredItemRepository;
 import org.swbe.global.error.BusinessException;
 
@@ -26,9 +30,13 @@ public class StoredItemDetailService {
 
   private final StoredItemRepository storedItemRepository;
   private final StoredItemAttachmentRepository attachmentRepository;
+  private final ItemClaimRepository itemClaimRepository;
   private final FilePublicUrlResolver filePublicUrlResolver;
 
-  public StoredItemDetailResponse getStoredItem(Long storedItemId) {
+  public StoredItemDetailResponse getStoredItem(
+      Long storedItemId,
+      Long viewerUserId
+  ) {
     StoredItem item = storedItemRepository.findDetailById(storedItemId)
         .orElseThrow(this::notFound);
     List<StoredItemAttachmentResponse> attachments = attachmentRepository
@@ -63,9 +71,38 @@ public class StoredItemDetailService {
                 item.getOffice().getName()
             ),
             attachments,
+            resolveMyClaimResult(storedItemId, viewerUserId),
             item.getCreatedAt(),
             item.getUpdatedAt()
         )
+    );
+  }
+
+  private MyItemClaimResultResponse resolveMyClaimResult(
+      Long storedItemId,
+      Long viewerUserId
+  ) {
+    if (viewerUserId == null) {
+      return null;
+    }
+    return itemClaimRepository
+        .findFirstByStoredItem_IdAndClaimantUser_IdOrderByCreatedAtDescIdDesc(
+            storedItemId,
+            viewerUserId
+        )
+        .filter(claim -> claim.getClaimStatus().isDecision())
+        .map(this::toMyClaimResult)
+        .orElse(null);
+  }
+
+  private MyItemClaimResultResponse toMyClaimResult(ItemClaim claim) {
+    ItemClaimStatus decision = claim.getClaimStatus();
+    return new MyItemClaimResultResponse(
+        claim.getId(),
+        decision.name(),
+        decision.getDisplayName(),
+        claim.getDecisionMessage(),
+        claim.getDecidedAt()
     );
   }
 

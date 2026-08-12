@@ -15,6 +15,7 @@ public record StoredItemDetailDataResponse(
     String publicStatusName,
     StoredItemOfficeResponse office,
     List<StoredItemAttachmentResponse> attachments,
+    MyItemClaimResultResponse myClaimResult,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {

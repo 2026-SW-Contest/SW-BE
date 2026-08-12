@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
@@ -15,11 +16,14 @@ import org.junit.jupiter.api.Test;
 import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.service.FilePublicUrlResolver;
 import org.swbe.domain.lostitem.entity.ItemCategory;
+import org.swbe.domain.lostitem.entity.ItemClaim;
+import org.swbe.domain.lostitem.entity.ItemClaimStatus;
 import org.swbe.domain.lostitem.entity.LostItemOffice;
 import org.swbe.domain.lostitem.entity.StoredItem;
 import org.swbe.domain.lostitem.entity.StoredItemAttachment;
 import org.swbe.domain.lostitem.entity.StoredItemStatus;
 import org.swbe.domain.lostitem.repository.StoredItemAttachmentRepository;
+import org.swbe.domain.lostitem.repository.ItemClaimRepository;
 import org.swbe.domain.lostitem.repository.StoredItemRepository;
 import org.swbe.global.error.BusinessException;
 
@@ -27,6 +31,7 @@ class StoredItemDetailServiceTest {
 
   private StoredItemRepository storedItemRepository;
   private StoredItemAttachmentRepository attachmentRepository;
+  private ItemClaimRepository itemClaimRepository;
   private FilePublicUrlResolver filePublicUrlResolver;
   private StoredItemDetailService service;
 
@@ -34,10 +39,12 @@ class StoredItemDetailServiceTest {
   void setUp() {
     storedItemRepository = mock(StoredItemRepository.class);
     attachmentRepository = mock(StoredItemAttachmentRepository.class);
+    itemClaimRepository = mock(ItemClaimRepository.class);
     filePublicUrlResolver = mock(FilePublicUrlResolver.class);
     service = new StoredItemDetailService(
         storedItemRepository,
         attachmentRepository,
+        itemClaimRepository,
         filePublicUrlResolver
     );
   }
@@ -57,7 +64,7 @@ class StoredItemDetailServiceTest {
     when(filePublicUrlResolver.resolve(file))
         .thenReturn("/api/files/31");
 
-    var response = service.getStoredItem(25L);
+    var response = service.getStoredItem(25L, null);
 
     assertThat(response.data().storedItemId()).isEqualTo(25L);
     assertThat(response.data().description()).isEqualTo("공개 설명");
@@ -74,6 +81,96 @@ class StoredItemDetailServiceTest {
           assertThat(result.originalFilename()).isEqualTo("wallet.jpg");
           assertThat(result.fileUrl()).isEqualTo("/api/files/31");
         });
+    assertThat(response.data().myClaimResult()).isNull();
+    verifyNoInteractions(itemClaimRepository);
+  }
+
+  @Test
+  void returnsLatestApprovedClaimOnlyToItsClaimant() {
+    StoredItem item = item();
+    ItemClaim claim = decisionClaim(ItemClaimStatus.APPROVED, "승인 메시지");
+    when(storedItemRepository.findDetailById(25L))
+        .thenReturn(Optional.of(item));
+    when(attachmentRepository.findPublicImagesByStoredItemId(25L))
+        .thenReturn(List.of());
+    when(itemClaimRepository
+        .findFirstByStoredItem_IdAndClaimantUser_IdOrderByCreatedAtDescIdDesc(
+            25L,
+            7L
+        )).thenReturn(Optional.of(claim));
+
+    var response = service.getStoredItem(25L, 7L);
+
+    assertThat(response.data().myClaimResult()).satisfies(result -> {
+      assertThat(result.itemClaimId()).isEqualTo(31L);
+      assertThat(result.decision()).isEqualTo("APPROVED");
+      assertThat(result.decisionName()).isEqualTo("승인");
+      assertThat(result.message()).isEqualTo("승인 메시지");
+      assertThat(result.decidedAt()).isEqualTo(
+          LocalDateTime.of(2026, 8, 12, 14, 30)
+      );
+    });
+  }
+
+  @Test
+  void returnsRejectedClaimWithReasonToItsClaimant() {
+    StoredItem item = item();
+    ItemClaim claim = decisionClaim(ItemClaimStatus.REJECTED, "정보 부족");
+    when(storedItemRepository.findDetailById(25L))
+        .thenReturn(Optional.of(item));
+    when(attachmentRepository.findPublicImagesByStoredItemId(25L))
+        .thenReturn(List.of());
+    when(itemClaimRepository
+        .findFirstByStoredItem_IdAndClaimantUser_IdOrderByCreatedAtDescIdDesc(
+            25L,
+            7L
+        )).thenReturn(Optional.of(claim));
+
+    var response = service.getStoredItem(25L, 7L);
+
+    assertThat(response.data().myClaimResult()).satisfies(result -> {
+      assertThat(result.decision()).isEqualTo("REJECTED");
+      assertThat(result.decisionName()).isEqualTo("거부");
+      assertThat(result.message()).isEqualTo("정보 부족");
+    });
+  }
+
+  @Test
+  void latestWaitingClaimHidesPreviousDecisionResult() {
+    StoredItem item = item();
+    ItemClaim waitingClaim = mock(ItemClaim.class);
+    when(waitingClaim.getClaimStatus()).thenReturn(ItemClaimStatus.WAITING);
+    when(storedItemRepository.findDetailById(25L))
+        .thenReturn(Optional.of(item));
+    when(attachmentRepository.findPublicImagesByStoredItemId(25L))
+        .thenReturn(List.of());
+    when(itemClaimRepository
+        .findFirstByStoredItem_IdAndClaimantUser_IdOrderByCreatedAtDescIdDesc(
+            25L,
+            7L
+        )).thenReturn(Optional.of(waitingClaim));
+
+    var response = service.getStoredItem(25L, 7L);
+
+    assertThat(response.data().myClaimResult()).isNull();
+  }
+
+  @Test
+  void userWithoutClaimReceivesNoDecisionResult() {
+    StoredItem item = item();
+    when(storedItemRepository.findDetailById(25L))
+        .thenReturn(Optional.of(item));
+    when(attachmentRepository.findPublicImagesByStoredItemId(25L))
+        .thenReturn(List.of());
+    when(itemClaimRepository
+        .findFirstByStoredItem_IdAndClaimantUser_IdOrderByCreatedAtDescIdDesc(
+            25L,
+            99L
+        )).thenReturn(Optional.empty());
+
+    var response = service.getStoredItem(25L, 99L);
+
+    assertThat(response.data().myClaimResult()).isNull();
   }
 
   @Test
@@ -81,7 +178,7 @@ class StoredItemDetailServiceTest {
     when(storedItemRepository.findDetailById(99L))
         .thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> service.getStoredItem(99L))
+    assertThatThrownBy(() -> service.getStoredItem(99L, null))
         .isInstanceOf(BusinessException.class)
         .satisfies(exception -> assertThat(
             ((BusinessException) exception).getErrorCode().code()
@@ -112,5 +209,19 @@ class StoredItemDetailServiceTest {
         LocalDateTime.of(2026, 8, 10, 14, 30)
     );
     return item;
+  }
+
+  private ItemClaim decisionClaim(
+      ItemClaimStatus status,
+      String message
+  ) {
+    ItemClaim claim = mock(ItemClaim.class);
+    when(claim.getId()).thenReturn(31L);
+    when(claim.getClaimStatus()).thenReturn(status);
+    when(claim.getDecisionMessage()).thenReturn(message);
+    when(claim.getDecidedAt()).thenReturn(
+        LocalDateTime.of(2026, 8, 12, 14, 30)
+    );
+    return claim;
   }
 }

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +20,7 @@ import org.swbe.domain.lostitem.dto.response.StoredItemListResponse;
 import org.swbe.domain.lostitem.entity.StoredItemStatus;
 import org.swbe.domain.lostitem.service.StoredItemDetailService;
 import org.swbe.domain.lostitem.service.StoredItemQueryService;
+import org.swbe.global.security.AppUserPrincipal;
 
 @RestController
 @RequestMapping("/api/stored-items")
@@ -56,8 +58,12 @@ public class StoredItemController {
 
   @GetMapping("/{storedItemId}")
   public StoredItemDetailResponse getStoredItem(
-      @PathVariable @Positive Long storedItemId
+      @PathVariable @Positive Long storedItemId,
+      @AuthenticationPrincipal AppUserPrincipal principal
   ) {
-    return storedItemDetailService.getStoredItem(storedItemId);
+    return storedItemDetailService.getStoredItem(
+        storedItemId,
+        principal == null ? null : principal.getUserId()
+    );
   }
 }
