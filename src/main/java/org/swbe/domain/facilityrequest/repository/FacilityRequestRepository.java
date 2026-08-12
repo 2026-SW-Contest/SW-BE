@@ -1,6 +1,7 @@
 package org.swbe.domain.facilityrequest.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,29 @@ public interface FacilityRequestRepository extends
   })
   @Query("SELECT request FROM FacilityRequest request WHERE request.id = :id")
   Optional<FacilityRequest> findAdminDetailById(@Param("id") Long id);
+
+  @Query("""
+      SELECT request
+      FROM FacilityRequest request
+      JOIN FETCH request.facilityCategory category
+      JOIN FETCH request.location location
+      WHERE request.requester.id = :requesterUserId
+        AND (
+          :cursorCreatedAt IS NULL
+          OR request.createdAt < :cursorCreatedAt
+          OR (
+            request.createdAt = :cursorCreatedAt
+            AND request.id < :cursorId
+          )
+        )
+      ORDER BY request.createdAt DESC, request.id DESC
+      """)
+  List<FacilityRequest> findAllByRequesterIdAndCursor(
+      @Param("requesterUserId") Long requesterUserId,
+      @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+      @Param("cursorId") Long cursorId,
+      Pageable pageable
+  );
 
   @Query(
       value = """

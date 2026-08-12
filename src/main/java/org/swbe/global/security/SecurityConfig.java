@@ -87,6 +87,10 @@ public class SecurityConfig {
                 "/api/facility-requests"
             ).hasRole("STUDENT")
             .requestMatchers(
+                HttpMethod.GET,
+                "/api/users/me/facility-requests"
+            ).hasRole("STUDENT")
+            .requestMatchers(
                 HttpMethod.POST,
                 "/api/stored-items/*/claims"
             ).hasRole("STUDENT")
