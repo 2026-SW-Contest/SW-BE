@@ -70,6 +70,8 @@ public class SecurityConfig {
                 "/api/item-categories",
                 "/api/facility-requests",
                 "/api/facility-requests/*",
+                "/api/stored-items",
+                "/api/stored-items/*",
                 "/api/files/*",
                 "/api/search/**"
             ).permitAll()

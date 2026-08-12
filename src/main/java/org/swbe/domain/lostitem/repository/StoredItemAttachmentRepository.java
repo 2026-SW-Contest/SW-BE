@@ -12,6 +12,21 @@ public interface StoredItemAttachmentRepository
   @Query("""
       SELECT attachment
       FROM StoredItemAttachment attachment
+      JOIN FETCH attachment.file file
+      WHERE attachment.storedItem.id = :storedItemId
+        AND file.deletedAt IS NULL
+      ORDER BY
+        CASE WHEN attachment.primary = true THEN 0 ELSE 1 END,
+        attachment.displayOrder,
+        attachment.id
+      """)
+  List<StoredItemAttachment> findPublicImagesByStoredItemId(
+      @Param("storedItemId") Long storedItemId
+  );
+
+  @Query("""
+      SELECT attachment
+      FROM StoredItemAttachment attachment
       JOIN FETCH attachment.storedItem item
       JOIN FETCH attachment.file file
       WHERE item.id IN :storedItemIds
