@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockMultipartFile;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestCreateDataResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestCreateResponse;
+import org.swbe.domain.facilityrequest.dto.response.FacilityRequestAdminResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityCategoryResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailDataResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailResponse;
@@ -239,6 +240,12 @@ class FacilityRequestControllerTest {
         List.of(),
         false,
         false,
+        false,
+        List.of(new FacilityRequestAdminResponse(
+            3L,
+            "Inspection started.",
+            LocalDateTime.of(2026, 8, 1, 16, 5)
+        )),
         LocalDateTime.of(2026, 8, 1, 16, 0),
         LocalDateTime.of(2026, 8, 1, 16, 10)
     );
@@ -253,8 +260,13 @@ class FacilityRequestControllerTest {
         .andExpect(jsonPath("$.data.category.categoryId").value(1))
         .andExpect(jsonPath("$.data.location.locationId").value(2))
         .andExpect(jsonPath("$.data.attachments.length()").value(0))
+        .andExpect(jsonPath("$.data.ownedByCurrentUser").value(false))
         .andExpect(jsonPath("$.data.editable").value(false))
-        .andExpect(jsonPath("$.data.deletable").value(false));
+        .andExpect(jsonPath("$.data.deletable").value(false))
+        .andExpect(jsonPath("$.data.adminResponses.length()").value(1))
+        .andExpect(jsonPath("$.data.adminResponses[0].responseId").value(3))
+        .andExpect(jsonPath("$.data.adminResponses[0].content")
+            .value("Inspection started."));
   }
 
   @Test
