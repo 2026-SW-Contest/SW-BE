@@ -58,6 +58,32 @@ public interface ItemClaimRepository
       SELECT claim
       FROM ItemClaim claim
       JOIN FETCH claim.storedItem item
+      LEFT JOIN FETCH claim.claimantUser
+      LEFT JOIN FETCH claim.temporaryClaimant
+      WHERE item.office.id = :officeId
+        AND (:status IS NULL OR claim.claimStatus = :status)
+        AND (
+          :cursorCreatedAt IS NULL
+          OR claim.createdAt < :cursorCreatedAt
+          OR (
+            claim.createdAt = :cursorCreatedAt
+            AND claim.id < :cursorId
+          )
+        )
+      ORDER BY claim.createdAt DESC, claim.id DESC
+      """)
+  List<ItemClaim> findAllByOfficeIdAndCursor(
+      @Param("officeId") Long officeId,
+      @Param("status") ItemClaimStatus status,
+      @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+      @Param("cursorId") Long cursorId,
+      Pageable pageable
+  );
+
+  @Query("""
+      SELECT claim
+      FROM ItemClaim claim
+      JOIN FETCH claim.storedItem item
       JOIN FETCH item.office
       LEFT JOIN FETCH claim.claimantUser
       LEFT JOIN FETCH claim.temporaryClaimant

@@ -18,6 +18,9 @@ import org.swbe.domain.lostitem.dto.response.ItemClaimDetailResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimListItemResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimListResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimSliceResponse;
+import org.swbe.domain.lostitem.dto.response.OfficeItemClaimListItemResponse;
+import org.swbe.domain.lostitem.dto.response.OfficeItemClaimListResponse;
+import org.swbe.domain.lostitem.dto.response.OfficeItemClaimSliceResponse;
 import org.swbe.domain.lostitem.entity.ClaimStatusHistory;
 import org.swbe.domain.lostitem.entity.ItemClaim;
 import org.swbe.domain.lostitem.entity.ItemClaimAttachment;
@@ -28,6 +31,7 @@ import org.swbe.domain.lostitem.exception.StoredItemErrorCode;
 import org.swbe.domain.lostitem.repository.ClaimStatusHistoryRepository;
 import org.swbe.domain.lostitem.repository.ItemClaimAttachmentRepository;
 import org.swbe.domain.lostitem.repository.ItemClaimRepository;
+import org.swbe.domain.lostitem.repository.LostItemOfficeRepository;
 import org.swbe.domain.lostitem.repository.OfficeStaffAssignmentRepository;
 import org.swbe.domain.lostitem.repository.StoredItemRepository;
 import org.swbe.global.error.BusinessException;
@@ -41,6 +45,7 @@ public class ItemClaimQueryService {
   private final ItemClaimRepository itemClaimRepository;
   private final ItemClaimAttachmentRepository attachmentRepository;
   private final ClaimStatusHistoryRepository historyRepository;
+  private final LostItemOfficeRepository officeRepository;
   private final OfficeStaffAssignmentRepository assignmentRepository;
   private final ItemClaimThumbnailService thumbnailService;
   private final PrivateFileUrlResolver privateFileUrlResolver;
@@ -57,7 +62,11 @@ public class ItemClaimQueryService {
         .orElseThrow(() -> new BusinessException(
             StoredItemErrorCode.NOT_FOUND
         ));
-    validateOfficeAccess(storedItem, requesterUserId, admin);
+    validateOfficeAccess(
+        storedItem.getOffice().getId(),
+        requesterUserId,
+        admin
+    );
 
     ItemClaimCursor cursor = condition.cursor() == null
         ? null
@@ -92,6 +101,53 @@ public class ItemClaimQueryService {
     ));
   }
 
+  public OfficeItemClaimListResponse getOfficeItemClaims(
+      Long officeId,
+      ItemClaimSearchCondition condition,
+      Long requesterUserId,
+      boolean admin
+  ) {
+    if (!officeRepository.existsById(officeId)) {
+      throw new BusinessException(ItemClaimErrorCode.OFFICE_NOT_FOUND);
+    }
+    validateOfficeAccess(officeId, requesterUserId, admin);
+
+    ItemClaimCursor cursor = condition.cursor() == null
+        ? null
+        : cursorCodec.decode(condition.cursor());
+    List<ItemClaim> matches = itemClaimRepository
+        .findAllByOfficeIdAndCursor(
+            officeId,
+            condition.status(),
+            cursor == null ? null : cursor.createdAt(),
+            cursor == null ? null : cursor.id(),
+            PageRequest.of(0, condition.size() + 1)
+        );
+    boolean hasNext = matches.size() > condition.size();
+    List<ItemClaim> content = hasNext
+        ? matches.subList(0, condition.size())
+        : matches;
+    Map<Long, ItemClaimAttachmentSummary> summaries = content.isEmpty()
+        ? Map.of()
+        : thumbnailService.resolveAll(
+            content.stream().map(ItemClaim::getId).toList()
+        );
+    List<OfficeItemClaimListItemResponse> responses = content.stream()
+        .map(claim -> toOfficeListItemResponse(
+            claim,
+            summaries.get(claim.getId())
+        ))
+        .toList();
+
+    return new OfficeItemClaimListResponse(
+        new OfficeItemClaimSliceResponse(
+            responses,
+            nextCursor(content, hasNext),
+            hasNext
+        )
+    );
+  }
+
   public ItemClaimDetailResponse getItemClaim(
       Long itemClaimId,
       Long requesterUserId,
@@ -102,7 +158,7 @@ public class ItemClaimQueryService {
             ItemClaimErrorCode.NOT_FOUND
         ));
     validateOfficeAccess(
-        claim.getStoredItem(),
+        claim.getStoredItem().getOffice().getId(),
         requesterUserId,
         admin
     );
@@ -165,6 +221,27 @@ public class ItemClaimQueryService {
     );
   }
 
+  private OfficeItemClaimListItemResponse toOfficeListItemResponse(
+      ItemClaim claim,
+      ItemClaimAttachmentSummary summary
+  ) {
+    ItemClaimStatus status = claim.getClaimStatus();
+    StoredItem storedItem = claim.getStoredItem();
+    return new OfficeItemClaimListItemResponse(
+        claim.getId(),
+        storedItem.getId(),
+        storedItem.getItemName(),
+        claimantName(claim),
+        studentNumber(claim),
+        claim.getRequestMethod(),
+        status.name(),
+        status.getDisplayName(),
+        summary == null ? null : summary.thumbnailUrl(),
+        summary == null ? 0 : summary.attachmentCount(),
+        claim.getCreatedAt()
+    );
+  }
+
   private ClaimStatusHistoryResponse toHistoryResponse(
       ClaimStatusHistory history
   ) {
@@ -185,13 +262,13 @@ public class ItemClaimQueryService {
   }
 
   private void validateOfficeAccess(
-      StoredItem storedItem,
+      Long officeId,
       Long requesterUserId,
       boolean admin
   ) {
     if (!admin && !assignmentRepository
         .existsByOffice_IdAndUser_IdAndEndedAtIsNull(
-            storedItem.getOffice().getId(),
+            officeId,
             requesterUserId
         )) {
       throw new BusinessException(ItemClaimErrorCode.ACCESS_DENIED);

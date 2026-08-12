@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.data.domain.Pageable;
 import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.service.PrivateFileUrlResolver;
@@ -31,6 +32,7 @@ import org.swbe.domain.lostitem.exception.ItemClaimErrorCode;
 import org.swbe.domain.lostitem.repository.ClaimStatusHistoryRepository;
 import org.swbe.domain.lostitem.repository.ItemClaimAttachmentRepository;
 import org.swbe.domain.lostitem.repository.ItemClaimRepository;
+import org.swbe.domain.lostitem.repository.LostItemOfficeRepository;
 import org.swbe.domain.lostitem.repository.OfficeStaffAssignmentRepository;
 import org.swbe.domain.lostitem.repository.StoredItemRepository;
 import org.swbe.domain.user.entity.AppUser;
@@ -42,6 +44,7 @@ class ItemClaimQueryServiceTest {
   private ItemClaimRepository itemClaimRepository;
   private ItemClaimAttachmentRepository attachmentRepository;
   private ClaimStatusHistoryRepository historyRepository;
+  private LostItemOfficeRepository officeRepository;
   private OfficeStaffAssignmentRepository assignmentRepository;
   private ItemClaimThumbnailService thumbnailService;
   private PrivateFileUrlResolver privateFileUrlResolver;
@@ -54,12 +57,14 @@ class ItemClaimQueryServiceTest {
     itemClaimRepository = mock(ItemClaimRepository.class);
     attachmentRepository = mock(ItemClaimAttachmentRepository.class);
     historyRepository = mock(ClaimStatusHistoryRepository.class);
+    officeRepository = mock(LostItemOfficeRepository.class);
     assignmentRepository = mock(OfficeStaffAssignmentRepository.class);
     thumbnailService = mock(ItemClaimThumbnailService.class);
     privateFileUrlResolver = mock(PrivateFileUrlResolver.class);
     storedItem = storedItem();
     when(storedItemRepository.findDetailById(25L))
         .thenReturn(Optional.of(storedItem));
+    when(officeRepository.existsById(3L)).thenReturn(true);
     when(assignmentRepository
         .existsByOffice_IdAndUser_IdAndEndedAtIsNull(3L, 7L))
         .thenReturn(true);
@@ -68,10 +73,201 @@ class ItemClaimQueryServiceTest {
         itemClaimRepository,
         attachmentRepository,
         historyRepository,
+        officeRepository,
         assignmentRepository,
         thumbnailService,
         privateFileUrlResolver,
         new ItemClaimCursorCodec()
+    );
+  }
+
+  @Test
+  void assignedStaffGetsOfficeClaimsWithStoredItemAndCursor() {
+    ItemClaim first = memberClaim(
+        31L,
+        LocalDateTime.of(2026, 8, 12, 15, 0),
+        "정석우",
+        "60251423"
+    );
+    ItemClaim second = memberClaim(
+        30L,
+        LocalDateTime.of(2026, 8, 12, 14, 0),
+        "홍길동",
+        "60250001"
+    );
+    when(itemClaimRepository.findAllByOfficeIdAndCursor(
+        eq(3L),
+        eq(ItemClaimStatus.WAITING),
+        eq(null),
+        eq(null),
+        any(Pageable.class)
+    )).thenReturn(List.of(first, second));
+    when(thumbnailService.resolveAll(List.of(31L)))
+        .thenReturn(Map.of(
+            31L,
+            new ItemClaimAttachmentSummary("https://cdn/proof.jpg", 2)
+        ));
+
+    var response = service.getOfficeItemClaims(
+        3L,
+        new ItemClaimSearchCondition(
+            ItemClaimStatus.WAITING,
+            null,
+            1
+        ),
+        7L,
+        false
+    );
+
+    assertThat(response.data().content()).singleElement()
+        .satisfies(item -> {
+          assertThat(item.itemClaimId()).isEqualTo(31L);
+          assertThat(item.storedItemId()).isEqualTo(25L);
+          assertThat(item.itemName()).isEqualTo("검은색 반지갑");
+          assertThat(item.claimantName()).isEqualTo("정석우");
+          assertThat(item.studentNumber()).isEqualTo("60251423");
+          assertThat(item.requestMethod()).isEqualTo("ONLINE");
+          assertThat(item.claimStatus()).isEqualTo("WAITING");
+          assertThat(item.claimStatusName()).isEqualTo("대기");
+          assertThat(item.thumbnailUrl())
+              .isEqualTo("https://cdn/proof.jpg");
+          assertThat(item.attachmentCount()).isEqualTo(2);
+        });
+    assertThat(response.data().hasNext()).isTrue();
+    assertThat(response.data().nextCursor()).isNotBlank();
+    ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(
+        Pageable.class
+    );
+    verify(itemClaimRepository).findAllByOfficeIdAndCursor(
+        eq(3L),
+        eq(ItemClaimStatus.WAITING),
+        eq(null),
+        eq(null),
+        pageableCaptor.capture()
+    );
+    assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(2);
+  }
+
+  @Test
+  void officeListPassesDecodedCursorToRepository() {
+    LocalDateTime cursorCreatedAt = LocalDateTime.of(
+        2026, 8, 12, 15, 0
+    );
+    String cursor = new ItemClaimCursorCodec().encode(
+        cursorCreatedAt,
+        31L
+    );
+    when(itemClaimRepository.findAllByOfficeIdAndCursor(
+        eq(3L),
+        eq(null),
+        eq(cursorCreatedAt),
+        eq(31L),
+        any(Pageable.class)
+    )).thenReturn(List.of());
+
+    var response = service.getOfficeItemClaims(
+        3L,
+        new ItemClaimSearchCondition(null, cursor, 20),
+        7L,
+        false
+    );
+
+    assertThat(response.data().content()).isEmpty();
+    assertThat(response.data().hasNext()).isFalse();
+    assertThat(response.data().nextCursor()).isNull();
+  }
+
+  @Test
+  void officeListSupportsTemporaryClaimantWithoutAttachments() {
+    ItemClaim claim = temporaryClaim(31L);
+    when(itemClaimRepository.findAllByOfficeIdAndCursor(
+        eq(3L),
+        eq(null),
+        eq(null),
+        eq(null),
+        any(Pageable.class)
+    )).thenReturn(List.of(claim));
+    when(thumbnailService.resolveAll(List.of(31L))).thenReturn(Map.of());
+
+    var response = service.getOfficeItemClaims(
+        3L,
+        new ItemClaimSearchCondition(null, null, 20),
+        7L,
+        false
+    );
+
+    var item = response.data().content().getFirst();
+    assertThat(item.claimantName()).isEqualTo("임시 신청자");
+    assertThat(item.studentNumber()).isEqualTo("60259999");
+    assertThat(item.thumbnailUrl()).isNull();
+    assertThat(item.attachmentCount()).isZero();
+  }
+
+  @Test
+  void missingOfficeReturnsNotFound() {
+    when(officeRepository.existsById(99L)).thenReturn(false);
+
+    assertBusinessError(
+        () -> service.getOfficeItemClaims(
+            99L,
+            new ItemClaimSearchCondition(null, null, 20),
+            7L,
+            false
+        ),
+        ItemClaimErrorCode.OFFICE_NOT_FOUND
+    );
+    verify(assignmentRepository, never())
+        .existsByOffice_IdAndUser_IdAndEndedAtIsNull(any(), any());
+  }
+
+  @Test
+  void staffWithoutOfficeAssignmentCannotReadOfficeClaims() {
+    when(assignmentRepository
+        .existsByOffice_IdAndUser_IdAndEndedAtIsNull(3L, 7L))
+        .thenReturn(false);
+
+    assertBusinessError(
+        () -> service.getOfficeItemClaims(
+            3L,
+            new ItemClaimSearchCondition(null, null, 20),
+            7L,
+            false
+        ),
+        ItemClaimErrorCode.ACCESS_DENIED
+    );
+    verify(itemClaimRepository, never())
+        .findAllByOfficeIdAndCursor(
+            any(), any(), any(), any(), any()
+        );
+  }
+
+  @Test
+  void adminReadsOfficeClaimsWithoutAssignment() {
+    when(itemClaimRepository.findAllByOfficeIdAndCursor(
+        eq(3L), eq(null), eq(null), eq(null), any(Pageable.class)
+    )).thenReturn(List.of());
+
+    service.getOfficeItemClaims(
+        3L,
+        new ItemClaimSearchCondition(null, null, 20),
+        7L,
+        true
+    );
+
+    verify(assignmentRepository, never())
+        .existsByOffice_IdAndUser_IdAndEndedAtIsNull(any(), any());
+  }
+
+  @Test
+  void malformedOfficeClaimCursorIsRejected() {
+    assertBusinessError(
+        () -> service.getOfficeItemClaims(
+            3L,
+            new ItemClaimSearchCondition(null, "invalid", 20),
+            7L,
+            false
+        ),
+        ItemClaimErrorCode.INVALID_CURSOR
     );
   }
 
@@ -263,6 +459,7 @@ class ItemClaimQueryServiceTest {
     StoredItem item = mock(StoredItem.class);
     LostItemOffice office = mock(LostItemOffice.class);
     when(item.getId()).thenReturn(25L);
+    when(item.getItemName()).thenReturn("검은색 반지갑");
     when(item.getOffice()).thenReturn(office);
     when(office.getId()).thenReturn(3L);
     return item;

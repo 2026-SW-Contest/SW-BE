@@ -79,6 +79,7 @@ public class SecurityConfig {
             .requestMatchers(
                 HttpMethod.GET,
                 "/api/stored-items/*/claims",
+                "/api/lost-item-offices/*/claims",
                 "/api/item-claims/*"
             ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
             .requestMatchers(
