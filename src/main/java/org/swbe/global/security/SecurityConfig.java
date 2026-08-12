@@ -88,6 +88,10 @@ public class SecurityConfig {
                 "/api/facility-requests/*"
             ).hasRole("STUDENT")
             .requestMatchers(
+                HttpMethod.DELETE,
+                "/api/stored-items/*"
+            ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
+            .requestMatchers(
                 HttpMethod.PATCH,
                 "/api/facility-requests/*"
             ).hasRole("STUDENT")

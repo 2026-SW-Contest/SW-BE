@@ -74,6 +74,16 @@ public enum StoredItemErrorCode implements ErrorCode {
       HttpStatus.CONFLICT,
       "STORED_ITEM_INVALID_STATUS_TRANSITION",
       "The requested stored item status transition is not allowed."
+  ),
+  NOT_DELETABLE(
+      HttpStatus.CONFLICT,
+      "STORED_ITEM_NOT_DELETABLE",
+      "Only stored items can be deleted."
+  ),
+  HAS_CLAIMS(
+      HttpStatus.CONFLICT,
+      "STORED_ITEM_HAS_CLAIMS",
+      "A stored item with ownership claims cannot be deleted."
   );
 
   private final HttpStatus status;
