@@ -66,6 +66,7 @@ public class SecurityConfig {
                 "/actuator/health",
                 "/actuator/health/**",
                 "/api/locations",
+                "/api/lost-item-offices",
                 "/api/facility-categories",
                 "/api/item-categories",
                 "/api/facility-requests",
