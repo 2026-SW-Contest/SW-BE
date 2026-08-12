@@ -20,10 +20,12 @@ import org.swbe.domain.file.service.FilePublicUrlResolver;
 import org.swbe.domain.facilityrequest.entity.FacilityCategory;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestAttachment;
+import org.swbe.domain.facilityrequest.entity.RequestComment;
 import org.swbe.domain.facilityrequest.exception.FacilityRequestErrorCode;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailResponse;
 import org.swbe.domain.facilityrequest.repository.FacilityRequestAttachmentRepository;
 import org.swbe.domain.facilityrequest.repository.FacilityRequestRepository;
+import org.swbe.domain.facilityrequest.repository.RequestCommentRepository;
 import org.swbe.global.error.BusinessException;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +36,9 @@ class FacilityRequestDetailServiceTest {
 
   @Mock
   private FacilityRequestAttachmentRepository attachmentRepository;
+
+  @Mock
+  private RequestCommentRepository requestCommentRepository;
 
   @Mock
   private FilePublicUrlResolver filePublicUrlResolver;
@@ -56,6 +61,12 @@ class FacilityRequestDetailServiceTest {
     when(attachmentRepository
         .findAllByFacilityRequest_IdAndFile_DeletedAtIsNullOrderByIdAsc(10L))
         .thenReturn(List.of(attachment));
+    when(requestCommentRepository
+        .findAllByFacilityRequest_IdAndCommentTypeAndInternalFalseOrderByCreatedAtAscIdAsc(
+            10L,
+            "ADMIN_RESPONSE"
+        ))
+        .thenReturn(List.of());
 
     FacilityRequestDetailResponse response =
         facilityRequestDetailService.getFacilityRequest(
@@ -70,8 +81,10 @@ class FacilityRequestDetailServiceTest {
         .isEqualTo(15L);
     assertThat(response.data().attachments().getFirst().fileUrl())
         .isEqualTo("https://cdn.example.com/image.jpg");
+    assertThat(response.data().ownedByCurrentUser()).isFalse();
     assertThat(response.data().editable()).isFalse();
     assertThat(response.data().deletable()).isFalse();
+    assertThat(response.data().adminResponses()).isEmpty();
   }
 
   @Test
@@ -79,10 +92,17 @@ class FacilityRequestDetailServiceTest {
     FacilityRequest request = request(10L, "WAITING");
     when(request.isRequestedBy(7L)).thenReturn(true);
     when(request.isEditable()).thenReturn(true);
+    when(request.isDeletable()).thenReturn(true);
     when(facilityRequestRepository.findDetailById(10L))
         .thenReturn(Optional.of(request));
     when(attachmentRepository
         .findAllByFacilityRequest_IdAndFile_DeletedAtIsNullOrderByIdAsc(10L))
+        .thenReturn(List.of());
+    when(requestCommentRepository
+        .findAllByFacilityRequest_IdAndCommentTypeAndInternalFalseOrderByCreatedAtAscIdAsc(
+            10L,
+            "ADMIN_RESPONSE"
+        ))
         .thenReturn(List.of());
 
     FacilityRequestDetailResponse response =
@@ -91,8 +111,33 @@ class FacilityRequestDetailServiceTest {
         7L
     );
 
+    assertThat(response.data().ownedByCurrentUser()).isTrue();
     assertThat(response.data().editable()).isTrue();
     assertThat(response.data().deletable()).isTrue();
+  }
+
+  @Test
+  void ownerOfInProgressRequestIsOwnedButCannotEditOrDelete() {
+    FacilityRequest request = request(10L, "IN_PROGRESS");
+    when(request.isRequestedBy(7L)).thenReturn(true);
+    when(facilityRequestRepository.findDetailById(10L))
+        .thenReturn(Optional.of(request));
+    when(attachmentRepository
+        .findAllByFacilityRequest_IdAndFile_DeletedAtIsNullOrderByIdAsc(10L))
+        .thenReturn(List.of());
+    when(requestCommentRepository
+        .findAllByFacilityRequest_IdAndCommentTypeAndInternalFalseOrderByCreatedAtAscIdAsc(
+            10L,
+            "ADMIN_RESPONSE"
+        ))
+        .thenReturn(List.of());
+
+    FacilityRequestDetailResponse response =
+        facilityRequestDetailService.getFacilityRequest(10L, 7L);
+
+    assertThat(response.data().ownedByCurrentUser()).isTrue();
+    assertThat(response.data().editable()).isFalse();
+    assertThat(response.data().deletable()).isFalse();
   }
 
   @Test
@@ -103,6 +148,18 @@ class FacilityRequestDetailServiceTest {
     when(attachmentRepository
         .findAllByFacilityRequest_IdAndFile_DeletedAtIsNullOrderByIdAsc(10L))
         .thenReturn(List.of());
+    RequestComment adminResponse = mock(RequestComment.class);
+    when(adminResponse.getId()).thenReturn(3L);
+    when(adminResponse.getContent()).thenReturn("Inspection started.");
+    when(adminResponse.getCreatedAt()).thenReturn(
+        LocalDateTime.of(2026, 8, 12, 16, 30)
+    );
+    when(requestCommentRepository
+        .findAllByFacilityRequest_IdAndCommentTypeAndInternalFalseOrderByCreatedAtAscIdAsc(
+            10L,
+            "ADMIN_RESPONSE"
+        ))
+        .thenReturn(List.of(adminResponse));
 
     FacilityRequestDetailResponse response =
         facilityRequestDetailService.getFacilityRequest(
@@ -111,8 +168,14 @@ class FacilityRequestDetailServiceTest {
     );
 
     assertThat(response.data().facilityRequestId()).isEqualTo(10L);
+    assertThat(response.data().ownedByCurrentUser()).isFalse();
     assertThat(response.data().editable()).isFalse();
     assertThat(response.data().deletable()).isFalse();
+    assertThat(response.data().adminResponses()).hasSize(1);
+    assertThat(response.data().adminResponses().getFirst().responseId())
+        .isEqualTo(3L);
+    assertThat(response.data().adminResponses().getFirst().content())
+        .isEqualTo("Inspection started.");
   }
 
   @Test
@@ -128,6 +191,7 @@ class FacilityRequestDetailServiceTest {
             ((BusinessException) exception).getErrorCode()
         ).isEqualTo(FacilityRequestErrorCode.NOT_FOUND));
     verifyNoInteractions(attachmentRepository);
+    verifyNoInteractions(requestCommentRepository);
   }
 
   private FacilityRequest request(

@@ -12,13 +12,16 @@ public record FacilityRequestDetailDataResponse(
     String requestStatus,
     String requestStatusName,
     List<FacilityRequestAttachmentResponse> attachments,
+    boolean ownedByCurrentUser,
     boolean editable,
     boolean deletable,
+    List<FacilityRequestAdminResponse> adminResponses,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {
 
   public FacilityRequestDetailDataResponse {
     attachments = List.copyOf(attachments);
+    adminResponses = List.copyOf(adminResponses);
   }
 }
