@@ -35,6 +35,11 @@ NOT_DELETABLE(
       "FACILITY_REQUEST_NOT_EDITABLE",
       "Only received facility requests can be updated."
   ),
+  INVALID_CURSOR(
+      HttpStatus.BAD_REQUEST,
+      "FACILITY_REQUEST_INVALID_CURSOR",
+      "The facility request cursor is invalid."
+  ),
   INVALID_REQUEST(
       HttpStatus.BAD_REQUEST,
       "INVALID_REQUEST",

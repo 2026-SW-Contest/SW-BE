@@ -18,8 +18,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListItemResponse;
-import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
-import org.swbe.domain.facilityrequest.dto.response.FacilityRequestPageResponse;
+import org.swbe.domain.facilityrequest.dto.response.MyFacilityRequestListResponse;
+import org.swbe.domain.facilityrequest.dto.response.MyFacilityRequestSliceResponse;
 import org.swbe.domain.facilityrequest.service.MyFacilityRequestQueryService;
 import org.swbe.domain.user.entity.AccountStatus;
 import org.swbe.global.security.AppUserPrincipal;
@@ -52,7 +52,7 @@ class MyFacilityRequestControllerTest {
   private UserDetailsService userDetailsService;
 
   @Test
-  void studentCanGetOwnFacilityRequests() throws Exception {
+  void studentCanGetOwnFacilityRequestsByCursor() throws Exception {
     FacilityRequestListItemResponse item =
         new FacilityRequestListItemResponse(
             25L,
@@ -64,18 +64,19 @@ class MyFacilityRequestControllerTest {
             "https://cdn.example.com/request-25.jpg",
             LocalDateTime.of(2026, 8, 12, 14, 30)
         );
-    FacilityRequestListResponse response = new FacilityRequestListResponse(
-        new FacilityRequestPageResponse(
-            List.of(item),
-            0,
-            20,
-            1,
-            1,
-            false
-        )
-    );
-    when(myFacilityRequestQueryService.getMyFacilityRequests(7L, 0, 20))
-        .thenReturn(response);
+    MyFacilityRequestListResponse response =
+        new MyFacilityRequestListResponse(
+            new MyFacilityRequestSliceResponse(
+                List.of(item),
+                "next-cursor",
+                true
+            )
+        );
+    when(myFacilityRequestQueryService.getMyFacilityRequests(
+        7L,
+        null,
+        20
+    )).thenReturn(response);
 
     mockMvc.perform(get("/api/users/me/facility-requests")
             .with(user(principal("ROLE_STUDENT"))))
@@ -86,8 +87,10 @@ class MyFacilityRequestControllerTest {
             .value("IN_PROGRESS"))
         .andExpect(jsonPath("$.data.content[0].thumbnailUrl")
             .value("https://cdn.example.com/request-25.jpg"))
-        .andExpect(jsonPath("$.data.page").value(0))
-        .andExpect(jsonPath("$.data.hasNext").value(false));
+        .andExpect(jsonPath("$.data.nextCursor").value("next-cursor"))
+        .andExpect(jsonPath("$.data.hasNext").value(true))
+        .andExpect(jsonPath("$.data.page").doesNotExist())
+        .andExpect(jsonPath("$.data.totalElements").doesNotExist());
   }
 
   @Test
@@ -104,9 +107,9 @@ class MyFacilityRequestControllerTest {
   }
 
   @Test
-  void invalidPageSizeIsRejected() throws Exception {
+  void invalidSizeIsRejected() throws Exception {
     mockMvc.perform(get("/api/users/me/facility-requests")
-            .queryParam("size", "101")
+            .queryParam("size", "51")
             .with(user(principal("ROLE_STUDENT"))))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("COMMON_VALIDATION_FAILED"));
