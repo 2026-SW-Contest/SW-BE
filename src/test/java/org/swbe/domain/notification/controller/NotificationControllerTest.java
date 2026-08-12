@@ -23,6 +23,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.swbe.domain.notification.dto.response.NotificationListItemResponse;
 import org.swbe.domain.notification.dto.response.NotificationListResponse;
 import org.swbe.domain.notification.dto.response.NotificationSliceResponse;
+import org.swbe.domain.notification.dto.response.NotificationUnreadCountDataResponse;
+import org.swbe.domain.notification.dto.response.NotificationUnreadCountResponse;
 import org.swbe.domain.notification.service.NotificationService;
 import org.swbe.domain.user.entity.AccountStatus;
 import org.swbe.global.security.AppUserPrincipal;
@@ -86,14 +88,43 @@ class NotificationControllerTest {
   }
 
   @Test
+  void authenticatedUserGetsUnreadNotificationCount() throws Exception {
+    when(notificationService.getUnreadCount(7L)).thenReturn(
+        new NotificationUnreadCountResponse(
+            new NotificationUnreadCountDataResponse(3L)
+        )
+    );
+
+    mockMvc.perform(get("/api/notifications/unread-count")
+            .with(user(principal())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.unreadCount").value(3));
+  }
+
+  @Test
+  void authenticatedUserMarksAllNotificationsAsRead() throws Exception {
+    mockMvc.perform(patch("/api/notifications/read-all")
+            .with(user(principal()))
+            .with(csrf()))
+        .andExpect(status().isNoContent());
+
+    verify(notificationService).readAll(7L);
+  }
+
+  @Test
   void anonymousUserCannotUseNotificationApi() throws Exception {
     mockMvc.perform(get("/api/notifications"))
+        .andExpect(status().isUnauthorized());
+    mockMvc.perform(get("/api/notifications/unread-count"))
         .andExpect(status().isUnauthorized());
   }
 
   @Test
   void readRequiresCsrfToken() throws Exception {
     mockMvc.perform(patch("/api/notifications/10/read")
+            .with(user(principal())))
+        .andExpect(status().isForbidden());
+    mockMvc.perform(patch("/api/notifications/read-all")
             .with(user(principal())))
         .andExpect(status().isForbidden());
   }
