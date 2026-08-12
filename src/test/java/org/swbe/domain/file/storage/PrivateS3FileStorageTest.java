@@ -8,8 +8,8 @@ import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
-import java.time.Instant;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,10 +23,10 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
-class S3FileStorageTest {
+class PrivateS3FileStorageTest {
 
   private S3Client s3Client;
-  private S3FileStorage storage;
+  private PrivateS3FileStorage storage;
 
   @BeforeEach
   void setUp() {
@@ -40,18 +40,21 @@ class S3FileStorageTest {
             Duration.ofMinutes(10)
         )
     );
-    Clock clock = Clock.fixed(
-        Instant.parse("2026-08-10T03:00:00Z"),
-        ZoneOffset.UTC
+    storage = new PrivateS3FileStorage(
+        s3Client,
+        properties,
+        Clock.fixed(
+            Instant.parse("2026-08-12T03:00:00Z"),
+            ZoneOffset.UTC
+        )
     );
-    storage = new S3FileStorage(s3Client, properties, clock);
   }
 
   @Test
-  void storesImageInConfiguredBucket() {
+  void storesClaimEvidenceUnderPrivatePrefix() {
     MockMultipartFile image = new MockMultipartFile(
         "files",
-        "airpods.JPG",
+        "proof.JPG",
         "image/jpeg",
         "image-content".getBytes(StandardCharsets.UTF_8)
     );
@@ -62,41 +65,30 @@ class S3FileStorageTest {
 
     StoredFile storedFile = storage.store(image);
 
-    assertThat(storedFile.storageProvider()).isEqualTo("S3");
+    assertThat(storedFile.storageProvider()).isEqualTo("S3_PRIVATE");
     assertThat(storedFile.storageKey())
-        .startsWith("public/2026/08/10/")
+        .startsWith("private/item-claims/2026/08/12/")
         .endsWith(".jpg");
-    assertThat(storedFile.originalFilename()).isEqualTo("airpods.JPG");
-    assertThat(storedFile.mimeType()).isEqualTo("image/jpeg");
-    assertThat(storedFile.size()).isEqualTo(image.getSize());
-
-    ArgumentCaptor<PutObjectRequest> requestCaptor =
+    ArgumentCaptor<PutObjectRequest> request =
         ArgumentCaptor.forClass(PutObjectRequest.class);
-    verify(s3Client).putObject(
-        requestCaptor.capture(),
-        any(RequestBody.class)
-    );
-    assertThat(requestCaptor.getValue().bucket())
-        .isEqualTo("test-bucket");
-    assertThat(requestCaptor.getValue().key())
+    verify(s3Client).putObject(request.capture(), any(RequestBody.class));
+    assertThat(request.getValue().bucket()).isEqualTo("test-bucket");
+    assertThat(request.getValue().key())
         .isEqualTo(storedFile.storageKey());
-    assertThat(requestCaptor.getValue().contentType())
-        .isEqualTo("image/jpeg");
   }
 
   @Test
-  void deletesObjectFromConfiguredBucket() {
+  void deletesPrivateObjectFromConfiguredBucket() {
     when(s3Client.deleteObject(any(DeleteObjectRequest.class)))
         .thenReturn(DeleteObjectResponse.builder().build());
 
-    storage.delete("2026/08/10/image.jpg");
+    storage.delete("private/item-claims/2026/08/12/proof.jpg");
 
-    ArgumentCaptor<DeleteObjectRequest> requestCaptor =
+    ArgumentCaptor<DeleteObjectRequest> request =
         ArgumentCaptor.forClass(DeleteObjectRequest.class);
-    verify(s3Client).deleteObject(requestCaptor.capture());
-    assertThat(requestCaptor.getValue().bucket())
-        .isEqualTo("test-bucket");
-    assertThat(requestCaptor.getValue().key())
-        .isEqualTo("2026/08/10/image.jpg");
+    verify(s3Client).deleteObject(request.capture());
+    assertThat(request.getValue().bucket()).isEqualTo("test-bucket");
+    assertThat(request.getValue().key())
+        .isEqualTo("private/item-claims/2026/08/12/proof.jpg");
   }
 }

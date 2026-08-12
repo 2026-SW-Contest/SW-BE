@@ -1,7 +1,13 @@
 package org.swbe.domain.lostitem.repository;
 
 import java.util.Collection;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.swbe.domain.lostitem.entity.ItemClaim;
 import org.swbe.domain.lostitem.entity.ItemClaimStatus;
 
@@ -14,5 +20,44 @@ public interface ItemClaimRepository
       Long storedItemId,
       Long claimantUserId,
       Collection<ItemClaimStatus> claimStatuses
+  );
+
+  @Query("""
+      SELECT claim
+      FROM ItemClaim claim
+      JOIN FETCH claim.storedItem item
+      LEFT JOIN FETCH claim.claimantUser
+      LEFT JOIN FETCH claim.temporaryClaimant
+      WHERE item.id = :storedItemId
+        AND (:status IS NULL OR claim.claimStatus = :status)
+        AND (
+          :cursorCreatedAt IS NULL
+          OR claim.createdAt < :cursorCreatedAt
+          OR (
+            claim.createdAt = :cursorCreatedAt
+            AND claim.id < :cursorId
+          )
+        )
+      ORDER BY claim.createdAt DESC, claim.id DESC
+      """)
+  List<ItemClaim> findAllByCursor(
+      @Param("storedItemId") Long storedItemId,
+      @Param("status") ItemClaimStatus status,
+      @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+      @Param("cursorId") Long cursorId,
+      Pageable pageable
+  );
+
+  @Query("""
+      SELECT claim
+      FROM ItemClaim claim
+      JOIN FETCH claim.storedItem item
+      JOIN FETCH item.office
+      LEFT JOIN FETCH claim.claimantUser
+      LEFT JOIN FETCH claim.temporaryClaimant
+      WHERE claim.id = :itemClaimId
+      """)
+  Optional<ItemClaim> findDetailById(
+      @Param("itemClaimId") Long itemClaimId
   );
 }

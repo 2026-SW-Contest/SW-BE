@@ -5,6 +5,21 @@ import org.swbe.global.error.ErrorCode;
 
 public enum ItemClaimErrorCode implements ErrorCode {
 
+  NOT_FOUND(
+      HttpStatus.NOT_FOUND,
+      "ITEM_CLAIM_NOT_FOUND",
+      "The ownership claim was not found."
+  ),
+  ACCESS_DENIED(
+      HttpStatus.FORBIDDEN,
+      "ITEM_CLAIM_ACCESS_DENIED",
+      "The user is not assigned to the lost item office."
+  ),
+  INVALID_CURSOR(
+      HttpStatus.BAD_REQUEST,
+      "ITEM_CLAIM_INVALID_CURSOR",
+      "The ownership claim cursor is invalid."
+  ),
   NOT_CLAIMABLE(
       HttpStatus.CONFLICT,
       "ITEM_CLAIM_NOT_CLAIMABLE",

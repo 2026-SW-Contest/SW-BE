@@ -84,8 +84,10 @@ class ItemClaimCreateServiceTest {
         .thenReturn(Optional.of(claimant));
     when(claimant.getName()).thenReturn("정석우");
     when(claimant.getStudentNumber()).thenReturn("60251423");
-    when(fileStorageRegistry.writeStorage()).thenReturn(fileStorage);
-    when(fileStorageRegistry.get("LOCAL")).thenReturn(fileStorage);
+    when(fileStorageRegistry.privateItemClaimStorage())
+        .thenReturn(fileStorage);
+    when(fileStorageRegistry.get("S3_PRIVATE"))
+        .thenReturn(fileStorage);
     when(itemClaimRepository.save(any(ItemClaim.class)))
         .thenAnswer(invocation -> {
           ItemClaim claim = invocation.getArgument(0);
@@ -287,7 +289,7 @@ class ItemClaimCreateServiceTest {
 
   private StoredFile storedFile(String filename, String storageKey) {
     return new StoredFile(
-        "LOCAL",
+        "S3_PRIVATE",
         storageKey,
         filename,
         "image/jpeg",

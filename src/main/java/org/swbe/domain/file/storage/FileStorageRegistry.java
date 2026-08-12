@@ -31,6 +31,10 @@ public class FileStorageRegistry {
     return get(writeProvider);
   }
 
+  public FileStorage privateItemClaimStorage() {
+    return get("S3_PRIVATE");
+  }
+
   public FileStorage get(String provider) {
     FileStorage storage = storages.get(normalize(provider));
     if (storage == null) {

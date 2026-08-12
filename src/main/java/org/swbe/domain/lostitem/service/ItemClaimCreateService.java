@@ -176,7 +176,7 @@ public class ItemClaimCreateService {
     List<ItemClaimAttachment> attachments = new ArrayList<>();
     for (MultipartFile file : files) {
       StoredFile storedFile = fileStorageRegistry
-          .writeStorage()
+          .privateItemClaimStorage()
           .store(file);
       storedFiles.add(storedFile);
       FileResource fileResource = FileResource.create(

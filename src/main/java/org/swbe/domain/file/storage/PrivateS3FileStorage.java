@@ -21,9 +21,10 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Component
 @RequiredArgsConstructor
-public class S3FileStorage implements FileStorage {
+public class PrivateS3FileStorage implements FileStorage {
 
-  private static final String STORAGE_PROVIDER = "S3";
+  private static final String STORAGE_PROVIDER = "S3_PRIVATE";
+  private static final String KEY_PREFIX = "private/item-claims/";
   private static final DateTimeFormatter DIRECTORY_FORMATTER =
       DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
@@ -67,7 +68,7 @@ public class S3FileStorage implements FileStorage {
       );
     } catch (IOException | SdkException exception) {
       throw new FileStorageException(
-          "Failed to store S3 object",
+          "Failed to store private S3 object",
           exception
       );
     }
@@ -83,7 +84,7 @@ public class S3FileStorage implements FileStorage {
       s3Client.deleteObject(request);
     } catch (SdkException exception) {
       throw new FileStorageException(
-          "Failed to delete S3 object",
+          "Failed to delete private S3 object",
           exception
       );
     }
@@ -92,7 +93,7 @@ public class S3FileStorage implements FileStorage {
   private String createStorageKey(String originalFilename) {
     String extension = extensionOf(originalFilename);
     String directory = LocalDate.now(clock).format(DIRECTORY_FORMATTER);
-    return "public/" + directory + "/" + UUID.randomUUID() + extension;
+    return KEY_PREFIX + directory + "/" + UUID.randomUUID() + extension;
   }
 
   private String safeOriginalFilename(String originalFilename) {

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.swbe.domain.file.config.FileStorageProperties;
 
@@ -15,12 +16,14 @@ class FileStorageRegistryTest {
   void selectsConfiguredWriteStorageAndProviderCaseInsensitively() {
     FileStorage local = storage("LOCAL");
     FileStorage s3 = storage("S3");
+    FileStorage privateS3 = storage("S3_PRIVATE");
     FileStorageRegistry registry = new FileStorageRegistry(
-        List.of(local, s3),
+        List.of(local, s3, privateS3),
         properties("s3", "bucket")
     );
 
     assertThat(registry.writeStorage()).isSameAs(s3);
+    assertThat(registry.privateItemClaimStorage()).isSameAs(privateS3);
     assertThat(registry.get("local")).isSameAs(local);
   }
 
@@ -48,7 +51,8 @@ class FileStorageRegistryTest {
         new FileStorageProperties.S3(
             "bucket",
             "ap-northeast-2",
-            ""
+            "",
+            Duration.ofMinutes(10)
         )
     );
 
@@ -75,7 +79,8 @@ class FileStorageRegistryTest {
         new FileStorageProperties.S3(
             bucket,
             "ap-northeast-2",
-            "https://example.cloudfront.net"
+            "https://example.cloudfront.net",
+            Duration.ofMinutes(10)
         )
     );
   }
