@@ -109,6 +109,24 @@ public class Notification {
     );
   }
 
+  public static Notification createItemClaimDecision(
+      AppUser recipient,
+      Long storedItemId,
+      String title,
+      String content,
+      LocalDateTime createdAt
+  ) {
+    return new Notification(
+        recipient,
+        "ITEM_CLAIM_DECIDED",
+        "STORED_ITEM",
+        storedItemId,
+        title,
+        content,
+        createdAt
+    );
+  }
+
   private static String requireText(String value, String fieldName) {
     if (value == null || value.isBlank()) {
       throw new IllegalArgumentException(fieldName + " must not be blank");

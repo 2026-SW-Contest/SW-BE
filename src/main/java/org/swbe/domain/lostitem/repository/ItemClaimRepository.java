@@ -60,4 +60,18 @@ public interface ItemClaimRepository
   Optional<ItemClaim> findDetailById(
       @Param("itemClaimId") Long itemClaimId
   );
+
+  @Query("""
+      SELECT claim
+      FROM ItemClaim claim
+      LEFT JOIN FETCH claim.claimantUser
+      LEFT JOIN FETCH claim.temporaryClaimant
+      WHERE claim.storedItem.id = :storedItemId
+        AND claim.claimStatus = :status
+      ORDER BY claim.id
+      """)
+  List<ItemClaim> findAllByStoredItemIdAndStatus(
+      @Param("storedItemId") Long storedItemId,
+      @Param("status") ItemClaimStatus status
+  );
 }

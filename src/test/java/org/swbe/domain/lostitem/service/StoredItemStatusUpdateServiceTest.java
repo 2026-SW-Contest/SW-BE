@@ -39,6 +39,7 @@ class StoredItemStatusUpdateServiceTest {
   private ItemStatusHistoryRepository statusHistoryRepository;
   private OfficeStaffAssignmentRepository assignmentRepository;
   private AppUserRepository appUserRepository;
+  private ItemClaimClosureService closureService;
   private StoredItemStatusUpdateService service;
   private StoredItem item;
   private AppUser changer;
@@ -49,6 +50,7 @@ class StoredItemStatusUpdateServiceTest {
     statusHistoryRepository = mock(ItemStatusHistoryRepository.class);
     assignmentRepository = mock(OfficeStaffAssignmentRepository.class);
     appUserRepository = mock(AppUserRepository.class);
+    closureService = mock(ItemClaimClosureService.class);
     item = storedItem();
     changer = mock(AppUser.class);
     when(storedItemRepository.findDetailById(25L))
@@ -63,6 +65,7 @@ class StoredItemStatusUpdateServiceTest {
         statusHistoryRepository,
         assignmentRepository,
         appUserRepository,
+        closureService,
         Clock.fixed(
             Instant.parse("2026-08-12T07:30:00Z"),
             ZoneOffset.UTC
@@ -122,6 +125,12 @@ class StoredItemStatusUpdateServiceTest {
     assertThat(item.getCollectedAt()).isNull();
     assertThat(item.getStorageClosedAt()).isNull();
     assertThat(item.getStorageCloseReason()).isNull();
+    verify(closureService).rejectWaitingClaims(
+        item,
+        null,
+        changer,
+        LocalDateTime.of(2026, 8, 12, 7, 30)
+    );
   }
 
   @Test
@@ -138,6 +147,12 @@ class StoredItemStatusUpdateServiceTest {
     verify(statusHistoryRepository, never()).save(any());
     verify(appUserRepository, never()).findById(any());
     verify(storedItemRepository, never()).flush();
+    verify(closureService, never()).rejectWaitingClaims(
+        any(),
+        any(),
+        any(),
+        any()
+    );
   }
 
   @Test

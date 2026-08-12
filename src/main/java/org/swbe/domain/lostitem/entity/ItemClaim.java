@@ -66,15 +66,15 @@ public class ItemClaim {
   private LocalDateTime expectedLostAt;
 
   @JdbcTypeCode(SqlTypes.LONGVARCHAR)
-  @Column(name = "rejection_reason")
-  private String rejectionReason;
+  @Column(name = "decision_message")
+  private String decisionMessage;
 
   @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @Column(name = "closure_reason")
   private String closureReason;
 
-  @Column(name = "approved_at")
-  private LocalDateTime approvedAt;
+  @Column(name = "decided_at")
+  private LocalDateTime decidedAt;
 
   @Column(name = "collected_at")
   private LocalDateTime collectedAt;
@@ -125,10 +125,47 @@ public class ItemClaim {
     );
   }
 
+  public void decide(
+      ItemClaimStatus decision,
+      AppUser reviewer,
+      String message,
+      LocalDateTime decidedAt
+  ) {
+    Objects.requireNonNull(decision, "decision must not be null");
+    if (!decision.isDecision()) {
+      throw new IllegalArgumentException(
+          "Only APPROVED or REJECTED can be used as a decision"
+      );
+    }
+    if (claimStatus != ItemClaimStatus.WAITING) {
+      throw new IllegalStateException("The claim is already decided");
+    }
+    String normalizedMessage = stripNullable(message);
+    if (decision == ItemClaimStatus.REJECTED
+        && normalizedMessage == null) {
+      throw new IllegalArgumentException(
+          "A rejection message is required"
+      );
+    }
+    this.claimStatus = decision;
+    this.reviewedBy = Objects.requireNonNull(reviewer);
+    this.decisionMessage = normalizedMessage;
+    this.decidedAt = Objects.requireNonNull(decidedAt);
+    this.updatedAt = decidedAt;
+  }
+
   private static String requireText(String value, String fieldName) {
     if (value == null || value.isBlank()) {
       throw new IllegalArgumentException(fieldName + " must not be blank");
     }
     return value.strip();
+  }
+
+  private static String stripNullable(String value) {
+    if (value == null) {
+      return null;
+    }
+    String stripped = value.strip();
+    return stripped.isEmpty() ? null : stripped;
   }
 }

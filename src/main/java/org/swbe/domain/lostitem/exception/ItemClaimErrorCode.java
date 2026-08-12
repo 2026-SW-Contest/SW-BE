@@ -30,6 +30,26 @@ public enum ItemClaimErrorCode implements ErrorCode {
       "ITEM_CLAIM_DUPLICATE_ACTIVE_CLAIM",
       "The user already has an active claim for this stored item."
   ),
+  INVALID_DECISION(
+      HttpStatus.BAD_REQUEST,
+      "ITEM_CLAIM_INVALID_DECISION",
+      "Only APPROVED or REJECTED can be used as a decision."
+  ),
+  DECISION_MESSAGE_REQUIRED(
+      HttpStatus.BAD_REQUEST,
+      "ITEM_CLAIM_DECISION_MESSAGE_REQUIRED",
+      "A rejection message is required."
+  ),
+  ALREADY_DECIDED(
+      HttpStatus.CONFLICT,
+      "ITEM_CLAIM_ALREADY_DECIDED",
+      "The ownership claim has already been decided."
+  ),
+  VERSION_CONFLICT(
+      HttpStatus.CONFLICT,
+      "ITEM_CLAIM_VERSION_CONFLICT",
+      "The ownership claim was modified by another request."
+  ),
   FILE_LIMIT_EXCEEDED(
       HttpStatus.BAD_REQUEST,
       "ITEM_CLAIM_FILE_LIMIT_EXCEEDED",
