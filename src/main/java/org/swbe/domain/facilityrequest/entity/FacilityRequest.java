@@ -138,6 +138,51 @@ public class FacilityRequest {
     this.updatedAt = Objects.requireNonNull(updatedAt);
   }
 
+  // 관리자가 요청한 상태로 현재 문의를 변경할 수 있는지 확인한다.
+  public boolean canTransitionTo(FacilityRequestStatus nextStatus) {
+    if (nextStatus == null) {
+      return false;
+    }
+    FacilityRequestStatus currentStatus = FacilityRequestStatus.valueOf(
+        requestStatus
+    );
+
+    return switch (currentStatus) {
+      case RECEIVED -> nextStatus == FacilityRequestStatus.IN_PROGRESS
+          || nextStatus == FacilityRequestStatus.COMPLETED;
+      case IN_PROGRESS -> nextStatus == FacilityRequestStatus.COMPLETED;
+      default -> false;
+    };
+  }
+
+  // 관리자가 검증한 상태로 문의를 변경하고 처리 시각을 갱신한다.
+  public void transitionTo(
+      FacilityRequestStatus nextStatus,
+      LocalDateTime updatedAt
+  ) {
+    if (!canTransitionTo(nextStatus)) {
+      throw new IllegalStateException("Invalid facility request transition");
+    }
+    this.requestStatus = nextStatus.name();
+    this.updatedAt = Objects.requireNonNull(updatedAt);
+    if (nextStatus == FacilityRequestStatus.COMPLETED) {
+      this.completedAt = updatedAt;
+    }
+  }
+
+  // 답변만 등록된 경우에도 문의의 마지막 처리 시각을 갱신한다.
+  public void touch(LocalDateTime updatedAt) {
+    this.updatedAt = Objects.requireNonNull(updatedAt);
+  }
+
+  public boolean hasStatus(FacilityRequestStatus status) {
+    return status != null && status.name().equals(requestStatus);
+  }
+
+  public boolean isCompleted() {
+    return hasStatus(FacilityRequestStatus.COMPLETED);
+  }
+
   private static String requireText(String value, String fieldName) {
     String stripped = stripNullable(value);
     if (stripped == null || stripped.isBlank()) {

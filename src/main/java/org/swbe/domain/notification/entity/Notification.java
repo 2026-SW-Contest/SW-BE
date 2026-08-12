@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -65,4 +66,53 @@ public class Notification {
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
+
+  private Notification(
+      AppUser recipient,
+      String notificationType,
+      String referenceType,
+      Long referenceId,
+      String title,
+      String content,
+      LocalDateTime createdAt
+  ) {
+    this.recipient = Objects.requireNonNull(recipient);
+    this.notificationType = requireText(
+        notificationType,
+        "notificationType"
+    );
+    this.referenceType = requireText(referenceType, "referenceType");
+    this.referenceId = Objects.requireNonNull(referenceId);
+    this.title = requireText(title, "title");
+    this.content = requireText(content, "content");
+    this.deliveryChannel = "WEB";
+    this.deliveryStatus = "PENDING";
+    this.createdAt = Objects.requireNonNull(createdAt);
+  }
+
+  // 시설문의 처리 결과를 작성자에게 전달할 웹 알림을 생성한다.
+  public static Notification createFacilityRequestUpdate(
+      AppUser recipient,
+      Long facilityRequestId,
+      String title,
+      String content,
+      LocalDateTime createdAt
+  ) {
+    return new Notification(
+        recipient,
+        "FACILITY_REQUEST_UPDATED",
+        "FACILITY_REQUEST",
+        facilityRequestId,
+        title,
+        content,
+        createdAt
+    );
+  }
+
+  private static String requireText(String value, String fieldName) {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException(fieldName + " must not be blank");
+    }
+    return value.strip();
+  }
 }

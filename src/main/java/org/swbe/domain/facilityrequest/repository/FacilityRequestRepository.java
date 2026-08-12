@@ -10,7 +10,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 
-public interface FacilityRequestRepository extends JpaRepository<FacilityRequest, Long>, FacilityRequestIntegratedSearchRepository {
+public interface FacilityRequestRepository extends
+    JpaRepository<FacilityRequest, Long>,
+    FacilityRequestIntegratedSearchRepository,
+    AdminFacilityRequestSearchRepository {
 
   @EntityGraph(attributePaths = {
       "facilityCategory",
@@ -19,6 +22,15 @@ public interface FacilityRequestRepository extends JpaRepository<FacilityRequest
   })
   @Query("SELECT request FROM FacilityRequest request WHERE request.id = :id")
   Optional<FacilityRequest> findDetailById(@Param("id") Long id);
+
+  @EntityGraph(attributePaths = {
+      "facilityCategory",
+      "location",
+      "location.building",
+      "requester"
+  })
+  @Query("SELECT request FROM FacilityRequest request WHERE request.id = :id")
+  Optional<FacilityRequest> findAdminDetailById(@Param("id") Long id);
 
   @Query(
       value = """

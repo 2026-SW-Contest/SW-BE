@@ -120,6 +120,7 @@ public class SecurityConfig {
                 "/api/auth/email-verifications/confirm",
                 "/api/auth/signup"
             ).permitAll()
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated()
         )
         .exceptionHandling(exception -> exception
