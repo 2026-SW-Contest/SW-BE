@@ -106,4 +106,28 @@ public interface ItemClaimRepository
       @Param("storedItemId") Long storedItemId,
       @Param("status") ItemClaimStatus status
   );
+
+  @Query("""
+      SELECT claim
+      FROM ItemClaim claim
+      JOIN FETCH claim.storedItem item
+      JOIN FETCH item.itemCategory category
+      LEFT JOIN FETCH item.foundLocation location
+      WHERE claim.claimantUser.id = :claimantUserId
+        AND (
+          :cursorCreatedAt IS NULL
+          OR claim.createdAt < :cursorCreatedAt
+          OR (
+            claim.createdAt = :cursorCreatedAt
+            AND claim.id < :cursorId
+          )
+        )
+      ORDER BY claim.createdAt DESC, claim.id DESC
+      """)
+  List<ItemClaim> findAllByClaimantUserIdAndCursor(
+      @Param("claimantUserId") Long claimantUserId,
+      @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+      @Param("cursorId") Long cursorId,
+      Pageable pageable
+  );
 }

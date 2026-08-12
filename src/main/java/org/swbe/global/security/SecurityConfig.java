@@ -91,6 +91,10 @@ public class SecurityConfig {
                 "/api/stored-items/*/claims"
             ).hasRole("STUDENT")
             .requestMatchers(
+                HttpMethod.GET,
+                "/api/users/me/item-claims"
+            ).hasRole("STUDENT")
+            .requestMatchers(
                 HttpMethod.POST,
                 "/api/lost-item"
             ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
