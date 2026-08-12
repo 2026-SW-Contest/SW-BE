@@ -1,9 +1,12 @@
 package org.swbe.domain.facilityrequest.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -14,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,18 +25,23 @@ import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestListItem
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestLocationResponse;
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestPageResponse;
+import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestProcessDataResponse;
+import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestProcessResponse;
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestDetailDataResponse;
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestDetailResponse;
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestRequesterResponse;
 import org.swbe.domain.facilityrequest.dto.response.AdminFacilityRequestRequesterDetailResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityCategoryResponse;
 import org.swbe.domain.facilityrequest.service.AdminFacilityRequestDetailService;
+import org.swbe.domain.facilityrequest.service.AdminFacilityRequestProcessService;
 import org.swbe.domain.facilityrequest.service.AdminFacilityRequestQueryService;
 import org.swbe.global.security.RestAccessDeniedHandler;
 import org.swbe.global.security.RestAuthenticationEntryPoint;
 import org.swbe.global.security.RestSessionInformationExpiredStrategy;
 import org.swbe.global.security.SecurityConfig;
 import org.swbe.global.security.SecurityErrorResponseWriter;
+import org.swbe.global.security.AppUserPrincipal;
+import org.swbe.domain.user.entity.AccountStatus;
 
 @WebMvcTest(AdminFacilityRequestController.class)
 @Import({
@@ -55,6 +64,9 @@ class AdminFacilityRequestControllerTest {
 
   @MockitoBean
   private AdminFacilityRequestDetailService detailService;
+
+  @MockitoBean
+  private AdminFacilityRequestProcessService processService;
 
   @MockitoBean
   private UserDetailsService userDetailsService;
@@ -173,6 +185,49 @@ class AdminFacilityRequestControllerTest {
             .value("COMMON_VALIDATION_FAILED"));
   }
 
+  @Test
+  void adminCanProcessFacilityRequest() throws Exception {
+    AdminFacilityRequestProcessDataResponse data =
+        new AdminFacilityRequestProcessDataResponse(
+            25L,
+            "RECEIVED",
+            "IN_PROGRESS",
+            "진행 중",
+            null,
+            LocalDateTime.of(2026, 8, 12, 16, 30)
+        );
+    when(processService.process(eq(25L), any(), eq(7L)))
+        .thenReturn(new AdminFacilityRequestProcessResponse(data));
+
+    mockMvc.perform(patch("/api/admin/facility-requests/25")
+            .contentType("application/json")
+            .content("""
+                {
+                  "status": "IN_PROGRESS",
+                  "adminResponse": "Inspection started."
+                }
+                """)
+            .with(user(principal("ROLE_ADMIN")))
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.previousStatus")
+            .value("RECEIVED"))
+        .andExpect(jsonPath("$.data.requestStatus")
+            .value("IN_PROGRESS"));
+  }
+
+  @Test
+  void studentCannotProcessFacilityRequest() throws Exception {
+    mockMvc.perform(patch("/api/admin/facility-requests/25")
+            .contentType("application/json")
+            .content("{\"status\":\"IN_PROGRESS\"}")
+            .with(user("student").roles("STUDENT"))
+            .with(csrf()))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code")
+            .value("SECURITY_ACCESS_DENIED"));
+  }
+
   private AdminFacilityRequestListResponse response() {
     AdminFacilityRequestListItemResponse item =
         new AdminFacilityRequestListItemResponse(
@@ -204,5 +259,16 @@ class AdminFacilityRequestControllerTest {
             false
         );
     return new AdminFacilityRequestListResponse(data);
+  }
+
+  private AppUserPrincipal principal(String authority) {
+    return new AppUserPrincipal(
+        7L,
+        "admin@mju.ac.kr",
+        "{noop}password",
+        AccountStatus.ACTIVE,
+        true,
+        List.of(new SimpleGrantedAuthority(authority))
+    );
   }
 }

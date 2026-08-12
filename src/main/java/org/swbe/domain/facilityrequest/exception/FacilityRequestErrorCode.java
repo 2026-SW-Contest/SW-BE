@@ -40,6 +40,21 @@ NOT_DELETABLE(
       "INVALID_REQUEST",
       "At least one field or attachment must be updated."
   ),
+  UPDATE_REQUIRED(
+      HttpStatus.BAD_REQUEST,
+      "FACILITY_REQUEST_UPDATE_REQUIRED",
+      "A status or administrator response is required."
+  ),
+  INVALID_STATUS_TRANSITION(
+      HttpStatus.CONFLICT,
+      "FACILITY_REQUEST_INVALID_STATUS_TRANSITION",
+      "The facility request status cannot be changed."
+  ),
+  ALREADY_COMPLETED(
+      HttpStatus.CONFLICT,
+      "FACILITY_REQUEST_ALREADY_COMPLETED",
+      "The completed facility request cannot be changed."
+  ),
   INVALID_ATTACHMENT(
       HttpStatus.BAD_REQUEST,
       "INVALID_ATTACHMENT",

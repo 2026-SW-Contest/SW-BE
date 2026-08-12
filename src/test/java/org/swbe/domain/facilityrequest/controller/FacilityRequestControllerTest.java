@@ -171,7 +171,7 @@ class FacilityRequestControllerTest {
         "전기/조명",
         "학생회관",
         "IN_PROGRESS",
-        "진행중",
+        "진행 중",
         null,
         LocalDateTime.of(2026, 8, 1, 16, 0)
     );
@@ -209,7 +209,7 @@ class FacilityRequestControllerTest {
         .andExpect(jsonPath("$.data.content[0].requestStatus")
             .value("IN_PROGRESS"))
         .andExpect(jsonPath("$.data.content[0].requestStatusName")
-            .value("진행중"))
+            .value("진행 중"))
         .andExpect(jsonPath("$.data.content[0].thumbnailUrl").isEmpty())
         .andExpect(jsonPath("$.data.page").value(0))
         .andExpect(jsonPath("$.data.size").value(20))
