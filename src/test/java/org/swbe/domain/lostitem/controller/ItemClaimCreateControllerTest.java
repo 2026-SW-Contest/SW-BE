@@ -75,7 +75,7 @@ class ItemClaimCreateControllerTest {
         .andExpect(jsonPath("$.data.claimantName").value("정석우"))
         .andExpect(jsonPath("$.data.studentNumber").value("60251423"))
         .andExpect(jsonPath("$.data.claimStatus")
-            .value("IN_PROGRESS"))
+            .value("WAITING"))
         .andExpect(jsonPath("$.data.attachmentCount").value(1));
   }
 
@@ -132,7 +132,7 @@ class ItemClaimCreateControllerTest {
             25L,
             "정석우",
             "60251423",
-            "IN_PROGRESS",
+            "WAITING",
             1,
             LocalDateTime.of(2026, 8, 12, 5, 30)
         )

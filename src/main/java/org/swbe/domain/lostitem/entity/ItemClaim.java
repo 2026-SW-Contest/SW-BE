@@ -53,7 +53,7 @@ public class ItemClaim {
 
   @Enumerated(EnumType.STRING)
   @Column(name = "claim_status", nullable = false, length = 40)
-  private ItemClaimStatus claimStatus = ItemClaimStatus.IN_PROGRESS;
+  private ItemClaimStatus claimStatus = ItemClaimStatus.WAITING;
 
   @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @Column(name = "ownership_description")
@@ -102,7 +102,7 @@ public class ItemClaim {
     this.temporaryClaimant = null;
     this.reviewedBy = null;
     this.requestMethod = "ONLINE";
-    this.claimStatus = ItemClaimStatus.IN_PROGRESS;
+    this.claimStatus = ItemClaimStatus.WAITING;
     this.ownershipDescription = requireText(
         ownershipDescription,
         "ownershipDescription"

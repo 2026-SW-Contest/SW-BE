@@ -103,7 +103,7 @@ class FacilityRequestControllerTest {
     FacilityRequestCreateDataResponse data =
         new FacilityRequestCreateDataResponse(
             25L,
-            "RECEIVED",
+            "WAITING",
             1,
             LocalDateTime.of(2026, 8, 1, 16, 0)
         );
@@ -121,7 +121,7 @@ class FacilityRequestControllerTest {
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.data.facilityRequestId").value(25))
         .andExpect(jsonPath("$.data.receiptNumber").doesNotExist())
-        .andExpect(jsonPath("$.data.requestStatus").value("RECEIVED"))
+        .andExpect(jsonPath("$.data.requestStatus").value("WAITING"))
         .andExpect(jsonPath("$.data.attachmentCount").value(1));
   }
 
@@ -290,7 +290,7 @@ class FacilityRequestControllerTest {
     FacilityRequestUpdateDataResponse data =
         new FacilityRequestUpdateDataResponse(
             25L,
-            "RECEIVED",
+            "WAITING",
             2,
             LocalDateTime.of(2026, 8, 9, 16, 30)
         );
@@ -312,7 +312,7 @@ class FacilityRequestControllerTest {
             .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.facilityRequestId").value(25))
-        .andExpect(jsonPath("$.data.requestStatus").value("RECEIVED"))
+        .andExpect(jsonPath("$.data.requestStatus").value("WAITING"))
         .andExpect(jsonPath("$.data.attachmentCount").value(2));
   }
 

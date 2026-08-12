@@ -118,7 +118,7 @@ public class FacilityRequestController {
     );
   }
 
-  // 로그인한 학생이 작성한 접수 상태의 문의를 삭제한다.
+  // 로그인한 학생이 작성한 대기 상태의 문의를 삭제한다.
   @DeleteMapping("/{facilityRequestId}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteFacilityRequest(
@@ -131,7 +131,7 @@ public class FacilityRequestController {
     );
   }
 
-  // 로그인한 학생이 작성한 접수 상태의 문의를 부분 수정한다.
+  // 로그인한 학생이 작성한 대기 상태의 문의를 부분 수정한다.
   @PatchMapping(
       value = "/{facilityRequestId}",
       consumes = MediaType.MULTIPART_FORM_DATA_VALUE

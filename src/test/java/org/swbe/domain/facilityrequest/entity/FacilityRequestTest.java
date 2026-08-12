@@ -13,7 +13,7 @@ import org.swbe.domain.user.entity.AppUser;
 class FacilityRequestTest {
 
   @Test
-  void createsReceivedFacilityRequest() {
+  void createsWaitingFacilityRequest() {
     FacilityCategory category = mock(FacilityCategory.class);
     Location location = mock(Location.class);
     AppUser requester = mock(AppUser.class);
@@ -34,7 +34,7 @@ class FacilityRequestTest {
     assertThat(request.getTitle()).isEqualTo("Flickering light");
     assertThat(request.getDescription())
         .isEqualTo("The hallway light keeps flickering.");
-    assertThat(request.getRequestStatus()).isEqualTo("RECEIVED");
+    assertThat(request.getRequestStatus()).isEqualTo("WAITING");
     assertThat(request.getCreatedAt()).isEqualTo(createdAt);
     assertThat(request.getUpdatedAt()).isEqualTo(createdAt);
   }
@@ -52,10 +52,10 @@ class FacilityRequestTest {
   }
 
   @Test
-  void onlyReceivedFacilityRequestIsDeletable() {
+  void onlyWaitingFacilityRequestIsDeletable() {
     FacilityRequest request = new FacilityRequest();
 
-    ReflectionTestUtils.setField(request, "requestStatus", "RECEIVED");
+    ReflectionTestUtils.setField(request, "requestStatus", "WAITING");
     assertThat(request.isDeletable()).isTrue();
 
     ReflectionTestUtils.setField(request, "requestStatus", "IN_PROGRESS");
@@ -66,10 +66,10 @@ class FacilityRequestTest {
   }
 
   @Test
-  void onlyReceivedFacilityRequestIsEditable() {
+  void onlyWaitingFacilityRequestIsEditable() {
     FacilityRequest request = new FacilityRequest();
 
-    ReflectionTestUtils.setField(request, "requestStatus", "RECEIVED");
+    ReflectionTestUtils.setField(request, "requestStatus", "WAITING");
     assertThat(request.isEditable()).isTrue();
 
     ReflectionTestUtils.setField(request, "requestStatus", "IN_PROGRESS");

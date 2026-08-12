@@ -125,7 +125,7 @@ class ItemClaimCreateServiceTest {
     assertThat(response.data().storedItemId()).isEqualTo(25L);
     assertThat(response.data().claimantName()).isEqualTo("정석우");
     assertThat(response.data().studentNumber()).isEqualTo("60251423");
-    assertThat(response.data().claimStatus()).isEqualTo("IN_PROGRESS");
+    assertThat(response.data().claimStatus()).isEqualTo("WAITING");
     assertThat(response.data().attachmentCount()).isEqualTo(1);
     assertThat(response.data().createdAt()).isEqualTo(now());
 
@@ -138,14 +138,14 @@ class ItemClaimCreateServiceTest {
     assertThat(claim.getValue().getOwnershipDescription())
         .isEqualTo("검은색 지갑 내부 카드 정보를 확인해주세요.");
     assertThat(claim.getValue().getClaimStatus())
-        .isEqualTo(ItemClaimStatus.IN_PROGRESS);
+        .isEqualTo(ItemClaimStatus.WAITING);
 
     ArgumentCaptor<ClaimStatusHistory> claimHistory =
         ArgumentCaptor.forClass(ClaimStatusHistory.class);
     verify(claimHistoryRepository).save(claimHistory.capture());
     assertThat(claimHistory.getValue().getPreviousStatus()).isNull();
     assertThat(claimHistory.getValue().getNewStatus())
-        .isEqualTo(ItemClaimStatus.IN_PROGRESS);
+        .isEqualTo(ItemClaimStatus.WAITING);
     assertThat(claimHistory.getValue().getChangedBy())
         .isSameAs(claimant);
 
