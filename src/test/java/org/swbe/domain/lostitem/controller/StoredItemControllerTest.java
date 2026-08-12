@@ -1,7 +1,9 @@
 package org.swbe.domain.lostitem.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -22,10 +25,13 @@ import org.swbe.domain.lostitem.dto.response.StoredItemDetailDataResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemDetailResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemListItemResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemListResponse;
+import org.swbe.domain.lostitem.dto.response.MyItemClaimResultResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemOfficeResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemSliceResponse;
 import org.swbe.domain.lostitem.service.StoredItemDetailService;
 import org.swbe.domain.lostitem.service.StoredItemQueryService;
+import org.swbe.domain.user.entity.AccountStatus;
+import org.swbe.global.security.AppUserPrincipal;
 import org.swbe.global.security.RestAccessDeniedHandler;
 import org.swbe.global.security.RestAuthenticationEntryPoint;
 import org.swbe.global.security.RestSessionInformationExpiredStrategy;
@@ -115,10 +121,11 @@ class StoredItemControllerTest {
         "보관중",
         new StoredItemOfficeResponse(3L, "본관 경비실"),
         List.of(),
+        null,
         LocalDateTime.of(2026, 8, 10, 14, 30),
         LocalDateTime.of(2026, 8, 10, 14, 30)
     );
-    when(storedItemDetailService.getStoredItem(25L))
+    when(storedItemDetailService.getStoredItem(25L, null))
         .thenReturn(new StoredItemDetailResponse(data));
 
     mockMvc.perform(get("/api/stored-items/25"))
@@ -132,6 +139,43 @@ class StoredItemControllerTest {
         .andExpect(jsonPath("$.data.storagePosition").doesNotExist())
         .andExpect(jsonPath("$.data.editable").doesNotExist())
         .andExpect(jsonPath("$.data.deletable").doesNotExist());
+  }
+
+  @Test
+  void authenticatedClaimantReceivesOwnDecisionResult() throws Exception {
+    StoredItemDetailDataResponse data = new StoredItemDetailDataResponse(
+        25L,
+        "검은색 지갑",
+        "공개 설명",
+        new StoredItemCategoryResponse(2L, "지갑/카드/현금"),
+        null,
+        LocalDate.of(2026, 8, 10),
+        "COMPLETED",
+        "해결완료",
+        new StoredItemOfficeResponse(3L, "본관 경비실"),
+        List.of(),
+        new MyItemClaimResultResponse(
+            31L,
+            "APPROVED",
+            "승인",
+            "학생증을 확인했습니다.",
+            LocalDateTime.of(2026, 8, 12, 14, 30)
+        ),
+        LocalDateTime.of(2026, 8, 10, 14, 30),
+        LocalDateTime.of(2026, 8, 12, 14, 30)
+    );
+    when(storedItemDetailService.getStoredItem(eq(25L), eq(7L)))
+        .thenReturn(new StoredItemDetailResponse(data));
+
+    mockMvc.perform(get("/api/stored-items/25")
+            .with(user(principal())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.myClaimResult.itemClaimId")
+            .value(31))
+        .andExpect(jsonPath("$.data.myClaimResult.decision")
+            .value("APPROVED"))
+        .andExpect(jsonPath("$.data.myClaimResult.message")
+            .value("학생증을 확인했습니다."));
   }
 
   @Test
@@ -149,5 +193,16 @@ class StoredItemControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code")
             .value("COMMON_VALIDATION_FAILED"));
+  }
+
+  private AppUserPrincipal principal() {
+    return new AppUserPrincipal(
+        7L,
+        "student@mju.ac.kr",
+        "{noop}password",
+        AccountStatus.ACTIVE,
+        true,
+        List.of(new SimpleGrantedAuthority("ROLE_STUDENT"))
+    );
   }
 }

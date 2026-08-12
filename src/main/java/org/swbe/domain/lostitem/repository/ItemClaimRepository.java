@@ -22,6 +22,12 @@ public interface ItemClaimRepository
       Collection<ItemClaimStatus> claimStatuses
   );
 
+  Optional<ItemClaim>
+      findFirstByStoredItem_IdAndClaimantUser_IdOrderByCreatedAtDescIdDesc(
+          Long storedItemId,
+          Long claimantUserId
+      );
+
   @Query("""
       SELECT claim
       FROM ItemClaim claim
