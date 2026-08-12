@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,4 +49,44 @@ public class RequestComment {
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
+
+  private RequestComment(
+      FacilityRequest facilityRequest,
+      AppUser author,
+      String commentType,
+      String content,
+      boolean internal,
+      LocalDateTime createdAt
+  ) {
+    this.facilityRequest = Objects.requireNonNull(facilityRequest);
+    this.author = Objects.requireNonNull(author);
+    this.commentType = requireText(commentType, "commentType");
+    this.content = requireText(content, "content");
+    this.internal = internal;
+    this.createdAt = Objects.requireNonNull(createdAt);
+  }
+
+  // 사용자에게 공개할 관리자 시설문의 답변을 생성한다.
+  public static RequestComment createAdminResponse(
+      FacilityRequest facilityRequest,
+      AppUser author,
+      String content,
+      LocalDateTime createdAt
+  ) {
+    return new RequestComment(
+        facilityRequest,
+        author,
+        "ADMIN_RESPONSE",
+        content,
+        false,
+        createdAt
+    );
+  }
+
+  private static String requireText(String value, String fieldName) {
+    if (value == null || value.isBlank()) {
+      throw new IllegalArgumentException(fieldName + " must not be blank");
+    }
+    return value.strip();
+  }
 }
