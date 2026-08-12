@@ -10,6 +10,11 @@ public enum ItemClaimErrorCode implements ErrorCode {
       "ITEM_CLAIM_NOT_FOUND",
       "The ownership claim was not found."
   ),
+  OFFICE_NOT_FOUND(
+      HttpStatus.NOT_FOUND,
+      "LOST_ITEM_OFFICE_NOT_FOUND",
+      "The lost item office was not found."
+  ),
   ACCESS_DENIED(
       HttpStatus.FORBIDDEN,
       "ITEM_CLAIM_ACCESS_DENIED",

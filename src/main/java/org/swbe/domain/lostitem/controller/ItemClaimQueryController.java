@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.swbe.domain.lostitem.dto.request.ItemClaimSearchCondition;
 import org.swbe.domain.lostitem.dto.response.ItemClaimDetailResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimListResponse;
+import org.swbe.domain.lostitem.dto.response.OfficeItemClaimListResponse;
 import org.swbe.domain.lostitem.entity.ItemClaimStatus;
 import org.swbe.domain.lostitem.service.ItemClaimQueryService;
 import org.swbe.global.security.AppUserPrincipal;
@@ -35,6 +36,22 @@ public class ItemClaimQueryController {
   ) {
     return itemClaimQueryService.getItemClaims(
         storedItemId,
+        new ItemClaimSearchCondition(status, cursor, size),
+        principal.getUserId(),
+        isAdmin(principal)
+    );
+  }
+
+  @GetMapping("/api/lost-item-offices/{officeId}/claims")
+  public OfficeItemClaimListResponse getOfficeItemClaims(
+      @PathVariable @Positive Long officeId,
+      @RequestParam(required = false) ItemClaimStatus status,
+      @RequestParam(required = false) @Size(max = 512) String cursor,
+      @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size,
+      @AuthenticationPrincipal AppUserPrincipal principal
+  ) {
+    return itemClaimQueryService.getOfficeItemClaims(
+        officeId,
         new ItemClaimSearchCondition(status, cursor, size),
         principal.getUserId(),
         isAdmin(principal)

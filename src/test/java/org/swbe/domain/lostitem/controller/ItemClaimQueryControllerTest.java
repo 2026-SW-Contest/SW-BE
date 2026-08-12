@@ -24,6 +24,9 @@ import org.swbe.domain.lostitem.dto.response.ItemClaimDetailResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimListItemResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimListResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimSliceResponse;
+import org.swbe.domain.lostitem.dto.response.OfficeItemClaimListItemResponse;
+import org.swbe.domain.lostitem.dto.response.OfficeItemClaimListResponse;
+import org.swbe.domain.lostitem.dto.response.OfficeItemClaimSliceResponse;
 import org.swbe.domain.lostitem.service.ItemClaimQueryService;
 import org.swbe.domain.user.entity.AccountStatus;
 import org.swbe.global.security.AppUserPrincipal;
@@ -79,6 +82,48 @@ class ItemClaimQueryControllerTest {
   }
 
   @Test
+  void lostItemStaffGetsFilteredOfficeClaimList() throws Exception {
+    when(itemClaimQueryService.getOfficeItemClaims(
+        eq(3L),
+        any(),
+        eq(7L),
+        eq(false)
+    )).thenReturn(officeListResponse());
+
+    mockMvc.perform(get("/api/lost-item-offices/3/claims")
+            .param("status", "WAITING")
+            .param("size", "20")
+            .with(user(principal("ROLE_LOST_ITEM_STAFF"))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content[0].itemClaimId")
+            .value(31))
+        .andExpect(jsonPath("$.data.content[0].storedItemId")
+            .value(25))
+        .andExpect(jsonPath("$.data.content[0].itemName")
+            .value("검은색 반지갑"))
+        .andExpect(jsonPath("$.data.content[0].claimantName")
+            .value("정석우"))
+        .andExpect(jsonPath("$.data.content[0].thumbnailUrl")
+            .value("https://cdn/proof.jpg"))
+        .andExpect(jsonPath("$.data.content[0].attachmentCount")
+            .value(2));
+  }
+
+  @Test
+  void adminFlagIsPassedForOfficeClaimList() throws Exception {
+    when(itemClaimQueryService.getOfficeItemClaims(
+        eq(3L),
+        any(),
+        eq(7L),
+        eq(true)
+    )).thenReturn(officeListResponse());
+
+    mockMvc.perform(get("/api/lost-item-offices/3/claims")
+            .with(user(principal("ROLE_ADMIN"))))
+        .andExpect(status().isOk());
+  }
+
+  @Test
   void adminFlagIsPassedForDetail() throws Exception {
     when(itemClaimQueryService.getItemClaim(31L, 7L, true))
         .thenReturn(detailResponse());
@@ -101,17 +146,26 @@ class ItemClaimQueryControllerTest {
     mockMvc.perform(get("/api/item-claims/31")
             .with(user(student)))
         .andExpect(status().isForbidden());
+    mockMvc.perform(get("/api/lost-item-offices/3/claims")
+            .with(user(student)))
+        .andExpect(status().isForbidden());
   }
 
   @Test
   void anonymousUserCannotReadClaims() throws Exception {
     mockMvc.perform(get("/api/stored-items/25/claims"))
         .andExpect(status().isUnauthorized());
+    mockMvc.perform(get("/api/lost-item-offices/3/claims"))
+        .andExpect(status().isUnauthorized());
   }
 
   @Test
   void invalidStatusIsRejected() throws Exception {
     mockMvc.perform(get("/api/stored-items/25/claims")
+            .param("status", "COLLECTED")
+            .with(user(principal("ROLE_LOST_ITEM_STAFF"))))
+        .andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/lost-item-offices/3/claims")
             .param("status", "COLLECTED")
             .with(user(principal("ROLE_LOST_ITEM_STAFF"))))
         .andExpect(status().isBadRequest());
@@ -126,6 +180,13 @@ class ItemClaimQueryControllerTest {
             .with(user(staff)))
         .andExpect(status().isBadRequest());
     mockMvc.perform(get("/api/item-claims/0")
+            .with(user(staff)))
+        .andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/lost-item-offices/0/claims")
+            .with(user(staff)))
+        .andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/lost-item-offices/3/claims")
+            .param("size", "51")
             .with(user(staff)))
         .andExpect(status().isBadRequest());
   }
@@ -163,6 +224,28 @@ class ItemClaimQueryControllerTest {
         LocalDateTime.of(2026, 8, 12, 15, 0),
         LocalDateTime.of(2026, 8, 12, 15, 0)
     ));
+  }
+
+  private OfficeItemClaimListResponse officeListResponse() {
+    return new OfficeItemClaimListResponse(
+        new OfficeItemClaimSliceResponse(
+            List.of(new OfficeItemClaimListItemResponse(
+                31L,
+                25L,
+                "검은색 반지갑",
+                "정석우",
+                "60251423",
+                "ONLINE",
+                "WAITING",
+                "대기",
+                "https://cdn/proof.jpg",
+                2,
+                LocalDateTime.of(2026, 8, 12, 15, 0)
+            )),
+            null,
+            false
+        )
+    );
   }
 
   private AppUserPrincipal principal(String authority) {
