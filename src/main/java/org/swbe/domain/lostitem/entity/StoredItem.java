@@ -172,6 +172,49 @@ public class StoredItem {
         : foundLocation.getName();
   }
 
+  public void update(
+      LostItemOffice office,
+      ItemCategory itemCategory,
+      Location foundLocation,
+      String foundLocationText,
+      boolean foundLocationChanged,
+      String itemName,
+      String publicDescription,
+      String privateDescription,
+      boolean privateDescriptionChanged,
+      LocalDate foundDate,
+      LocalDateTime updatedAt
+  ) {
+    if (office != null) {
+      this.office = office;
+    }
+    if (itemCategory != null) {
+      this.itemCategory = itemCategory;
+    }
+    if (foundLocationChanged) {
+      String normalizedLocationText = stripNullable(foundLocationText);
+      validateFoundLocation(foundLocation, normalizedLocationText);
+      this.foundLocation = foundLocation;
+      this.foundLocationText = normalizedLocationText;
+    }
+    if (itemName != null) {
+      this.itemName = requireText(itemName, "itemName");
+    }
+    if (publicDescription != null) {
+      this.publicDescription = requireText(
+          publicDescription,
+          "publicDescription"
+      );
+    }
+    if (privateDescriptionChanged) {
+      this.privateDescription = stripNullable(privateDescription);
+    }
+    if (foundDate != null) {
+      this.foundDate = foundDate;
+    }
+    this.updatedAt = Objects.requireNonNull(updatedAt);
+  }
+
   private static void validateFoundLocation(
       Location foundLocation,
       String foundLocationText

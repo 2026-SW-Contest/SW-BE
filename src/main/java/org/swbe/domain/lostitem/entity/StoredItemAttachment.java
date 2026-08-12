@@ -70,4 +70,14 @@ public class StoredItemAttachment {
         displayOrder
     );
   }
+
+  public void reorder(boolean primary, int displayOrder) {
+    if (displayOrder < 0) {
+      throw new IllegalArgumentException(
+          "displayOrder must not be negative"
+      );
+    }
+    this.primary = primary;
+    this.displayOrder = displayOrder;
+  }
 }

@@ -54,6 +54,21 @@ public enum StoredItemErrorCode implements ErrorCode {
       HttpStatus.INTERNAL_SERVER_ERROR,
       "STORED_ITEM_FILE_STORAGE_ERROR",
       "The attachment could not be processed."
+  ),
+  INVALID_REQUEST(
+      HttpStatus.BAD_REQUEST,
+      "STORED_ITEM_INVALID_REQUEST",
+      "At least one field or attachment must be updated."
+  ),
+  INVALID_ATTACHMENT(
+      HttpStatus.BAD_REQUEST,
+      "STORED_ITEM_INVALID_ATTACHMENT",
+      "An attachment does not belong to the stored item."
+  ),
+  VERSION_CONFLICT(
+      HttpStatus.CONFLICT,
+      "STORED_ITEM_VERSION_CONFLICT",
+      "The stored item was modified by another request."
   );
 
   private final HttpStatus status;

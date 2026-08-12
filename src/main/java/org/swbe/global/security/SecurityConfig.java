@@ -91,6 +91,10 @@ public class SecurityConfig {
                 HttpMethod.PATCH,
                 "/api/facility-requests/*"
             ).hasRole("STUDENT")
+            .requestMatchers(
+                HttpMethod.PATCH,
+                "/api/stored-items/*"
+            ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers(
