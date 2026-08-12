@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,4 +39,35 @@ public class StoredItemAttachment {
 
   @Column(name = "display_order", nullable = false)
   private int displayOrder;
+
+  private StoredItemAttachment(
+      StoredItem storedItem,
+      FileResource file,
+      boolean primary,
+      int displayOrder
+  ) {
+    if (displayOrder < 0) {
+      throw new IllegalArgumentException(
+          "displayOrder must not be negative"
+      );
+    }
+    this.storedItem = Objects.requireNonNull(storedItem);
+    this.file = Objects.requireNonNull(file);
+    this.primary = primary;
+    this.displayOrder = displayOrder;
+  }
+
+  public static StoredItemAttachment attach(
+      StoredItem storedItem,
+      FileResource file,
+      boolean primary,
+      int displayOrder
+  ) {
+    return new StoredItemAttachment(
+        storedItem,
+        file,
+        primary,
+        displayOrder
+    );
+  }
 }

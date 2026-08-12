@@ -59,7 +59,8 @@ public class StoredItemSearchRepositoryImpl
     return ITEM.itemName.lower().like(pattern, '!')
         .or(ITEM.publicDescription.lower().like(pattern, '!'))
         .or(CATEGORY.name.lower().like(pattern, '!'))
-        .or(LOCATION.name.lower().like(pattern, '!'));
+        .or(LOCATION.name.lower().like(pattern, '!'))
+        .or(ITEM.foundLocationText.lower().like(pattern, '!'));
   }
 
   private BooleanExpression beforeCursor(

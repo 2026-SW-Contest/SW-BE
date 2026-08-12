@@ -36,6 +36,7 @@ public class StoredItemDetailService {
         .stream()
         .map(this::toAttachmentResponse)
         .toList();
+    String foundLocationName = item.getFoundLocationName();
 
     return new StoredItemDetailResponse(
         new StoredItemDetailDataResponse(
@@ -46,15 +47,15 @@ public class StoredItemDetailService {
                 item.getItemCategory().getId(),
                 item.getItemCategory().getName()
             ),
-            item.getFoundLocation() == null
+            foundLocationName == null
                 ? null
                 : new StoredItemLocationResponse(
-                    item.getFoundLocation().getId(),
-                    item.getFoundLocation().getName()
+                    item.getFoundLocation() == null
+                        ? null
+                        : item.getFoundLocation().getId(),
+                    foundLocationName
                 ),
             item.getFoundDate(),
-            item.getFoundTime(),
-            item.isFoundTimeUnknown(),
             item.getPublicStatus().name(),
             item.getPublicStatus().getDisplayName(),
             new StoredItemOfficeResponse(

@@ -63,7 +63,9 @@ class StoredItemDetailServiceTest {
     assertThat(response.data().description()).isEqualTo("공개 설명");
     assertThat(response.data().category().name())
         .isEqualTo("지갑/카드/현금");
-    assertThat(response.data().foundLocation()).isNull();
+    assertThat(response.data().foundLocation().locationId()).isNull();
+    assertThat(response.data().foundLocation().name())
+        .isEqualTo("명진관 앞 벤치");
     assertThat(response.data().office().name()).isEqualTo("본관 경비실");
     assertThat(response.data().publicStatusName()).isEqualTo("보관중");
     assertThat(response.data().attachments()).singleElement()
@@ -100,7 +102,7 @@ class StoredItemDetailServiceTest {
     when(item.getPublicDescription()).thenReturn("공개 설명");
     when(item.getItemCategory()).thenReturn(category);
     when(item.getFoundDate()).thenReturn(LocalDate.of(2026, 8, 10));
-    when(item.isFoundTimeUnknown()).thenReturn(true);
+    when(item.getFoundLocationName()).thenReturn("명진관 앞 벤치");
     when(item.getPublicStatus()).thenReturn(StoredItemStatus.STORED);
     when(item.getOffice()).thenReturn(office);
     when(item.getCreatedAt()).thenReturn(

@@ -211,6 +211,9 @@ class StoredItemQueryServiceTest {
     when(item.getPublicDescription()).thenReturn("공개 설명");
     when(item.getItemCategory()).thenReturn(category);
     when(item.getFoundLocation()).thenReturn(location);
+    when(item.getFoundLocationName()).thenReturn(
+        location == null ? null : "명진관 2층"
+    );
     when(item.getFoundDate()).thenReturn(LocalDate.of(2026, 8, 10));
     when(item.getPublicStatus()).thenReturn(StoredItemStatus.STORED);
     when(item.getCreatedAt()).thenReturn(

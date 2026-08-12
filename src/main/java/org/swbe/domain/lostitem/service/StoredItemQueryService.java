@@ -76,9 +76,7 @@ public class StoredItemQueryService {
         item.getItemName(),
         item.getPublicDescription(),
         item.getItemCategory().getName(),
-        item.getFoundLocation() == null
-            ? null
-            : item.getFoundLocation().getName(),
+        item.getFoundLocationName(),
         item.getFoundDate(),
         item.getPublicStatus().name(),
         item.getPublicStatus().getDisplayName(),

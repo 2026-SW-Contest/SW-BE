@@ -111,8 +111,6 @@ class StoredItemControllerTest {
         new StoredItemCategoryResponse(2L, "지갑/카드/현금"),
         null,
         LocalDate.of(2026, 8, 10),
-        null,
-        true,
         "STORED",
         "보관중",
         new StoredItemOfficeResponse(3L, "본관 경비실"),

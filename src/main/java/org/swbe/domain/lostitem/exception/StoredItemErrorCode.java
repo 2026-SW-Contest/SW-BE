@@ -14,6 +14,46 @@ public enum StoredItemErrorCode implements ErrorCode {
       HttpStatus.BAD_REQUEST,
       "STORED_ITEM_INVALID_CURSOR",
       "The stored item cursor is invalid."
+  ),
+  OFFICE_NOT_FOUND(
+      HttpStatus.NOT_FOUND,
+      "LOST_ITEM_OFFICE_NOT_FOUND",
+      "The active lost item office was not found."
+  ),
+  CATEGORY_NOT_FOUND(
+      HttpStatus.NOT_FOUND,
+      "ITEM_CATEGORY_NOT_FOUND",
+      "The item category was not found."
+  ),
+  LOCATION_NOT_FOUND(
+      HttpStatus.NOT_FOUND,
+      "LOCATION_NOT_FOUND",
+      "The active location was not found."
+  ),
+  ACCESS_DENIED(
+      HttpStatus.FORBIDDEN,
+      "STORED_ITEM_ACCESS_DENIED",
+      "The user is not assigned to the lost item office."
+  ),
+  INVALID_FOUND_LOCATION(
+      HttpStatus.BAD_REQUEST,
+      "STORED_ITEM_INVALID_FOUND_LOCATION",
+      "Exactly one found location must be provided."
+  ),
+  FILE_LIMIT_EXCEEDED(
+      HttpStatus.BAD_REQUEST,
+      "STORED_ITEM_FILE_LIMIT_EXCEEDED",
+      "A maximum of five images can be attached."
+  ),
+  INVALID_FILE_TYPE(
+      HttpStatus.BAD_REQUEST,
+      "STORED_ITEM_INVALID_FILE_TYPE",
+      "Only JPEG, PNG, GIF, and WebP images can be attached."
+  ),
+  FILE_STORAGE_ERROR(
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      "STORED_ITEM_FILE_STORAGE_ERROR",
+      "The attachment could not be processed."
   );
 
   private final HttpStatus status;
