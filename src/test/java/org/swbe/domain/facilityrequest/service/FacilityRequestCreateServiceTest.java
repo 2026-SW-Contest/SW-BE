@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -37,6 +38,7 @@ import org.swbe.domain.facilityrequest.repository.FacilityRequestRepository;
 import org.swbe.domain.file.repository.FileResourceRepository;
 import org.swbe.domain.file.storage.FileStorage;
 import org.swbe.domain.file.storage.FileStorageException;
+import org.swbe.domain.file.storage.FileStorageRegistry;
 import org.swbe.domain.file.storage.StoredFile;
 import org.swbe.domain.user.entity.AppUser;
 import org.swbe.domain.user.repository.AppUserRepository;
@@ -71,10 +73,17 @@ class FacilityRequestCreateServiceTest {
   @Mock
   private FileStorage fileStorage;
 
+  @Mock
+  private FileStorageRegistry fileStorageRegistry;
+
   private FacilityRequestCreateService createService;
 
   @BeforeEach
   void setUp() {
+    lenient().when(fileStorageRegistry.writeStorage())
+        .thenReturn(fileStorage);
+    lenient().when(fileStorageRegistry.get("LOCAL"))
+        .thenReturn(fileStorage);
     createService = new FacilityRequestCreateService(
         facilityRequestRepository,
         attachmentRepository,
@@ -82,7 +91,7 @@ class FacilityRequestCreateServiceTest {
         locationRepository,
         appUserRepository,
         fileResourceRepository,
-        fileStorage,
+        fileStorageRegistry,
         FIXED_CLOCK
     );
   }

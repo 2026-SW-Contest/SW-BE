@@ -75,7 +75,7 @@ class FacilityRequestControllerTest {
 
   @MockitoBean
   private FacilityRequestDeleteService facilityRequestDeleteService;
-  
+
   @MockitoBean
   private FacilityRequestUpdateService facilityRequestUpdateService;
 

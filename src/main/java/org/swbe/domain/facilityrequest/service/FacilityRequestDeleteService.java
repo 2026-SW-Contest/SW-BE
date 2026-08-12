@@ -12,6 +12,7 @@ import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.repository.FileResourceRepository;
 import org.swbe.domain.file.storage.FileStorage;
 import org.swbe.domain.file.storage.FileStorageException;
+import org.swbe.domain.file.storage.FileStorageRegistry;
 import org.swbe.global.error.BusinessException;
 
 @Service
@@ -20,19 +21,19 @@ public class FacilityRequestDeleteService {
   private final FacilityRequestRepository facilityRequestRepository;
   private final FacilityRequestAttachmentRepository attachmentRepository;
   private final FileResourceRepository fileResourceRepository;
-  private final FileStorage fileStorage;
+  private final FileStorageRegistry fileStorageRegistry;
 
   // 문의 삭제에 필요한 JPA 저장소와 실제 파일 저장소를 주입받는다.
   public FacilityRequestDeleteService(
       FacilityRequestRepository facilityRequestRepository,
       FacilityRequestAttachmentRepository attachmentRepository,
       FileResourceRepository fileResourceRepository,
-      FileStorage fileStorage
+      FileStorageRegistry fileStorageRegistry
   ) {
     this.facilityRequestRepository = facilityRequestRepository;
     this.attachmentRepository = attachmentRepository;
     this.fileResourceRepository = fileResourceRepository;
-    this.fileStorage = fileStorage;
+    this.fileStorageRegistry = fileStorageRegistry;
   }
 
   // 문의 존재 여부, 작성자, 삭제 가능 상태를 검증한 뒤 문의와 첨부파일을 삭제한다.
@@ -54,8 +55,13 @@ public class FacilityRequestDeleteService {
         .toList();
 
     deleteStoredFiles(files);
-    attachmentRepository.deleteAllInBatch(attachments);
-    fileResourceRepository.deleteAllInBatch(files);
+
+    attachmentRepository.deleteAll(attachments);
+    attachmentRepository.flush();
+
+    fileResourceRepository.deleteAll(files);
+    fileResourceRepository.flush();
+
     facilityRequestRepository.delete(facilityRequest);
   }
 
@@ -84,6 +90,9 @@ public class FacilityRequestDeleteService {
   private void deleteStoredFiles(List<FileResource> files) {
     try {
       for (FileResource file : files) {
+        FileStorage fileStorage = fileStorageRegistry.get(
+            file.getStorageProvider()
+        );
         fileStorage.delete(file.getStorageKey());
       }
     } catch (FileStorageException exception) {

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.swbe.global.error.dto.ErrorResponse;
 import org.swbe.global.error.dto.FieldErrorResponse;
@@ -142,6 +143,14 @@ public class GlobalExceptionHandler {
       HttpServletRequest request
   ) {
     return errorResponse(CommonErrorCode.UNSUPPORTED_MEDIA_TYPE, request);
+  }
+
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
+      MaxUploadSizeExceededException exception,
+      HttpServletRequest request
+  ) {
+    return errorResponse(CommonErrorCode.UPLOAD_SIZE_EXCEEDED, request);
   }
 
   @ExceptionHandler(Exception.class)

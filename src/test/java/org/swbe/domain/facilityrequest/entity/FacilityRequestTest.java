@@ -64,7 +64,7 @@ class FacilityRequestTest {
     ReflectionTestUtils.setField(request, "requestStatus", "COMPLETED");
     assertThat(request.isDeletable()).isFalse();
   }
-  
+
   @Test
   void onlyReceivedFacilityRequestIsEditable() {
     FacilityRequest request = new FacilityRequest();

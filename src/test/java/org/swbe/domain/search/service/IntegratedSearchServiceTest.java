@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
@@ -18,10 +19,12 @@ import org.swbe.domain.campus.entity.Location;
 import org.swbe.domain.facilityrequest.entity.FacilityCategory;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 import org.swbe.domain.facilityrequest.repository.FacilityRequestRepository;
+import org.swbe.domain.facilityrequest.service.FacilityRequestThumbnailService;
 import org.swbe.domain.lostitem.entity.ItemCategory;
 import org.swbe.domain.lostitem.entity.StoredItem;
 import org.swbe.domain.lostitem.entity.StoredItemStatus;
 import org.swbe.domain.lostitem.repository.StoredItemRepository;
+import org.swbe.domain.lostitem.service.StoredItemThumbnailService;
 import org.swbe.domain.search.cursor.SearchCursorCodec;
 
 class IntegratedSearchServiceTest {
@@ -29,6 +32,8 @@ class IntegratedSearchServiceTest {
   private StoredItemRepository storedItemRepository;
   private FacilityRequestRepository facilityRequestRepository;
   private SearchCursorCodec searchCursorCodec;
+  private StoredItemThumbnailService storedItemThumbnailService;
+  private FacilityRequestThumbnailService facilityRequestThumbnailService;
   private IntegratedSearchService service;
 
   @BeforeEach
@@ -36,10 +41,16 @@ class IntegratedSearchServiceTest {
     storedItemRepository = mock(StoredItemRepository.class);
     facilityRequestRepository = mock(FacilityRequestRepository.class);
     searchCursorCodec = mock(SearchCursorCodec.class);
+    storedItemThumbnailService = mock(StoredItemThumbnailService.class);
+    facilityRequestThumbnailService = mock(
+        FacilityRequestThumbnailService.class
+    );
     service = new IntegratedSearchService(
         storedItemRepository,
         facilityRequestRepository,
-        searchCursorCodec
+        searchCursorCodec,
+        storedItemThumbnailService,
+        facilityRequestThumbnailService
     );
   }
 
@@ -73,12 +84,20 @@ class IntegratedSearchServiceTest {
         second.getCreatedAt(),
         second.getId()
     )).thenReturn("next-cursor");
+    when(storedItemThumbnailService.resolveAll(List.of(30L, 20L)))
+        .thenReturn(Map.of(
+            30L,
+            "https://cdn.example.com/lost-item.jpg"
+        ));
 
     var response = service.searchLostItems("에어", null, 2);
 
     assertThat(response.data().content()).hasSize(2);
     assertThat(response.data().content().getFirst().itemName())
         .isEqualTo("에어팟 프로");
+    assertThat(response.data().content().getFirst().thumbnailUrl())
+        .isEqualTo("https://cdn.example.com/lost-item.jpg");
+    assertThat(response.data().content().get(1).thumbnailUrl()).isNull();
     assertThat(response.data().nextCursor())
         .isEqualTo("next-cursor");
     assertThat(response.data().hasNext()).isTrue();
@@ -97,6 +116,11 @@ class IntegratedSearchServiceTest {
         isNull(),
         any(Pageable.class)
     )).thenReturn(List.of(request));
+    when(facilityRequestThumbnailService.resolveAll(List.of(40L)))
+        .thenReturn(Map.of(
+            40L,
+            "https://cdn.example.com/facility-request.jpg"
+        ));
 
     var response = service.searchFacilityRequests(
         "에어",
@@ -108,6 +132,9 @@ class IntegratedSearchServiceTest {
         .satisfies(item -> {
           assertThat(item.title()).isEqualTo("에어컨 고장");
           assertThat(item.requestStatusName()).isEqualTo("진행중");
+          assertThat(item.thumbnailUrl()).isEqualTo(
+              "https://cdn.example.com/facility-request.jpg"
+          );
         });
     assertThat(response.data().nextCursor()).isNull();
     assertThat(response.data().hasNext()).isFalse();

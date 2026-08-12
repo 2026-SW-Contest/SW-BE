@@ -70,6 +70,7 @@ public class SecurityConfig {
                 "/api/item-categories",
                 "/api/facility-requests",
                 "/api/facility-requests/*",
+                "/api/files/*",
                 "/api/search/**"
             ).permitAll()
             .requestMatchers(
@@ -77,13 +78,13 @@ public class SecurityConfig {
                 "/api/facility-requests"
             ).hasRole("STUDENT")
             .requestMatchers(
-     HttpMethod.DELETE,
-    "/api/facility-requests/*"
-).hasRole("STUDENT")
-.requestMatchers(
-    HttpMethod.PATCH,
-    "/api/facility-requests/*"
-).hasRole("STUDENT")
+                HttpMethod.DELETE,
+                "/api/facility-requests/*"
+            ).hasRole("STUDENT")
+            .requestMatchers(
+                HttpMethod.PATCH,
+                "/api/facility-requests/*"
+            ).hasRole("STUDENT")
             .requestMatchers("/api/auth/csrf").permitAll()
             .requestMatchers("/api/auth/login").permitAll()
             .requestMatchers(
