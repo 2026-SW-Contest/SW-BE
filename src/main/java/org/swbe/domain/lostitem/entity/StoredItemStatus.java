@@ -12,4 +12,15 @@ public enum StoredItemStatus {
   COMPLETED("해결완료");
 
   private final String displayName;
+
+  public boolean canTransitionTo(StoredItemStatus target) {
+    if (target == null || this == target) {
+      return false;
+    }
+    return switch (this) {
+      case STORED -> target == IN_PROGRESS || target == COMPLETED;
+      case IN_PROGRESS -> target == COMPLETED;
+      case COMPLETED -> false;
+    };
+  }
 }

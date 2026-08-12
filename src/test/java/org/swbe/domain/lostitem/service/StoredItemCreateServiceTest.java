@@ -32,10 +32,12 @@ import org.swbe.domain.file.storage.FileStorageRegistry;
 import org.swbe.domain.file.storage.StoredFile;
 import org.swbe.domain.lostitem.dto.request.StoredItemCreateRequest;
 import org.swbe.domain.lostitem.entity.ItemCategory;
+import org.swbe.domain.lostitem.entity.ItemStatusHistory;
 import org.swbe.domain.lostitem.entity.LostItemOffice;
 import org.swbe.domain.lostitem.entity.StoredItem;
 import org.swbe.domain.lostitem.entity.StoredItemAttachment;
 import org.swbe.domain.lostitem.repository.ItemCategoryRepository;
+import org.swbe.domain.lostitem.repository.ItemStatusHistoryRepository;
 import org.swbe.domain.lostitem.repository.LostItemOfficeRepository;
 import org.swbe.domain.lostitem.repository.OfficeStaffAssignmentRepository;
 import org.swbe.domain.lostitem.repository.StoredItemAttachmentRepository;
@@ -48,6 +50,7 @@ class StoredItemCreateServiceTest {
 
   private StoredItemRepository storedItemRepository;
   private StoredItemAttachmentRepository attachmentRepository;
+  private ItemStatusHistoryRepository statusHistoryRepository;
   private LostItemOfficeRepository officeRepository;
   private OfficeStaffAssignmentRepository assignmentRepository;
   private ItemCategoryRepository itemCategoryRepository;
@@ -66,6 +69,7 @@ class StoredItemCreateServiceTest {
   void setUp() {
     storedItemRepository = mock(StoredItemRepository.class);
     attachmentRepository = mock(StoredItemAttachmentRepository.class);
+    statusHistoryRepository = mock(ItemStatusHistoryRepository.class);
     officeRepository = mock(LostItemOfficeRepository.class);
     assignmentRepository = mock(OfficeStaffAssignmentRepository.class);
     itemCategoryRepository = mock(ItemCategoryRepository.class);
@@ -98,6 +102,7 @@ class StoredItemCreateServiceTest {
     service = new StoredItemCreateService(
         storedItemRepository,
         attachmentRepository,
+        statusHistoryRepository,
         officeRepository,
         assignmentRepository,
         itemCategoryRepository,
@@ -155,6 +160,14 @@ class StoredItemCreateServiceTest {
     assertThat(item.getValue().getStoragePosition()).isNull();
     assertThat(item.getValue().getFoundTime()).isNull();
     assertThat(item.getValue().isFoundTimeUnknown()).isTrue();
+    ArgumentCaptor<ItemStatusHistory> history = ArgumentCaptor.forClass(
+        ItemStatusHistory.class
+    );
+    verify(statusHistoryRepository).save(history.capture());
+    assertThat(history.getValue().getPreviousStatus()).isNull();
+    assertThat(history.getValue().getNewStatus())
+        .isEqualTo(org.swbe.domain.lostitem.entity.StoredItemStatus.STORED);
+    assertThat(history.getValue().getChangedBy()).isSameAs(user);
   }
 
   @Test

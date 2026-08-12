@@ -69,6 +69,11 @@ public enum StoredItemErrorCode implements ErrorCode {
       HttpStatus.CONFLICT,
       "STORED_ITEM_VERSION_CONFLICT",
       "The stored item was modified by another request."
+  ),
+  INVALID_STATUS_TRANSITION(
+      HttpStatus.CONFLICT,
+      "STORED_ITEM_INVALID_STATUS_TRANSITION",
+      "The requested stored item status transition is not allowed."
   );
 
   private final HttpStatus status;

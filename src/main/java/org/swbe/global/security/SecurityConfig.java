@@ -93,6 +93,10 @@ public class SecurityConfig {
             ).hasRole("STUDENT")
             .requestMatchers(
                 HttpMethod.PATCH,
+                "/api/stored-items/*/status"
+            ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
+            .requestMatchers(
+                HttpMethod.PATCH,
                 "/api/stored-items/*"
             ).hasAnyRole("LOST_ITEM_STAFF", "ADMIN")
             .requestMatchers("/api/auth/csrf").permitAll()

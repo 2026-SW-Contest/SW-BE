@@ -215,6 +215,25 @@ public class StoredItem {
     this.updatedAt = Objects.requireNonNull(updatedAt);
   }
 
+  public boolean changeStatus(
+      StoredItemStatus newStatus,
+      LocalDateTime changedAt
+  ) {
+    Objects.requireNonNull(newStatus, "newStatus must not be null");
+    if (publicStatus == newStatus) {
+      return false;
+    }
+    if (!publicStatus.canTransitionTo(newStatus)) {
+      throw new IllegalStateException(
+          "Invalid stored item status transition: "
+              + publicStatus + " -> " + newStatus
+      );
+    }
+    this.publicStatus = newStatus;
+    this.updatedAt = Objects.requireNonNull(changedAt);
+    return true;
+  }
+
   private static void validateFoundLocation(
       Location foundLocation,
       String foundLocationText

@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -55,4 +56,67 @@ public class ItemStatusHistory {
 
   @Column(name = "changed_at", nullable = false)
   private LocalDateTime changedAt;
+
+  private ItemStatusHistory(
+      StoredItem storedItem,
+      AppUser changedBy,
+      StoredItemStatus previousStatus,
+      StoredItemStatus newStatus,
+      String changeReason,
+      LocalDateTime changedAt
+  ) {
+    this.storedItem = Objects.requireNonNull(storedItem);
+    this.changedBy = Objects.requireNonNull(changedBy);
+    this.actorType = "USER";
+    this.previousStatus = previousStatus;
+    this.newStatus = Objects.requireNonNull(newStatus);
+    this.changeReason = stripNullable(changeReason);
+    this.changedAt = Objects.requireNonNull(changedAt);
+  }
+
+  public static ItemStatusHistory recordInitial(
+      StoredItem storedItem,
+      AppUser changedBy,
+      LocalDateTime changedAt
+  ) {
+    return new ItemStatusHistory(
+        storedItem,
+        changedBy,
+        null,
+        StoredItemStatus.STORED,
+        null,
+        changedAt
+    );
+  }
+
+  public static ItemStatusHistory recordTransition(
+      StoredItem storedItem,
+      AppUser changedBy,
+      StoredItemStatus previousStatus,
+      StoredItemStatus newStatus,
+      String changeReason,
+      LocalDateTime changedAt
+  ) {
+    if (previousStatus == null || previousStatus == newStatus) {
+      throw new IllegalArgumentException(
+          "A status transition requires two different statuses"
+      );
+    }
+    return new ItemStatusHistory(
+        storedItem,
+        changedBy,
+        previousStatus,
+        newStatus,
+        changeReason,
+        changedAt
+    );
+  }
+
+  private static String stripNullable(String value) {
+    if (value == null) {
+      return null;
+    }
+    String stripped = value.strip();
+    return stripped.isEmpty() ? null : stripped;
+  }
 }

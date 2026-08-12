@@ -20,11 +20,13 @@ import org.swbe.domain.lostitem.dto.request.StoredItemCreateRequest;
 import org.swbe.domain.lostitem.dto.response.StoredItemCreateDataResponse;
 import org.swbe.domain.lostitem.dto.response.StoredItemCreateResponse;
 import org.swbe.domain.lostitem.entity.ItemCategory;
+import org.swbe.domain.lostitem.entity.ItemStatusHistory;
 import org.swbe.domain.lostitem.entity.LostItemOffice;
 import org.swbe.domain.lostitem.entity.StoredItem;
 import org.swbe.domain.lostitem.entity.StoredItemAttachment;
 import org.swbe.domain.lostitem.exception.StoredItemErrorCode;
 import org.swbe.domain.lostitem.repository.ItemCategoryRepository;
+import org.swbe.domain.lostitem.repository.ItemStatusHistoryRepository;
 import org.swbe.domain.lostitem.repository.LostItemOfficeRepository;
 import org.swbe.domain.lostitem.repository.OfficeStaffAssignmentRepository;
 import org.swbe.domain.lostitem.repository.StoredItemAttachmentRepository;
@@ -48,6 +50,7 @@ public class StoredItemCreateService {
 
   private final StoredItemRepository storedItemRepository;
   private final StoredItemAttachmentRepository attachmentRepository;
+  private final ItemStatusHistoryRepository statusHistoryRepository;
   private final LostItemOfficeRepository officeRepository;
   private final OfficeStaffAssignmentRepository assignmentRepository;
   private final ItemCategoryRepository itemCategoryRepository;
@@ -107,6 +110,11 @@ public class StoredItemCreateService {
     List<StoredFile> storedFiles = new ArrayList<>();
     try {
       storedItemRepository.save(storedItem);
+      statusHistoryRepository.save(ItemStatusHistory.recordInitial(
+          storedItem,
+          registrant,
+          now
+      ));
       saveAttachments(
           storedItem,
           registrant,
