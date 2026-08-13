@@ -21,7 +21,7 @@ class StoredItemTest {
   }
 
   @Test
-  void updateCanSwitchToFreeTextLocationAndClearPrivateDescription() {
+  void updateCanSetLocationAndOptionalTextAndClearPrivateDescription() {
     StoredItem item = StoredItem.create(
         mock(LostItemOffice.class),
         mock(Location.class),
@@ -35,10 +35,12 @@ class StoredItemTest {
         LocalDateTime.of(2026, 8, 10, 12, 0)
     );
 
+    Location updatedLocation = mock(Location.class);
+
     item.update(
         null,
         null,
-        null,
+        updatedLocation,
         " 명진관 앞 벤치 ",
         true,
         " 수정된 지갑 ",
@@ -49,7 +51,7 @@ class StoredItemTest {
         LocalDateTime.of(2026, 8, 12, 15, 0)
     );
 
-    assertThat(item.getFoundLocation()).isNull();
+    assertThat(item.getFoundLocation()).isSameAs(updatedLocation);
     assertThat(item.getFoundLocationText()).isEqualTo("명진관 앞 벤치");
     assertThat(item.getItemName()).isEqualTo("수정된 지갑");
     assertThat(item.getPrivateDescription()).isNull();

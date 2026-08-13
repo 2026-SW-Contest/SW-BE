@@ -61,7 +61,8 @@ public class StoredItemDetailService {
                     item.getFoundLocation() == null
                         ? null
                         : item.getFoundLocation().getId(),
-                    foundLocationName
+                    foundLocationName,
+                    item.getFoundLocationText()
                 ),
             item.getFoundDate(),
             item.getPublicStatus().name(),
