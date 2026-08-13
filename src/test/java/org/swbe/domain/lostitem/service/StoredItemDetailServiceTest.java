@@ -62,7 +62,7 @@ class StoredItemDetailServiceTest {
     when(attachmentRepository.findPublicImagesByStoredItemId(25L))
         .thenReturn(List.of(attachment));
     when(filePublicUrlResolver.resolve(file))
-        .thenReturn("/api/files/31");
+        .thenReturn("https://cdn.example.com/public/image.jpg");
 
     var response = service.getStoredItem(25L, null);
 
@@ -79,7 +79,8 @@ class StoredItemDetailServiceTest {
         .satisfies(result -> {
           assertThat(result.fileId()).isEqualTo(31L);
           assertThat(result.originalFilename()).isEqualTo("wallet.jpg");
-          assertThat(result.fileUrl()).isEqualTo("/api/files/31");
+          assertThat(result.fileUrl())
+              .isEqualTo("https://cdn.example.com/public/image.jpg");
         });
     assertThat(response.data().myClaimResult()).isNull();
     verifyNoInteractions(itemClaimRepository);

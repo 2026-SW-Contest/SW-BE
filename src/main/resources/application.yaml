@@ -53,8 +53,6 @@ server:
 
 app:
   file:
-    storage-directory: ${FILE_STORAGE_DIRECTORY:uploads}
-    storage-provider: ${FILE_STORAGE_PROVIDER:LOCAL}
     s3:
       bucket: ${S3_BUCKET:}
       region: ${AWS_REGION:ap-northeast-2}

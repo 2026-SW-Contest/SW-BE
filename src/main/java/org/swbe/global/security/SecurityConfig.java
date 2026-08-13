@@ -73,7 +73,6 @@ public class SecurityConfig {
                 "/api/facility-requests/*",
                 "/api/stored-items",
                 "/api/stored-items/*",
-                "/api/files/*",
                 "/api/search/**"
             ).permitAll()
             .requestMatchers(

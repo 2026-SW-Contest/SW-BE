@@ -13,32 +13,24 @@ import org.swbe.domain.file.config.FileStorageProperties;
 class FileStorageRegistryTest {
 
   @Test
-  void selectsConfiguredWriteStorageAndProviderCaseInsensitively() {
-    FileStorage local = storage("LOCAL");
+  void selectsS3StoragesAndProviderCaseInsensitively() {
     FileStorage s3 = storage("S3");
     FileStorage privateS3 = storage("S3_PRIVATE");
     FileStorageRegistry registry = new FileStorageRegistry(
-        List.of(local, s3, privateS3),
-        properties("s3", "bucket")
+        List.of(s3, privateS3),
+        properties("bucket")
     );
 
     assertThat(registry.writeStorage()).isSameAs(s3);
     assertThat(registry.privateItemClaimStorage()).isSameAs(privateS3);
-    assertThat(registry.get("local")).isSameAs(local);
+    assertThat(registry.get("s3")).isSameAs(s3);
   }
 
   @Test
-  void missingS3ConfigurationFailsFastWhenS3IsWriteStorage() {
-    FileStorageRegistry localRegistry = new FileStorageRegistry(
-        List.of(storage("LOCAL"), storage("S3")),
-        properties("LOCAL", "")
-    );
-
-    assertThat(localRegistry.writeStorage().provider())
-        .isEqualTo("LOCAL");
+  void missingS3ConfigurationFailsFast() {
     assertThatThrownBy(() -> new FileStorageRegistry(
-        List.of(storage("LOCAL"), storage("S3")),
-        properties("S3", "")
+        List.of(storage("S3")),
+        properties("")
     ))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("S3_BUCKET");
@@ -47,7 +39,6 @@ class FileStorageRegistryTest {
   @Test
   void missingCloudFrontUrlFailsFastWhenS3IsWriteStorage() {
     FileStorageProperties properties = new FileStorageProperties(
-        "S3",
         new FileStorageProperties.S3(
             "bucket",
             "ap-northeast-2",
@@ -57,7 +48,7 @@ class FileStorageRegistryTest {
     );
 
     assertThatThrownBy(() -> new FileStorageRegistry(
-        List.of(storage("LOCAL"), storage("S3")),
+        List.of(storage("S3")),
         properties
     ))
         .isInstanceOf(IllegalStateException.class)
@@ -70,12 +61,8 @@ class FileStorageRegistryTest {
     return storage;
   }
 
-  private FileStorageProperties properties(
-      String provider,
-      String bucket
-  ) {
+  private FileStorageProperties properties(String bucket) {
     return new FileStorageProperties(
-        provider,
         new FileStorageProperties.S3(
             bucket,
             "ap-northeast-2",

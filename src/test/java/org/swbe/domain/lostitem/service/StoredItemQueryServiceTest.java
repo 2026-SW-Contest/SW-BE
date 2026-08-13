@@ -101,7 +101,10 @@ class StoredItemQueryServiceTest {
         eq(3)
     )).thenReturn(List.of(first, second, extra));
     when(thumbnailService.resolveAll(List.of(30L, 20L)))
-        .thenReturn(Map.of(30L, "/api/files/31"));
+        .thenReturn(Map.of(
+            30L,
+            "https://cdn.example.com/public/image.jpg"
+        ));
     when(cursorCodec.encode(second.getCreatedAt(), 20L))
         .thenReturn("next-cursor");
 
@@ -111,7 +114,7 @@ class StoredItemQueryServiceTest {
     assertThat(response.data().content().getFirst().description())
         .isEqualTo("공개 설명");
     assertThat(response.data().content().getFirst().thumbnailUrl())
-        .isEqualTo("/api/files/31");
+        .isEqualTo("https://cdn.example.com/public/image.jpg");
     assertThat(response.data().content().get(1).foundLocationName())
         .isNull();
     assertThat(response.data().content().get(1).thumbnailUrl()).isNull();

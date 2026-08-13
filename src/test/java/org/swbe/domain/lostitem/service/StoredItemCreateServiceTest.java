@@ -92,7 +92,7 @@ class StoredItemCreateServiceTest {
         .thenReturn(Optional.of(location));
     when(appUserRepository.findById(7L)).thenReturn(Optional.of(user));
     when(fileStorageRegistry.writeStorage()).thenReturn(fileStorage);
-    when(fileStorageRegistry.get("LOCAL")).thenReturn(fileStorage);
+    when(fileStorageRegistry.get("S3")).thenReturn(fileStorage);
     when(storedItemRepository.save(any(StoredItem.class)))
         .thenAnswer(invocation -> {
           StoredItem item = invocation.getArgument(0);
@@ -336,7 +336,7 @@ class StoredItemCreateServiceTest {
 
   private StoredFile storedFile(String filename, String storageKey) {
     return new StoredFile(
-        "LOCAL",
+        "S3",
         storageKey,
         filename,
         filename.endsWith(".png") ? "image/png" : "image/jpeg",

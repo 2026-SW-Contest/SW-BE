@@ -70,7 +70,7 @@ class FacilityRequestUpdateServiceTest {
     fileStorage = mock(FileStorage.class);
     fileStorageRegistry = mock(FileStorageRegistry.class);
     when(fileStorageRegistry.writeStorage()).thenReturn(fileStorage);
-    when(fileStorageRegistry.get("LOCAL")).thenReturn(fileStorage);
+    when(fileStorageRegistry.get("S3")).thenReturn(fileStorage);
     updateService = new FacilityRequestUpdateService(
         facilityRequestRepository,
         attachmentRepository,
@@ -336,7 +336,7 @@ class FacilityRequestUpdateServiceTest {
   ) {
     FileResource file = mock(FileResource.class);
     when(file.getId()).thenReturn(fileId);
-    when(file.getStorageProvider()).thenReturn("LOCAL");
+    when(file.getStorageProvider()).thenReturn("S3");
     when(file.getStorageKey()).thenReturn(storageKey);
     FacilityRequestAttachment attachment =
         mock(FacilityRequestAttachment.class);
@@ -365,7 +365,7 @@ class FacilityRequestUpdateServiceTest {
 
   private StoredFile storedFile(String storageKey) {
     return new StoredFile(
-        "LOCAL",
+        "S3",
         storageKey,
         storageKey,
         "image/jpeg",

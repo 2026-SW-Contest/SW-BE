@@ -74,7 +74,7 @@ class StoredItemControllerTest {
         LocalDate.of(2026, 8, 10),
         "STORED",
         "보관중",
-        "/api/files/31",
+        "https://cdn.example.com/public/image.jpg",
         LocalDateTime.of(2026, 8, 10, 14, 30)
     );
     when(storedItemQueryService.getStoredItems(any())).thenReturn(
