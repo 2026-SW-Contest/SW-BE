@@ -2,13 +2,16 @@ package org.swbe.domain.lostitem.dto.response;
 
 import java.util.List;
 
-public record OfficeItemClaimSliceResponse(
+public record OfficeItemClaimPageResponse(
     List<OfficeItemClaimListItemResponse> content,
-    String nextCursor,
+    int page,
+    int size,
+    long totalElements,
+    int totalPages,
     boolean hasNext
 ) {
 
-  public OfficeItemClaimSliceResponse {
+  public OfficeItemClaimPageResponse {
     content = List.copyOf(content);
   }
 }

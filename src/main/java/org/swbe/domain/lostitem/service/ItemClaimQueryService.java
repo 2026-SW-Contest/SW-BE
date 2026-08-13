@@ -3,13 +3,12 @@ package org.swbe.domain.lostitem.service;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.service.PrivateFileUrlResolver;
-import org.swbe.domain.lostitem.cursor.ItemClaimCursor;
-import org.swbe.domain.lostitem.cursor.ItemClaimCursorCodec;
 import org.swbe.domain.lostitem.dto.request.ItemClaimSearchCondition;
 import org.swbe.domain.lostitem.dto.response.ClaimStatusHistoryResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimAttachmentResponse;
@@ -17,10 +16,10 @@ import org.swbe.domain.lostitem.dto.response.ItemClaimDetailDataResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimDetailResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimListItemResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimListResponse;
-import org.swbe.domain.lostitem.dto.response.ItemClaimSliceResponse;
+import org.swbe.domain.lostitem.dto.response.ItemClaimPageResponse;
 import org.swbe.domain.lostitem.dto.response.OfficeItemClaimListItemResponse;
 import org.swbe.domain.lostitem.dto.response.OfficeItemClaimListResponse;
-import org.swbe.domain.lostitem.dto.response.OfficeItemClaimSliceResponse;
+import org.swbe.domain.lostitem.dto.response.OfficeItemClaimPageResponse;
 import org.swbe.domain.lostitem.entity.ClaimStatusHistory;
 import org.swbe.domain.lostitem.entity.ItemClaim;
 import org.swbe.domain.lostitem.entity.ItemClaimAttachment;
@@ -49,7 +48,6 @@ public class ItemClaimQueryService {
   private final OfficeStaffAssignmentRepository assignmentRepository;
   private final ItemClaimThumbnailService thumbnailService;
   private final PrivateFileUrlResolver privateFileUrlResolver;
-  private final ItemClaimCursorCodec cursorCodec;
 
   public ItemClaimListResponse getItemClaims(
       Long storedItemId,
@@ -68,20 +66,12 @@ public class ItemClaimQueryService {
         admin
     );
 
-    ItemClaimCursor cursor = condition.cursor() == null
-        ? null
-        : cursorCodec.decode(condition.cursor());
-    List<ItemClaim> matches = itemClaimRepository.findAllByCursor(
+    Page<ItemClaim> result = itemClaimRepository.findAllByStoredItemId(
         storedItemId,
         condition.status(),
-        cursor == null ? null : cursor.createdAt(),
-        cursor == null ? null : cursor.id(),
-        PageRequest.of(0, condition.size() + 1)
+        PageRequest.of(condition.page(), condition.size())
     );
-    boolean hasNext = matches.size() > condition.size();
-    List<ItemClaim> content = hasNext
-        ? matches.subList(0, condition.size())
-        : matches;
+    List<ItemClaim> content = result.getContent();
     Map<Long, ItemClaimAttachmentSummary> summaries = content.isEmpty()
         ? Map.of()
         : thumbnailService.resolveAll(
@@ -94,10 +84,13 @@ public class ItemClaimQueryService {
         ))
         .toList();
 
-    return new ItemClaimListResponse(new ItemClaimSliceResponse(
+    return new ItemClaimListResponse(new ItemClaimPageResponse(
         responses,
-        nextCursor(content, hasNext),
-        hasNext
+        result.getNumber(),
+        result.getSize(),
+        result.getTotalElements(),
+        result.getTotalPages(),
+        result.hasNext()
     ));
   }
 
@@ -112,21 +105,13 @@ public class ItemClaimQueryService {
     }
     validateOfficeAccess(officeId, requesterUserId, admin);
 
-    ItemClaimCursor cursor = condition.cursor() == null
-        ? null
-        : cursorCodec.decode(condition.cursor());
-    List<ItemClaim> matches = itemClaimRepository
-        .findAllByOfficeIdAndCursor(
+    Page<ItemClaim> result = itemClaimRepository
+        .findAllByOfficeId(
             officeId,
             condition.status(),
-            cursor == null ? null : cursor.createdAt(),
-            cursor == null ? null : cursor.id(),
-            PageRequest.of(0, condition.size() + 1)
+            PageRequest.of(condition.page(), condition.size())
         );
-    boolean hasNext = matches.size() > condition.size();
-    List<ItemClaim> content = hasNext
-        ? matches.subList(0, condition.size())
-        : matches;
+    List<ItemClaim> content = result.getContent();
     Map<Long, ItemClaimAttachmentSummary> summaries = content.isEmpty()
         ? Map.of()
         : thumbnailService.resolveAll(
@@ -140,10 +125,13 @@ public class ItemClaimQueryService {
         .toList();
 
     return new OfficeItemClaimListResponse(
-        new OfficeItemClaimSliceResponse(
+        new OfficeItemClaimPageResponse(
             responses,
-            nextCursor(content, hasNext),
-            hasNext
+            result.getNumber(),
+            result.getSize(),
+            result.getTotalElements(),
+            result.getTotalPages(),
+            result.hasNext()
         )
     );
   }
@@ -287,14 +275,4 @@ public class ItemClaimQueryService {
         : claim.getClaimantUser().getStudentNumber();
   }
 
-  private String nextCursor(
-      List<ItemClaim> content,
-      boolean hasNext
-  ) {
-    if (!hasNext) {
-      return null;
-    }
-    ItemClaim last = content.getLast();
-    return cursorCodec.encode(last.getCreatedAt(), last.getId());
-  }
 }

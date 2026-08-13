@@ -3,7 +3,6 @@ package org.swbe.domain.facilityrequest.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -56,8 +55,7 @@ public interface FacilityRequestRepository extends
       Pageable pageable
   );
 
-  @Query(
-      value = """
+  @Query("""
           SELECT request
           FROM FacilityRequest request
           JOIN FETCH request.facilityCategory category
@@ -72,29 +70,25 @@ public interface FacilityRequestRepository extends
             )
             AND (:fromDateTime IS NULL OR request.createdAt >= :fromDateTime)
             AND (:toDateTimeExclusive IS NULL OR request.createdAt < :toDateTimeExclusive)
-          """,
-      countQuery = """
-          SELECT COUNT(request)
-          FROM FacilityRequest request
-          WHERE (:categoryId IS NULL OR request.facilityCategory.id = :categoryId)
-            AND (:locationId IS NULL OR request.location.id = :locationId)
-            AND (:status IS NULL OR request.requestStatus = :status)
             AND (
-              :keyword IS NULL
-              OR LOWER(request.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              OR LOWER(request.description) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              :cursorCreatedAt IS NULL
+              OR request.createdAt < :cursorCreatedAt
+              OR (
+                request.createdAt = :cursorCreatedAt
+                AND request.id < :cursorId
+              )
             )
-            AND (:fromDateTime IS NULL OR request.createdAt >= :fromDateTime)
-            AND (:toDateTimeExclusive IS NULL OR request.createdAt < :toDateTimeExclusive)
-          """
-  )
-  Page<FacilityRequest> searchRequests(
+          ORDER BY request.createdAt DESC, request.id DESC
+          """)
+  List<FacilityRequest> searchRequestsByCursor(
       @Param("categoryId") Long categoryId,
       @Param("locationId") Long locationId,
       @Param("status") String status,
       @Param("keyword") String keyword,
       @Param("fromDateTime") LocalDateTime fromDateTime,
       @Param("toDateTimeExclusive") LocalDateTime toDateTimeExclusive,
+      @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+      @Param("cursorId") Long cursorId,
       Pageable pageable
   );
 }

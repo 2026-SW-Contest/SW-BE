@@ -15,20 +15,19 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.swbe.domain.campus.entity.Location;
+import org.swbe.domain.facilityrequest.cursor.FacilityRequestCursor;
+import org.swbe.domain.facilityrequest.cursor.FacilityRequestCursorCodec;
 import org.swbe.domain.facilityrequest.dto.request.FacilityRequestSearchCondition;
-import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListItemResponse;
-import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.entity.FacilityCategory;
 import org.swbe.domain.facilityrequest.entity.FacilityRequest;
 import org.swbe.domain.facilityrequest.entity.FacilityRequestStatus;
+import org.swbe.domain.facilityrequest.exception.FacilityRequestErrorCode;
 import org.swbe.domain.facilityrequest.repository.FacilityRequestRepository;
 import org.swbe.global.error.BusinessException;
 import org.swbe.global.error.CommonErrorCode;
@@ -42,137 +41,156 @@ class FacilityRequestQueryServiceTest {
   @Mock
   private FacilityRequestThumbnailService thumbnailService;
 
+  @Mock
+  private FacilityRequestCursorCodec cursorCodec;
+
   @InjectMocks
-  private FacilityRequestQueryService facilityRequestQueryService;
+  private FacilityRequestQueryService service;
 
   @Test
-  void requestsAreReturnedAsPagedSummary() {
-    LocalDateTime createdAt = LocalDateTime.of(2026, 8, 1, 16, 0);
-    FacilityCategory category = mock(FacilityCategory.class);
-    when(category.getName()).thenReturn("전기/조명");
-    Location location = mock(Location.class);
-    when(location.getName()).thenReturn("학생회관");
-    FacilityRequest request = mock(FacilityRequest.class);
-    when(request.getId()).thenReturn(25L);
-    when(request.getTitle()).thenReturn("학생회관 1층 조명 깜빡임");
-    when(request.getFacilityCategory()).thenReturn(category);
-    when(request.getLocation()).thenReturn(location);
-    when(request.getRequestStatus()).thenReturn("IN_PROGRESS");
-    when(request.getCreatedAt()).thenReturn(createdAt);
-    Page<FacilityRequest> page = new PageImpl<>(
-        List.of(request),
-        PageRequest.of(0, 20),
-        1
-    );
-    when(facilityRequestRepository.searchRequests(
+  void returnsFilteredRequestsWithNextCursor() {
+    FacilityRequest first = request(25L, LocalDateTime.of(
+        2026, 8, 1, 16, 0
+    ));
+    FacilityRequest extra = mock(FacilityRequest.class);
+    when(facilityRequestRepository.searchRequestsByCursor(
         eq(1L),
         eq(2L),
         eq("IN_PROGRESS"),
         eq("조명"),
         eq(LocalDateTime.of(2026, 7, 1, 0, 0)),
         eq(LocalDateTime.of(2026, 8, 2, 0, 0)),
+        eq(null),
+        eq(null),
         any(Pageable.class)
-    )).thenReturn(page);
+    )).thenReturn(List.of(first, extra));
     when(thumbnailService.resolveAll(List.of(25L))).thenReturn(
         Map.of(25L, "https://cdn.example.com/image.jpg")
     );
-    FacilityRequestSearchCondition condition = new FacilityRequestSearchCondition(
+    when(cursorCodec.encode(first.getCreatedAt(), 25L))
+        .thenReturn("next-cursor");
+
+    var response = service.getFacilityRequests(condition(
+        null,
+        1
+    ));
+
+    assertThat(response.data().content()).singleElement()
+        .satisfies(item -> {
+          assertThat(item.facilityRequestId()).isEqualTo(25L);
+          assertThat(item.title()).isEqualTo("학생회관 1층 조명 깜빡임");
+          assertThat(item.categoryName()).isEqualTo("전기/조명");
+          assertThat(item.locationName()).isEqualTo("학생회관");
+          assertThat(item.requestStatus()).isEqualTo("IN_PROGRESS");
+          assertThat(item.thumbnailUrl())
+              .isEqualTo("https://cdn.example.com/image.jpg");
+        });
+    assertThat(response.data().nextCursor()).isEqualTo("next-cursor");
+    assertThat(response.data().hasNext()).isTrue();
+    ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(
+        Pageable.class
+    );
+    verify(facilityRequestRepository).searchRequestsByCursor(
+        eq(1L),
+        eq(2L),
+        eq("IN_PROGRESS"),
+        eq("조명"),
+        eq(LocalDateTime.of(2026, 7, 1, 0, 0)),
+        eq(LocalDateTime.of(2026, 8, 2, 0, 0)),
+        eq(null),
+        eq(null),
+        pageableCaptor.capture()
+    );
+    assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(2);
+  }
+
+  @Test
+  void decodedCursorIsPassedToRepository() {
+    LocalDateTime createdAt = LocalDateTime.of(2026, 8, 1, 16, 0);
+    when(cursorCodec.decode("cursor"))
+        .thenReturn(new FacilityRequestCursor(createdAt, 25L));
+    when(facilityRequestRepository.searchRequestsByCursor(
+        eq(1L),
+        eq(2L),
+        eq("IN_PROGRESS"),
+        eq("조명"),
+        any(),
+        any(),
+        eq(createdAt),
+        eq(25L),
+        any(Pageable.class)
+    )).thenReturn(List.of());
+
+    var response = service.getFacilityRequests(condition("cursor", 20));
+
+    assertThat(response.data().content()).isEmpty();
+    assertThat(response.data().nextCursor()).isNull();
+    assertThat(response.data().hasNext()).isFalse();
+  }
+
+  @Test
+  void invalidCursorIsRejected() {
+    BusinessException exception = new BusinessException(
+        FacilityRequestErrorCode.INVALID_CURSOR
+    );
+    when(cursorCodec.decode("invalid")).thenThrow(exception);
+
+    assertThatThrownBy(
+        () -> service.getFacilityRequests(condition("invalid", 20))
+    ).isSameAs(exception);
+    verifyNoInteractions(facilityRequestRepository);
+  }
+
+  @Test
+  void startDateAfterEndDateIsRejected() {
+    FacilityRequestSearchCondition condition =
+        new FacilityRequestSearchCondition(
+            null,
+            null,
+            null,
+            null,
+            LocalDate.of(2026, 8, 2),
+            LocalDate.of(2026, 8, 1),
+            null,
+            20
+        );
+
+    assertThatThrownBy(() -> service.getFacilityRequests(condition))
+        .isInstanceOf(BusinessException.class)
+        .satisfies(exception -> assertThat(
+            ((BusinessException) exception).getErrorCode()
+        ).isEqualTo(CommonErrorCode.VALIDATION_FAILED));
+    verifyNoInteractions(facilityRequestRepository);
+  }
+
+  private FacilityRequestSearchCondition condition(
+      String cursor,
+      int size
+  ) {
+    return new FacilityRequestSearchCondition(
         1L,
         2L,
         FacilityRequestStatus.IN_PROGRESS,
         "  조명  ",
         LocalDate.of(2026, 7, 1),
         LocalDate.of(2026, 8, 1),
-        0,
-        20
-    );
-
-    FacilityRequestListResponse response =
-        facilityRequestQueryService.getFacilityRequests(condition);
-
-    assertThat(response.data().content()).hasSize(1);
-    FacilityRequestListItemResponse item = response.data().content().getFirst();
-    assertThat(item.facilityRequestId()).isEqualTo(25L);
-    assertThat(item.title()).isEqualTo("학생회관 1층 조명 깜빡임");
-    assertThat(item.categoryName()).isEqualTo("전기/조명");
-    assertThat(item.locationName()).isEqualTo("학생회관");
-    assertThat(item.requestStatus()).isEqualTo("IN_PROGRESS");
-    assertThat(item.requestStatusName()).isEqualTo("진행중");
-    assertThat(item.thumbnailUrl())
-        .isEqualTo("https://cdn.example.com/image.jpg");
-    assertThat(item.createdAt()).isEqualTo(createdAt);
-    assertThat(response.data().page()).isZero();
-    assertThat(response.data().size()).isEqualTo(20);
-    assertThat(response.data().totalElements()).isEqualTo(1);
-    assertThat(response.data().totalPages()).isEqualTo(1);
-    assertThat(response.data().hasNext()).isFalse();
-    verify(facilityRequestRepository).searchRequests(
-        eq(1L),
-        eq(2L),
-        eq("IN_PROGRESS"),
-        eq("조명"),
-        eq(LocalDateTime.of(2026, 7, 1, 0, 0)),
-        eq(LocalDateTime.of(2026, 8, 2, 0, 0)),
-        any(Pageable.class)
+        cursor,
+        size
     );
   }
 
-  @Test
-  void noSearchResultReturnsEmptyPage() {
-    Page<FacilityRequest> page = new PageImpl<>(
-        List.of(),
-        PageRequest.of(0, 20),
-        0
-    );
-    when(facilityRequestRepository.searchRequests(
-        eq(null),
-        eq(null),
-        eq(null),
-        eq(null),
-        eq(null),
-        eq(null),
-        any(Pageable.class)
-    )).thenReturn(page);
-    FacilityRequestSearchCondition condition = new FacilityRequestSearchCondition(
-        null,
-        null,
-        null,
-        " ",
-        null,
-        null,
-        0,
-        20
-    );
-
-    FacilityRequestListResponse response =
-        facilityRequestQueryService.getFacilityRequests(condition);
-
-    assertThat(response.data().content()).isEmpty();
-    assertThat(response.data().totalElements()).isZero();
-    assertThat(response.data().totalPages()).isZero();
-    assertThat(response.data().hasNext()).isFalse();
-  }
-
-  @Test
-  void startDateAfterEndDateIsRejected() {
-    FacilityRequestSearchCondition condition = new FacilityRequestSearchCondition(
-        null,
-        null,
-        null,
-        null,
-        LocalDate.of(2026, 8, 2),
-        LocalDate.of(2026, 8, 1),
-        0,
-        20
-    );
-
-    assertThatThrownBy(
-        () -> facilityRequestQueryService.getFacilityRequests(condition)
-    )
-        .isInstanceOf(BusinessException.class)
-        .satisfies(exception -> assertThat(
-            ((BusinessException) exception).getErrorCode()
-        ).isEqualTo(CommonErrorCode.VALIDATION_FAILED));
-    verifyNoInteractions(facilityRequestRepository);
+  private FacilityRequest request(Long id, LocalDateTime createdAt) {
+    FacilityCategory category = mock(FacilityCategory.class);
+    Location location = mock(Location.class);
+    FacilityRequest request = mock(FacilityRequest.class);
+    when(category.getName()).thenReturn("전기/조명");
+    when(location.getName()).thenReturn("학생회관");
+    when(request.getId()).thenReturn(id);
+    when(request.getTitle()).thenReturn("학생회관 1층 조명 깜빡임");
+    when(request.getFacilityCategory()).thenReturn(category);
+    when(request.getLocation()).thenReturn(location);
+    when(request.getRequestStatus()).thenReturn("IN_PROGRESS");
+    when(request.getCreatedAt()).thenReturn(createdAt);
+    return request;
   }
 }

@@ -10,7 +10,7 @@ public record FacilityRequestSearchCondition(
     String keyword,
     LocalDate from,
     LocalDate to,
-    int page,
+    String cursor,
     int size
 ) {
 

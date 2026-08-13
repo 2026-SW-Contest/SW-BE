@@ -3,7 +3,6 @@ package org.swbe.domain.lostitem.controller;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -30,13 +29,13 @@ public class ItemClaimQueryController {
   public ItemClaimListResponse getItemClaims(
       @PathVariable @Positive Long storedItemId,
       @RequestParam(required = false) ItemClaimStatus status,
-      @RequestParam(required = false) @Size(max = 512) String cursor,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
       @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size,
       @AuthenticationPrincipal AppUserPrincipal principal
   ) {
     return itemClaimQueryService.getItemClaims(
         storedItemId,
-        new ItemClaimSearchCondition(status, cursor, size),
+        new ItemClaimSearchCondition(status, page, size),
         principal.getUserId(),
         isAdmin(principal)
     );
@@ -46,13 +45,13 @@ public class ItemClaimQueryController {
   public OfficeItemClaimListResponse getOfficeItemClaims(
       @PathVariable @Positive Long officeId,
       @RequestParam(required = false) ItemClaimStatus status,
-      @RequestParam(required = false) @Size(max = 512) String cursor,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
       @RequestParam(defaultValue = "20") @Min(1) @Max(50) int size,
       @AuthenticationPrincipal AppUserPrincipal principal
   ) {
     return itemClaimQueryService.getOfficeItemClaims(
         officeId,
-        new ItemClaimSearchCondition(status, cursor, size),
+        new ItemClaimSearchCondition(status, page, size),
         principal.getUserId(),
         isAdmin(principal)
     );
