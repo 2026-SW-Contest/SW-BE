@@ -12,6 +12,7 @@ readonly NEXT_ENV_FILE="$2"
 readonly ACTIVE_ENV_FILE=".env"
 readonly PREVIOUS_ENV_FILE=".env.previous"
 readonly COMPOSE_FILE="docker-compose.yml"
+readonly IMAGE_RETENTION_PERIOD="168h"
 
 if [[ ! -f "$NEXT_ENV_FILE" ]]; then
   echo "$NEXT_ENV_FILE does not exist." >&2
@@ -36,6 +37,12 @@ if [[ -n "$previous_container_id" ]]; then
       "$previous_container_id" || true
   )"
 fi
+
+echo "Pruning unused images older than $IMAGE_RETENTION_PERIOD"
+docker image prune \
+  --all \
+  --force \
+  --filter "until=$IMAGE_RETENTION_PERIOD"
 
 echo "Pulling $NEW_IMAGE"
 DOCKER_IMAGE="$NEW_IMAGE" \
