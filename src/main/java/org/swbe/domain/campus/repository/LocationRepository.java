@@ -9,7 +9,8 @@ import org.swbe.domain.campus.entity.Location;
 public interface LocationRepository extends JpaRepository<Location, Long> {
 
   @EntityGraph(attributePaths = "building")
-  List<Location> findAllByActiveTrueAndBuilding_ActiveTrue();
+  List<Location>
+      findAllByActiveTrueAndBuilding_ActiveTrueAndParentIsNull();
 
   Optional<Location> findByIdAndActiveTrueAndBuilding_ActiveTrue(Long id);
 }

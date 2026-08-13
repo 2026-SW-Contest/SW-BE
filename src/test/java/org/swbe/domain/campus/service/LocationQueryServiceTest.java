@@ -24,12 +24,13 @@ class LocationQueryServiceTest {
   private LocationQueryService locationQueryService;
 
   @Test
-  void activeLocationsAreReturnedInCampusOrder() {
+  void activeRootLocationsAreReturnedInCampusOrder() {
     Location other = location(11L, null, "기타");
     Location s10 = location(10L, "S10", "MCC관");
     Location s2 = location(2L, "S2", "학생회관");
     Location s1 = location(1L, "S1", "본관(종합관)");
-    when(locationRepository.findAllByActiveTrueAndBuilding_ActiveTrue())
+    when(locationRepository
+        .findAllByActiveTrueAndBuilding_ActiveTrueAndParentIsNull())
         .thenReturn(List.of(other, s10, s2, s1));
 
     var response = locationQueryService.getLocations();
@@ -47,7 +48,8 @@ class LocationQueryServiceTest {
 
   @Test
   void noLocationsReturnsEmptyList() {
-    when(locationRepository.findAllByActiveTrueAndBuilding_ActiveTrue())
+    when(locationRepository
+        .findAllByActiveTrueAndBuilding_ActiveTrueAndParentIsNull())
         .thenReturn(List.of());
 
     var response = locationQueryService.getLocations();

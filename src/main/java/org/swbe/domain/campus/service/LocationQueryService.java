@@ -20,7 +20,7 @@ public class LocationQueryService {
 
   public LocationListResponse getLocations() {
     List<LocationResponse> locations = locationRepository
-        .findAllByActiveTrueAndBuilding_ActiveTrue()
+        .findAllByActiveTrueAndBuilding_ActiveTrueAndParentIsNull()
         .stream()
         .sorted(Comparator.comparingInt(
             location -> location.getBuilding().displayOrder()
