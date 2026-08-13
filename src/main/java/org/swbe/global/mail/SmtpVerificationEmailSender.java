@@ -11,7 +11,7 @@ import org.swbe.domain.user.service.VerificationEmailSender;
 public class SmtpVerificationEmailSender implements VerificationEmailSender {
 
   private static final String VERIFICATION_BODY = """
-      안녕하세요, ConnecThing입니다.
+      안녕하세요, Connecthing입니다.
 
       이메일 인증을 위한 인증 코드는 다음과 같습니다.
 

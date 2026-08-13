@@ -17,7 +17,7 @@ class SmtpVerificationEmailSenderTest {
     JavaMailSender mailSender = mock(JavaMailSender.class);
     MailSenderProperties properties = new MailSenderProperties(
         "no-reply@connecthing.example",
-        "[ConnecThing] 이메일 인증 코드 안내"
+        "[Connecthing] 이메일 인증 코드 안내"
     );
     SmtpVerificationEmailSender emailSender =
         new SmtpVerificationEmailSender(mailSender, properties);
@@ -36,9 +36,9 @@ class SmtpVerificationEmailSenderTest {
     assertThat(message.getFrom()).isEqualTo("no-reply@connecthing.example");
     assertThat(message.getTo()).containsExactly("student@mju.ac.kr");
     assertThat(message.getSubject())
-        .isEqualTo("[ConnecThing] 이메일 인증 코드 안내");
+        .isEqualTo("[Connecthing] 이메일 인증 코드 안내");
     assertThat(message.getText())
-        .contains("안녕하세요, ConnecThing입니다.")
+        .contains("안녕하세요, Connecthing입니다.")
         .contains("012345")
         .contains("발급 후 5분 동안 유효합니다.")
         .contains("본인이 요청하지 않은 경우");
