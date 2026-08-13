@@ -23,10 +23,10 @@ import org.swbe.domain.lostitem.dto.response.ItemClaimDetailDataResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimDetailResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimListItemResponse;
 import org.swbe.domain.lostitem.dto.response.ItemClaimListResponse;
-import org.swbe.domain.lostitem.dto.response.ItemClaimSliceResponse;
+import org.swbe.domain.lostitem.dto.response.ItemClaimPageResponse;
 import org.swbe.domain.lostitem.dto.response.OfficeItemClaimListItemResponse;
 import org.swbe.domain.lostitem.dto.response.OfficeItemClaimListResponse;
-import org.swbe.domain.lostitem.dto.response.OfficeItemClaimSliceResponse;
+import org.swbe.domain.lostitem.dto.response.OfficeItemClaimPageResponse;
 import org.swbe.domain.lostitem.service.ItemClaimQueryService;
 import org.swbe.domain.user.entity.AccountStatus;
 import org.swbe.global.security.AppUserPrincipal;
@@ -69,6 +69,7 @@ class ItemClaimQueryControllerTest {
 
     mockMvc.perform(get("/api/stored-items/25/claims")
             .param("status", "WAITING")
+            .param("page", "0")
             .param("size", "20")
             .with(user(principal("ROLE_LOST_ITEM_STAFF"))))
         .andExpect(status().isOk())
@@ -78,7 +79,12 @@ class ItemClaimQueryControllerTest {
         .andExpect(jsonPath("$.data.content[0].thumbnailUrl")
             .value("https://cdn/proof.jpg"))
         .andExpect(jsonPath("$.data.content[0].attachmentCount")
-            .value(2));
+            .value(2))
+        .andExpect(jsonPath("$.data.page").value(0))
+        .andExpect(jsonPath("$.data.size").value(20))
+        .andExpect(jsonPath("$.data.totalElements").value(1))
+        .andExpect(jsonPath("$.data.totalPages").value(1))
+        .andExpect(jsonPath("$.data.hasNext").value(false));
   }
 
   @Test
@@ -92,6 +98,7 @@ class ItemClaimQueryControllerTest {
 
     mockMvc.perform(get("/api/lost-item-offices/3/claims")
             .param("status", "WAITING")
+            .param("page", "0")
             .param("size", "20")
             .with(user(principal("ROLE_LOST_ITEM_STAFF"))))
         .andExpect(status().isOk())
@@ -106,7 +113,12 @@ class ItemClaimQueryControllerTest {
         .andExpect(jsonPath("$.data.content[0].thumbnailUrl")
             .value("https://cdn/proof.jpg"))
         .andExpect(jsonPath("$.data.content[0].attachmentCount")
-            .value(2));
+            .value(2))
+        .andExpect(jsonPath("$.data.page").value(0))
+        .andExpect(jsonPath("$.data.size").value(20))
+        .andExpect(jsonPath("$.data.totalElements").value(1))
+        .andExpect(jsonPath("$.data.totalPages").value(1))
+        .andExpect(jsonPath("$.data.hasNext").value(false));
   }
 
   @Test
@@ -179,6 +191,10 @@ class ItemClaimQueryControllerTest {
             .param("size", "51")
             .with(user(staff)))
         .andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/stored-items/25/claims")
+            .param("page", "-1")
+            .with(user(staff)))
+        .andExpect(status().isBadRequest());
     mockMvc.perform(get("/api/item-claims/0")
             .with(user(staff)))
         .andExpect(status().isBadRequest());
@@ -189,10 +205,14 @@ class ItemClaimQueryControllerTest {
             .param("size", "51")
             .with(user(staff)))
         .andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/lost-item-offices/3/claims")
+            .param("page", "-1")
+            .with(user(staff)))
+        .andExpect(status().isBadRequest());
   }
 
   private ItemClaimListResponse listResponse() {
-    return new ItemClaimListResponse(new ItemClaimSliceResponse(
+    return new ItemClaimListResponse(new ItemClaimPageResponse(
         List.of(new ItemClaimListItemResponse(
             31L,
             "정석우",
@@ -204,7 +224,10 @@ class ItemClaimQueryControllerTest {
             2,
             LocalDateTime.of(2026, 8, 12, 15, 0)
         )),
-        null,
+        0,
+        20,
+        1,
+        1,
         false
     ));
   }
@@ -228,7 +251,7 @@ class ItemClaimQueryControllerTest {
 
   private OfficeItemClaimListResponse officeListResponse() {
     return new OfficeItemClaimListResponse(
-        new OfficeItemClaimSliceResponse(
+        new OfficeItemClaimPageResponse(
             List.of(new OfficeItemClaimListItemResponse(
                 31L,
                 25L,
@@ -242,7 +265,10 @@ class ItemClaimQueryControllerTest {
                 2,
                 LocalDateTime.of(2026, 8, 12, 15, 0)
             )),
-            null,
+            0,
+            20,
+            1,
+            1,
             false
         )
     );

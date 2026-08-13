@@ -33,7 +33,7 @@ import org.swbe.domain.facilityrequest.dto.response.FacilityRequestDetailRespons
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListItemResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestListResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestLocationDetailResponse;
-import org.swbe.domain.facilityrequest.dto.response.FacilityRequestPageResponse;
+import org.swbe.domain.facilityrequest.dto.response.FacilityRequestSliceResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestUpdateDataResponse;
 import org.swbe.domain.facilityrequest.dto.response.FacilityRequestUpdateResponse;
 import org.swbe.domain.facilityrequest.service.FacilityRequestDetailService;
@@ -178,13 +178,10 @@ class FacilityRequestControllerTest {
     );
     when(facilityRequestQueryService.getFacilityRequests(any())).thenReturn(
         new FacilityRequestListResponse(
-            new FacilityRequestPageResponse(
+            new FacilityRequestSliceResponse(
                 List.of(item),
-                0,
-                20,
-                1,
-                1,
-                false
+                "next-cursor",
+                true
             )
         )
     );
@@ -196,7 +193,7 @@ class FacilityRequestControllerTest {
             .queryParam("keyword", "조명")
             .queryParam("from", "2026-07-01")
             .queryParam("to", "2026-08-01")
-            .queryParam("page", "0")
+            .queryParam("cursor", "cursor")
             .queryParam("size", "20"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content.length()").value(1))
@@ -212,17 +209,22 @@ class FacilityRequestControllerTest {
         .andExpect(jsonPath("$.data.content[0].requestStatusName")
             .value("진행 중"))
         .andExpect(jsonPath("$.data.content[0].thumbnailUrl").isEmpty())
-        .andExpect(jsonPath("$.data.page").value(0))
-        .andExpect(jsonPath("$.data.size").value(20))
-        .andExpect(jsonPath("$.data.totalElements").value(1))
-        .andExpect(jsonPath("$.data.totalPages").value(1))
-        .andExpect(jsonPath("$.data.hasNext").value(false));
+        .andExpect(jsonPath("$.data.nextCursor").value("next-cursor"))
+        .andExpect(jsonPath("$.data.hasNext").value(true));
   }
 
   @Test
   void invalidPageSizeIsRejected() throws Exception {
     mockMvc.perform(get("/api/facility-requests")
             .queryParam("size", "101"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("COMMON_VALIDATION_FAILED"));
+  }
+
+  @Test
+  void tooLongCursorIsRejected() throws Exception {
+    mockMvc.perform(get("/api/facility-requests")
+            .queryParam("cursor", "a".repeat(513)))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("COMMON_VALIDATION_FAILED"));
   }
