@@ -38,7 +38,7 @@ public enum StoredItemErrorCode implements ErrorCode {
   INVALID_FOUND_LOCATION(
       HttpStatus.BAD_REQUEST,
       "STORED_ITEM_INVALID_FOUND_LOCATION",
-      "Exactly one found location must be provided."
+      "A found location ID must be provided."
   ),
   FILE_LIMIT_EXCEEDED(
       HttpStatus.BAD_REQUEST,

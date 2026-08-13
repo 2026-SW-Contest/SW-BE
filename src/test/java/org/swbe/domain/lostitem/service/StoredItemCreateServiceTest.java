@@ -171,21 +171,21 @@ class StoredItemCreateServiceTest {
   }
 
   @Test
-  void adminCanCreateForAnyActiveOfficeWithFreeTextLocation() {
+  void adminCanCreateForAnyActiveOfficeWithOptionalLocationText() {
     var response = service.create(
-        requestWithFreeTextLocation(),
+        requestWithLocationText(),
         List.of(),
         7L,
         true
     );
 
     assertThat(response.data().storedItemId()).isEqualTo(25L);
-    verifyNoInteractions(assignmentRepository, locationRepository);
+    verifyNoInteractions(assignmentRepository);
     ArgumentCaptor<StoredItem> item = ArgumentCaptor.forClass(
         StoredItem.class
     );
     verify(storedItemRepository).save(item.capture());
-    assertThat(item.getValue().getFoundLocation()).isNull();
+    assertThat(item.getValue().getFoundLocation()).isSameAs(location);
     assertThat(item.getValue().getFoundLocationText())
         .isEqualTo("명진관 앞 벤치");
   }
@@ -209,11 +209,11 @@ class StoredItemCreateServiceTest {
   }
 
   @Test
-  void requiresExactlyOneFoundLocation() {
+  void rejectsCreateWithoutLocationId() {
     StoredItemCreateRequest invalid = new StoredItemCreateRequest(
         3L,
         2L,
-        10L,
+        null,
         "명진관 앞 벤치",
         "검은색 지갑",
         "공개 설명",
@@ -312,11 +312,11 @@ class StoredItemCreateServiceTest {
     );
   }
 
-  private StoredItemCreateRequest requestWithFreeTextLocation() {
+  private StoredItemCreateRequest requestWithLocationText() {
     return new StoredItemCreateRequest(
         3L,
         2L,
-        null,
+        10L,
         " 명진관 앞 벤치 ",
         "검은색 지갑",
         "공개 설명",

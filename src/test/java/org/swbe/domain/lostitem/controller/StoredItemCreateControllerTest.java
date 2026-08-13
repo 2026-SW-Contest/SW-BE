@@ -174,6 +174,7 @@ class StoredItemCreateControllerTest {
           "officeId": 3,
           "categoryId": 2,
           "foundLocationId": 10,
+          "foundLocationText": "1층 엘리베이터 앞",
           "itemName": "검은색 지갑",
           "description": "학생증과 카드가 들어 있습니다.",
           "privateDescription": "내부 확인용 메모",

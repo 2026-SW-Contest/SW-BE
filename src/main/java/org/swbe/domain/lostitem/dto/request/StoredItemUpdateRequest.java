@@ -97,7 +97,7 @@ public class StoredItemUpdateRequest {
   }
 
   public boolean hasValidFoundLocationChange() {
-    return (foundLocationId == null) != (foundLocationText == null);
+    return foundLocationId != null;
   }
 
   public boolean hasChanges() {

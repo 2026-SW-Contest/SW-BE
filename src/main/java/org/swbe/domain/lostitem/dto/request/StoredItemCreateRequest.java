@@ -15,6 +15,7 @@ public record StoredItemCreateRequest(
     @Positive(message = "categoryId must be positive")
     Long categoryId,
 
+    @NotNull(message = "foundLocationId is required")
     @Positive(message = "foundLocationId must be positive")
     Long foundLocationId,
 
@@ -47,8 +48,8 @@ public record StoredItemCreateRequest(
     privateDescription = stripNullable(privateDescription);
   }
 
-  public boolean hasExactlyOneFoundLocation() {
-    return (foundLocationId == null) != (foundLocationText == null);
+  public boolean hasRequiredFoundLocation() {
+    return foundLocationId != null;
   }
 
   private static String stripNullable(String value) {

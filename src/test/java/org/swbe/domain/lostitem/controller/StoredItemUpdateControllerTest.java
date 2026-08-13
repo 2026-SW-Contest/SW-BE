@@ -74,6 +74,7 @@ class StoredItemUpdateControllerTest {
                 """
                     {
                       "itemName": "수정된 지갑",
+                      "foundLocationId": 10,
                       "foundLocationText": "명진관 앞 벤치",
                       "privateDescription": "",
                       "keepFileIds": [32, 31]

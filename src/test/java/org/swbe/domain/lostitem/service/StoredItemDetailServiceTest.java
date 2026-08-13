@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.swbe.domain.campus.entity.Location;
 import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.service.FilePublicUrlResolver;
 import org.swbe.domain.lostitem.entity.ItemCategory;
@@ -70,9 +71,11 @@ class StoredItemDetailServiceTest {
     assertThat(response.data().description()).isEqualTo("공개 설명");
     assertThat(response.data().category().name())
         .isEqualTo("지갑/카드/현금");
-    assertThat(response.data().foundLocation().locationId()).isNull();
+    assertThat(response.data().foundLocation().locationId()).isEqualTo(10L);
     assertThat(response.data().foundLocation().name())
-        .isEqualTo("명진관 앞 벤치");
+        .isEqualTo("명진관");
+    assertThat(response.data().foundLocation().locationText())
+        .isEqualTo("1층 엘리베이터 앞");
     assertThat(response.data().office().name()).isEqualTo("본관 경비실");
     assertThat(response.data().publicStatusName()).isEqualTo("보관중");
     assertThat(response.data().attachments()).singleElement()
@@ -194,13 +197,17 @@ class StoredItemDetailServiceTest {
     LostItemOffice office = mock(LostItemOffice.class);
     when(office.getId()).thenReturn(3L);
     when(office.getName()).thenReturn("본관 경비실");
+    Location location = mock(Location.class);
+    when(location.getId()).thenReturn(10L);
     StoredItem item = mock(StoredItem.class);
     when(item.getId()).thenReturn(25L);
     when(item.getItemName()).thenReturn("검은색 지갑");
     when(item.getPublicDescription()).thenReturn("공개 설명");
     when(item.getItemCategory()).thenReturn(category);
     when(item.getFoundDate()).thenReturn(LocalDate.of(2026, 8, 10));
-    when(item.getFoundLocationName()).thenReturn("명진관 앞 벤치");
+    when(item.getFoundLocation()).thenReturn(location);
+    when(item.getFoundLocationName()).thenReturn("명진관");
+    when(item.getFoundLocationText()).thenReturn("1층 엘리베이터 앞");
     when(item.getPublicStatus()).thenReturn(StoredItemStatus.STORED);
     when(item.getOffice()).thenReturn(office);
     when(item.getCreatedAt()).thenReturn(

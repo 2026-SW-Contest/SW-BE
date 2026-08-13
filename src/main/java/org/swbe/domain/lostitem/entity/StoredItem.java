@@ -238,9 +238,9 @@ public class StoredItem {
       Location foundLocation,
       String foundLocationText
   ) {
-    if ((foundLocation == null) == (foundLocationText == null)) {
+    if (foundLocation == null) {
       throw new IllegalArgumentException(
-          "Exactly one found location must be provided"
+          "Found location must be provided"
       );
     }
   }

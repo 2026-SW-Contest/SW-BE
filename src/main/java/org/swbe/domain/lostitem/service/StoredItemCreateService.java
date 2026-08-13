@@ -189,7 +189,7 @@ public class StoredItemCreateService {
   }
 
   private void validateRequest(StoredItemCreateRequest request) {
-    if (!request.hasExactlyOneFoundLocation()) {
+    if (!request.hasRequiredFoundLocation()) {
       throw new BusinessException(
           StoredItemErrorCode.INVALID_FOUND_LOCATION
       );

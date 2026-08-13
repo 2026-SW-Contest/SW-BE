@@ -155,17 +155,22 @@ class StoredItemUpdateServiceTest {
   }
 
   @Test
-  void changesFromRegisteredLocationToFreeTextAndClearsPrivateDescription() {
+  void updatesLocationWithOptionalTextAndClearsPrivateDescription() {
+    Location updatedLocation = mock(Location.class);
+    when(locationRepository
+        .findByIdAndActiveTrueAndBuilding_ActiveTrue(10L))
+        .thenReturn(Optional.of(updatedLocation));
     when(attachmentRepository.findPublicImagesByStoredItemId(25L))
         .thenReturn(List.of());
     StoredItemUpdateRequest request = new StoredItemUpdateRequest();
+    request.setFoundLocationId(10L);
     request.setFoundLocationText(" 명진관 앞 벤치 ");
     request.setPrivateDescription("");
     request.setItemName(" 수정된 지갑 ");
 
     service.update(25L, request, List.of(), 7L, false);
 
-    assertThat(item.getFoundLocation()).isNull();
+    assertThat(item.getFoundLocation()).isSameAs(updatedLocation);
     assertThat(item.getFoundLocationText()).isEqualTo("명진관 앞 벤치");
     assertThat(item.getPrivateDescription()).isNull();
     assertThat(item.getItemName()).isEqualTo("수정된 지갑");
@@ -217,9 +222,8 @@ class StoredItemUpdateServiceTest {
   }
 
   @Test
-  void rejectsLocationIdAndFreeTextTogether() {
+  void rejectsLocationTextWithoutLocationId() {
     StoredItemUpdateRequest request = new StoredItemUpdateRequest();
-    request.setFoundLocationId(10L);
     request.setFoundLocationText("명진관 앞 벤치");
 
     assertThatThrownBy(() -> service.update(
@@ -233,6 +237,23 @@ class StoredItemUpdateServiceTest {
             ((BusinessException) exception).getErrorCode().code()
         ).isEqualTo("STORED_ITEM_INVALID_FOUND_LOCATION"));
     verify(storedItemRepository, never()).findDetailById(any());
+  }
+
+  @Test
+  void locationIdWithoutTextClearsExistingLocationText() {
+    Location updatedLocation = mock(Location.class);
+    when(locationRepository
+        .findByIdAndActiveTrueAndBuilding_ActiveTrue(10L))
+        .thenReturn(Optional.of(updatedLocation));
+    when(attachmentRepository.findPublicImagesByStoredItemId(25L))
+        .thenReturn(List.of());
+    StoredItemUpdateRequest request = new StoredItemUpdateRequest();
+    request.setFoundLocationId(10L);
+
+    service.update(25L, request, List.of(), 7L, false);
+
+    assertThat(item.getFoundLocation()).isSameAs(updatedLocation);
+    assertThat(item.getFoundLocationText()).isNull();
   }
 
   @Test
@@ -348,7 +369,7 @@ class StoredItemUpdateServiceTest {
     StoredItem result = StoredItem.create(
         office,
         location,
-        null,
+        "기존 상세 위치",
         registrant,
         category,
         "검은색 지갑",
