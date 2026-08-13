@@ -74,7 +74,6 @@ class PrivateFileUrlResolverTest {
 
   private FileStorageProperties properties() {
     return new FileStorageProperties(
-        "S3",
         new FileStorageProperties.S3(
             "test-bucket",
             "ap-northeast-2",

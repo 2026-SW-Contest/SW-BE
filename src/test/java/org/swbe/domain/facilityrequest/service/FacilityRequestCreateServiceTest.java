@@ -82,7 +82,7 @@ class FacilityRequestCreateServiceTest {
   void setUp() {
     lenient().when(fileStorageRegistry.writeStorage())
         .thenReturn(fileStorage);
-    lenient().when(fileStorageRegistry.get("LOCAL"))
+    lenient().when(fileStorageRegistry.get("S3"))
         .thenReturn(fileStorage);
     createService = new FacilityRequestCreateService(
         facilityRequestRepository,
@@ -103,7 +103,7 @@ class FacilityRequestCreateServiceTest {
     AppUser requester = mock(AppUser.class);
     MockMultipartFile image = image("broken-light.jpg", "image/jpeg");
     StoredFile storedFile = new StoredFile(
-        "LOCAL",
+        "S3",
         "2026/08/01/image.jpg",
         "broken-light.jpg",
         "image/jpeg",
@@ -226,7 +226,7 @@ class FacilityRequestCreateServiceTest {
     prepareReferences();
     MockMultipartFile image = image("broken-light.jpg", "image/jpeg");
     StoredFile storedFile = new StoredFile(
-        "LOCAL",
+        "S3",
         "2026/08/01/image.jpg",
         "broken-light.jpg",
         "image/jpeg",

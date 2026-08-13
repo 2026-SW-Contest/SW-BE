@@ -86,7 +86,7 @@ class StoredItemUpdateServiceTest {
         .thenReturn(true);
     when(appUserRepository.findById(7L)).thenReturn(Optional.of(updater));
     when(fileStorageRegistry.writeStorage()).thenReturn(fileStorage);
-    when(fileStorageRegistry.get("LOCAL")).thenReturn(fileStorage);
+    when(fileStorageRegistry.get("S3")).thenReturn(fileStorage);
     when(attachmentRepository.saveAll(anyList()))
         .thenAnswer(invocation -> invocation.getArgument(0));
     service = new StoredItemUpdateService(
@@ -121,7 +121,7 @@ class StoredItemUpdateServiceTest {
         .thenReturn(List.of(first, second));
     when(fileStorage.store(any())).thenReturn(
         new StoredFile(
-            "LOCAL",
+            "S3",
             "stored/new.jpg",
             "new.jpg",
             "image/jpeg",
@@ -314,7 +314,7 @@ class StoredItemUpdateServiceTest {
         .thenReturn(List.of());
     when(fileStorage.store(any())).thenReturn(
         new StoredFile(
-            "LOCAL",
+            "S3",
             "stored/new.jpg",
             "new.jpg",
             "image/jpeg",
@@ -369,7 +369,7 @@ class StoredItemUpdateServiceTest {
     FileResource file = mock(FileResource.class);
     when(file.getId()).thenReturn(fileId);
     when(file.getOriginalFilename()).thenReturn(filename);
-    when(file.getStorageProvider()).thenReturn("LOCAL");
+    when(file.getStorageProvider()).thenReturn("S3");
     when(file.getStorageKey()).thenReturn("stored/" + filename);
     return StoredItemAttachment.attach(item, file, order == 0, order);
   }

@@ -12,7 +12,6 @@ import org.swbe.domain.file.config.FileStorageProperties;
 public class FileStorageRegistry {
 
   private final Map<String, FileStorage> storages;
-  private final String writeProvider;
 
   public FileStorageRegistry(
       List<FileStorage> storages,
@@ -23,12 +22,11 @@ public class FileStorageRegistry {
             storage -> normalize(storage.provider()),
             Function.identity()
         ));
-    this.writeProvider = normalize(properties.storageProvider());
-    validateWriteStorage(properties);
+    validateS3Storage(properties);
   }
 
   public FileStorage writeStorage() {
-    return get(writeProvider);
+    return get("S3");
   }
 
   public FileStorage privateItemClaimStorage() {
@@ -45,12 +43,8 @@ public class FileStorageRegistry {
     return storage;
   }
 
-  private void validateWriteStorage(FileStorageProperties properties) {
-    get(writeProvider);
-    if (!"S3".equals(writeProvider)) {
-      return;
-    }
-
+  private void validateS3Storage(FileStorageProperties properties) {
+    get("S3");
     FileStorageProperties.S3 s3 = properties.s3();
     if (s3 == null
         || s3.bucket() == null

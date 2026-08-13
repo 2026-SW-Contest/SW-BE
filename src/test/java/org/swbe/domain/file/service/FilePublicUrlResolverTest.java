@@ -16,7 +16,6 @@ class FilePublicUrlResolverTest {
 
   private final FilePublicUrlResolver resolver = new FilePublicUrlResolver(
       new FileStorageProperties(
-          "S3",
           new FileStorageProperties.S3(
               "bucket",
               "ap-northeast-2",
@@ -37,13 +36,6 @@ class FilePublicUrlResolverTest {
     assertThat(resolver.resolve(file)).isEqualTo(
         "https://cdn.example.com/2026/08/10/image%20name.jpg"
     );
-  }
-
-  @Test
-  void resolvesLocalFileToBackendFileApi() {
-    FileResource file = file(15L, "LOCAL", "2026/08/10/image.jpg");
-
-    assertThat(resolver.resolve(file)).isEqualTo("/api/files/15");
   }
 
   @Test

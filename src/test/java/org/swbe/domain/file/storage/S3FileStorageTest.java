@@ -32,7 +32,6 @@ class S3FileStorageTest {
   void setUp() {
     s3Client = mock(S3Client.class);
     FileStorageProperties properties = new FileStorageProperties(
-        "S3",
         new FileStorageProperties.S3(
             "test-bucket",
             "ap-northeast-2",
