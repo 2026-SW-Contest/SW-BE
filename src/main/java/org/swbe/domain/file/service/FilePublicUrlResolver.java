@@ -18,7 +18,6 @@ public class FilePublicUrlResolver {
   public String resolve(FileResource file) {
     return switch (normalize(file.getStorageProvider())) {
       case "S3" -> cloudFrontUrl(file.getStorageKey());
-      case "LOCAL" -> "/api/files/" + file.getId();
       default -> throw new BusinessException(
           FileErrorCode.STORAGE_PROVIDER_NOT_SUPPORTED
       );

@@ -1,9 +1,10 @@
 package org.swbe.domain.lostitem.repository;
 
-import java.util.Collection;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,55 +29,51 @@ public interface ItemClaimRepository
           Long claimantUserId
       );
 
-  @Query("""
-      SELECT claim
-      FROM ItemClaim claim
-      JOIN FETCH claim.storedItem item
-      LEFT JOIN FETCH claim.claimantUser
-      LEFT JOIN FETCH claim.temporaryClaimant
-      WHERE item.id = :storedItemId
-        AND (:status IS NULL OR claim.claimStatus = :status)
-        AND (
-          :cursorCreatedAt IS NULL
-          OR claim.createdAt < :cursorCreatedAt
-          OR (
-            claim.createdAt = :cursorCreatedAt
-            AND claim.id < :cursorId
-          )
-        )
-      ORDER BY claim.createdAt DESC, claim.id DESC
-      """)
-  List<ItemClaim> findAllByCursor(
+  @Query(
+      value = """
+          SELECT claim
+          FROM ItemClaim claim
+          JOIN FETCH claim.storedItem item
+          LEFT JOIN FETCH claim.claimantUser
+          LEFT JOIN FETCH claim.temporaryClaimant
+          WHERE item.id = :storedItemId
+            AND (:status IS NULL OR claim.claimStatus = :status)
+          ORDER BY claim.createdAt DESC, claim.id DESC
+          """,
+      countQuery = """
+          SELECT COUNT(claim)
+          FROM ItemClaim claim
+          WHERE claim.storedItem.id = :storedItemId
+            AND (:status IS NULL OR claim.claimStatus = :status)
+          """
+  )
+  Page<ItemClaim> findAllByStoredItemId(
       @Param("storedItemId") Long storedItemId,
       @Param("status") ItemClaimStatus status,
-      @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
-      @Param("cursorId") Long cursorId,
       Pageable pageable
   );
 
-  @Query("""
-      SELECT claim
-      FROM ItemClaim claim
-      JOIN FETCH claim.storedItem item
-      LEFT JOIN FETCH claim.claimantUser
-      LEFT JOIN FETCH claim.temporaryClaimant
-      WHERE item.office.id = :officeId
-        AND (:status IS NULL OR claim.claimStatus = :status)
-        AND (
-          :cursorCreatedAt IS NULL
-          OR claim.createdAt < :cursorCreatedAt
-          OR (
-            claim.createdAt = :cursorCreatedAt
-            AND claim.id < :cursorId
-          )
-        )
-      ORDER BY claim.createdAt DESC, claim.id DESC
-      """)
-  List<ItemClaim> findAllByOfficeIdAndCursor(
+  @Query(
+      value = """
+          SELECT claim
+          FROM ItemClaim claim
+          JOIN FETCH claim.storedItem item
+          LEFT JOIN FETCH claim.claimantUser
+          LEFT JOIN FETCH claim.temporaryClaimant
+          WHERE item.office.id = :officeId
+            AND (:status IS NULL OR claim.claimStatus = :status)
+          ORDER BY claim.createdAt DESC, claim.id DESC
+          """,
+      countQuery = """
+          SELECT COUNT(claim)
+          FROM ItemClaim claim
+          WHERE claim.storedItem.office.id = :officeId
+            AND (:status IS NULL OR claim.claimStatus = :status)
+          """
+  )
+  Page<ItemClaim> findAllByOfficeId(
       @Param("officeId") Long officeId,
       @Param("status") ItemClaimStatus status,
-      @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
-      @Param("cursorId") Long cursorId,
       Pageable pageable
   );
 

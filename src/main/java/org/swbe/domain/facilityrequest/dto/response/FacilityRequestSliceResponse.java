@@ -2,16 +2,13 @@ package org.swbe.domain.facilityrequest.dto.response;
 
 import java.util.List;
 
-public record FacilityRequestPageResponse(
+public record FacilityRequestSliceResponse(
     List<FacilityRequestListItemResponse> content,
-    int page,
-    int size,
-    long totalElements,
-    int totalPages,
+    String nextCursor,
     boolean hasNext
 ) {
 
-  public FacilityRequestPageResponse {
+  public FacilityRequestSliceResponse {
     content = List.copyOf(content);
   }
 }

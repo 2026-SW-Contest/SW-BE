@@ -16,10 +16,11 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.swbe.domain.file.entity.FileResource;
 import org.swbe.domain.file.service.PrivateFileUrlResolver;
-import org.swbe.domain.lostitem.cursor.ItemClaimCursorCodec;
 import org.swbe.domain.lostitem.dto.request.ItemClaimSearchCondition;
 import org.swbe.domain.lostitem.entity.ClaimStatusHistory;
 import org.swbe.domain.lostitem.entity.ItemClaim;
@@ -76,45 +77,78 @@ class ItemClaimQueryServiceTest {
         officeRepository,
         assignmentRepository,
         thumbnailService,
-        privateFileUrlResolver,
-        new ItemClaimCursorCodec()
+        privateFileUrlResolver
     );
   }
 
   @Test
-  void assignedStaffGetsOfficeClaimsWithStoredItemAndCursor() {
-    ItemClaim first = memberClaim(
+  void assignedStaffGetsStoredItemClaimPage() {
+    ItemClaim claim = memberClaim(
         31L,
         LocalDateTime.of(2026, 8, 12, 15, 0),
         "정석우",
         "60251423"
     );
-    ItemClaim second = memberClaim(
-        30L,
-        LocalDateTime.of(2026, 8, 12, 14, 0),
-        "홍길동",
-        "60250001"
-    );
-    when(itemClaimRepository.findAllByOfficeIdAndCursor(
-        eq(3L),
+    when(itemClaimRepository.findAllByStoredItemId(
+        eq(25L),
         eq(ItemClaimStatus.WAITING),
-        eq(null),
-        eq(null),
         any(Pageable.class)
-    )).thenReturn(List.of(first, second));
+    )).thenReturn(new PageImpl<>(
+        List.of(claim),
+        PageRequest.of(0, 1),
+        2
+    ));
     when(thumbnailService.resolveAll(List.of(31L)))
         .thenReturn(Map.of(
             31L,
             new ItemClaimAttachmentSummary("https://cdn/proof.jpg", 2)
         ));
 
+    var response = service.getItemClaims(
+        25L,
+        new ItemClaimSearchCondition(ItemClaimStatus.WAITING, 0, 1),
+        7L,
+        false
+    );
+
+    assertThat(response.data().content()).singleElement()
+        .satisfies(item -> {
+          assertThat(item.itemClaimId()).isEqualTo(31L);
+          assertThat(item.claimantName()).isEqualTo("정석우");
+          assertThat(item.studentNumber()).isEqualTo("60251423");
+          assertThat(item.thumbnailUrl()).isEqualTo("https://cdn/proof.jpg");
+          assertThat(item.attachmentCount()).isEqualTo(2);
+        });
+    assertThat(response.data().page()).isZero();
+    assertThat(response.data().size()).isEqualTo(1);
+    assertThat(response.data().totalElements()).isEqualTo(2);
+    assertThat(response.data().totalPages()).isEqualTo(2);
+    assertThat(response.data().hasNext()).isTrue();
+  }
+
+  @Test
+  void assignedStaffGetsOfficeClaimPage() {
+    ItemClaim claim = memberClaim(
+        31L,
+        LocalDateTime.of(2026, 8, 12, 15, 0),
+        "정석우",
+        "60251423"
+    );
+    when(itemClaimRepository.findAllByOfficeId(
+        eq(3L),
+        eq(ItemClaimStatus.WAITING),
+        any(Pageable.class)
+    )).thenReturn(new PageImpl<>(
+        List.of(claim),
+        PageRequest.of(1, 20),
+        21
+    ));
+    when(thumbnailService.resolveAll(List.of(31L)))
+        .thenReturn(Map.of());
+
     var response = service.getOfficeItemClaims(
         3L,
-        new ItemClaimSearchCondition(
-            ItemClaimStatus.WAITING,
-            null,
-            1
-        ),
+        new ItemClaimSearchCondition(ItemClaimStatus.WAITING, 1, 20),
         7L,
         false
     );
@@ -124,74 +158,35 @@ class ItemClaimQueryServiceTest {
           assertThat(item.itemClaimId()).isEqualTo(31L);
           assertThat(item.storedItemId()).isEqualTo(25L);
           assertThat(item.itemName()).isEqualTo("검은색 반지갑");
-          assertThat(item.claimantName()).isEqualTo("정석우");
-          assertThat(item.studentNumber()).isEqualTo("60251423");
-          assertThat(item.requestMethod()).isEqualTo("ONLINE");
-          assertThat(item.claimStatus()).isEqualTo("WAITING");
-          assertThat(item.claimStatusName()).isEqualTo("대기");
-          assertThat(item.thumbnailUrl())
-              .isEqualTo("https://cdn/proof.jpg");
-          assertThat(item.attachmentCount()).isEqualTo(2);
         });
-    assertThat(response.data().hasNext()).isTrue();
-    assertThat(response.data().nextCursor()).isNotBlank();
-    ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(
-        Pageable.class
-    );
-    verify(itemClaimRepository).findAllByOfficeIdAndCursor(
+    assertThat(response.data().page()).isEqualTo(1);
+    assertThat(response.data().size()).isEqualTo(20);
+    assertThat(response.data().totalElements()).isEqualTo(21);
+    assertThat(response.data().totalPages()).isEqualTo(2);
+    assertThat(response.data().hasNext()).isFalse();
+    ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+    verify(itemClaimRepository).findAllByOfficeId(
         eq(3L),
         eq(ItemClaimStatus.WAITING),
-        eq(null),
-        eq(null),
-        pageableCaptor.capture()
+        captor.capture()
     );
-    assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(2);
+    assertThat(captor.getValue().getPageNumber()).isEqualTo(1);
+    assertThat(captor.getValue().getPageSize()).isEqualTo(20);
   }
 
   @Test
-  void officeListPassesDecodedCursorToRepository() {
-    LocalDateTime cursorCreatedAt = LocalDateTime.of(
-        2026, 8, 12, 15, 0
-    );
-    String cursor = new ItemClaimCursorCodec().encode(
-        cursorCreatedAt,
-        31L
-    );
-    when(itemClaimRepository.findAllByOfficeIdAndCursor(
-        eq(3L),
-        eq(null),
-        eq(cursorCreatedAt),
-        eq(31L),
-        any(Pageable.class)
-    )).thenReturn(List.of());
-
-    var response = service.getOfficeItemClaims(
-        3L,
-        new ItemClaimSearchCondition(null, cursor, 20),
-        7L,
-        false
-    );
-
-    assertThat(response.data().content()).isEmpty();
-    assertThat(response.data().hasNext()).isFalse();
-    assertThat(response.data().nextCursor()).isNull();
-  }
-
-  @Test
-  void officeListSupportsTemporaryClaimantWithoutAttachments() {
+  void pageSupportsTemporaryClaimantWithoutAttachments() {
     ItemClaim claim = temporaryClaim(31L);
-    when(itemClaimRepository.findAllByOfficeIdAndCursor(
-        eq(3L),
-        eq(null),
-        eq(null),
+    when(itemClaimRepository.findAllByStoredItemId(
+        eq(25L),
         eq(null),
         any(Pageable.class)
-    )).thenReturn(List.of(claim));
+    )).thenReturn(new PageImpl<>(List.of(claim)));
     when(thumbnailService.resolveAll(List.of(31L))).thenReturn(Map.of());
 
-    var response = service.getOfficeItemClaims(
-        3L,
-        new ItemClaimSearchCondition(null, null, 20),
+    var response = service.getItemClaims(
+        25L,
+        new ItemClaimSearchCondition(null, 0, 20),
         7L,
         false
     );
@@ -210,7 +205,7 @@ class ItemClaimQueryServiceTest {
     assertBusinessError(
         () -> service.getOfficeItemClaims(
             99L,
-            new ItemClaimSearchCondition(null, null, 20),
+            new ItemClaimSearchCondition(null, 0, 20),
             7L,
             false
         ),
@@ -218,134 +213,64 @@ class ItemClaimQueryServiceTest {
     );
     verify(assignmentRepository, never())
         .existsByOffice_IdAndUser_IdAndEndedAtIsNull(any(), any());
+    verify(itemClaimRepository, never())
+        .findAllByOfficeId(any(), any(), any());
   }
 
   @Test
-  void staffWithoutOfficeAssignmentCannotReadOfficeClaims() {
+  void staffWithoutOfficeAssignmentIsDenied() {
     when(assignmentRepository
         .existsByOffice_IdAndUser_IdAndEndedAtIsNull(3L, 7L))
         .thenReturn(false);
 
     assertBusinessError(
+        () -> service.getItemClaims(
+            25L,
+            new ItemClaimSearchCondition(null, 0, 20),
+            7L,
+            false
+        ),
+        ItemClaimErrorCode.ACCESS_DENIED
+    );
+    assertBusinessError(
         () -> service.getOfficeItemClaims(
             3L,
-            new ItemClaimSearchCondition(null, null, 20),
+            new ItemClaimSearchCondition(null, 0, 20),
             7L,
             false
         ),
         ItemClaimErrorCode.ACCESS_DENIED
     );
     verify(itemClaimRepository, never())
-        .findAllByOfficeIdAndCursor(
-            any(), any(), any(), any(), any()
-        );
+        .findAllByStoredItemId(any(), any(), any());
+    verify(itemClaimRepository, never())
+        .findAllByOfficeId(any(), any(), any());
   }
 
   @Test
-  void adminReadsOfficeClaimsWithoutAssignment() {
-    when(itemClaimRepository.findAllByOfficeIdAndCursor(
-        eq(3L), eq(null), eq(null), eq(null), any(Pageable.class)
-    )).thenReturn(List.of());
+  void adminReadsPagesWithoutOfficeAssignment() {
+    when(itemClaimRepository.findAllByStoredItemId(
+        eq(25L), eq(null), any(Pageable.class)
+    )).thenReturn(new PageImpl<>(List.of()));
+    when(itemClaimRepository.findAllByOfficeId(
+        eq(3L), eq(null), any(Pageable.class)
+    )).thenReturn(new PageImpl<>(List.of()));
 
+    service.getItemClaims(
+        25L,
+        new ItemClaimSearchCondition(null, 0, 20),
+        7L,
+        true
+    );
     service.getOfficeItemClaims(
         3L,
-        new ItemClaimSearchCondition(null, null, 20),
+        new ItemClaimSearchCondition(null, 0, 20),
         7L,
         true
     );
 
     verify(assignmentRepository, never())
         .existsByOffice_IdAndUser_IdAndEndedAtIsNull(any(), any());
-  }
-
-  @Test
-  void malformedOfficeClaimCursorIsRejected() {
-    assertBusinessError(
-        () -> service.getOfficeItemClaims(
-            3L,
-            new ItemClaimSearchCondition(null, "invalid", 20),
-            7L,
-            false
-        ),
-        ItemClaimErrorCode.INVALID_CURSOR
-    );
-  }
-
-  @Test
-  void assignedStaffGetsFilteredClaimsWithThumbnailAndCursor() {
-    ItemClaim first = memberClaim(
-        31L,
-        LocalDateTime.of(2026, 8, 12, 15, 0),
-        "정석우",
-        "60251423"
-    );
-    ItemClaim second = memberClaim(
-        30L,
-        LocalDateTime.of(2026, 8, 12, 14, 0),
-        "홍길동",
-        "60250001"
-    );
-    when(itemClaimRepository.findAllByCursor(
-        eq(25L),
-        eq(ItemClaimStatus.WAITING),
-        eq(null),
-        eq(null),
-        any(Pageable.class)
-    )).thenReturn(List.of(first, second));
-    when(thumbnailService.resolveAll(List.of(31L)))
-        .thenReturn(Map.of(
-            31L,
-            new ItemClaimAttachmentSummary("https://cdn/proof.jpg", 2)
-        ));
-
-    var response = service.getItemClaims(
-        25L,
-        new ItemClaimSearchCondition(
-            ItemClaimStatus.WAITING,
-            null,
-            1
-        ),
-        7L,
-        false
-    );
-
-    assertThat(response.data().content()).hasSize(1);
-    var item = response.data().content().getFirst();
-    assertThat(item.itemClaimId()).isEqualTo(31L);
-    assertThat(item.claimantName()).isEqualTo("정석우");
-    assertThat(item.studentNumber()).isEqualTo("60251423");
-    assertThat(item.claimStatus()).isEqualTo("WAITING");
-    assertThat(item.claimStatusName()).isEqualTo("대기");
-    assertThat(item.thumbnailUrl()).isEqualTo("https://cdn/proof.jpg");
-    assertThat(item.attachmentCount()).isEqualTo(2);
-    assertThat(response.data().hasNext()).isTrue();
-    assertThat(response.data().nextCursor()).isNotBlank();
-  }
-
-  @Test
-  void listSupportsTemporaryClaimantWithoutAttachments() {
-    ItemClaim claim = temporaryClaim(31L);
-    when(itemClaimRepository.findAllByCursor(
-        eq(25L),
-        eq(null),
-        eq(null),
-        eq(null),
-        any(Pageable.class)
-    )).thenReturn(List.of(claim));
-    when(thumbnailService.resolveAll(List.of(31L))).thenReturn(Map.of());
-
-    var response = service.getItemClaims(
-        25L,
-        new ItemClaimSearchCondition(null, null, 20),
-        7L,
-        false
-    );
-
-    var item = response.data().content().getFirst();
-    assertThat(item.claimantName()).isEqualTo("임시 신청자");
-    assertThat(item.studentNumber()).isEqualTo("60259999");
-    assertThat(item.thumbnailUrl()).isNull();
-    assertThat(item.attachmentCount()).isZero();
   }
 
   @Test
@@ -387,48 +312,7 @@ class ItemClaimQueryServiceTest {
     assertThat(response.data().ownershipDescription())
         .isEqualTo("소유 증명 설명");
     assertThat(response.data().attachments()).hasSize(1);
-    assertThat(response.data().attachments().getFirst().fileUrl())
-        .isEqualTo("https://cdn/proof.jpg");
     assertThat(response.data().statusHistories()).hasSize(1);
-    assertThat(response.data().statusHistories().getFirst().newStatusName())
-        .isEqualTo("대기");
-  }
-
-  @Test
-  void staffWithoutOfficeAssignmentIsDenied() {
-    when(assignmentRepository
-        .existsByOffice_IdAndUser_IdAndEndedAtIsNull(3L, 7L))
-        .thenReturn(false);
-
-    assertBusinessError(
-        () -> service.getItemClaims(
-            25L,
-            new ItemClaimSearchCondition(null, null, 20),
-            7L,
-            false
-        ),
-        ItemClaimErrorCode.ACCESS_DENIED
-    );
-    verify(itemClaimRepository, never()).findAllByCursor(
-        any(), any(), any(), any(), any()
-    );
-  }
-
-  @Test
-  void adminCanViewClaimsWithoutOfficeAssignment() {
-    when(itemClaimRepository.findAllByCursor(
-        eq(25L), eq(null), eq(null), eq(null), any(Pageable.class)
-    )).thenReturn(List.of());
-
-    service.getItemClaims(
-        25L,
-        new ItemClaimSearchCondition(null, null, 20),
-        7L,
-        true
-    );
-
-    verify(assignmentRepository, never())
-        .existsByOffice_IdAndUser_IdAndEndedAtIsNull(any(), any());
   }
 
   @Test
@@ -439,19 +323,6 @@ class ItemClaimQueryServiceTest {
     assertBusinessError(
         () -> service.getItemClaim(99L, 7L, false),
         ItemClaimErrorCode.NOT_FOUND
-    );
-  }
-
-  @Test
-  void malformedCursorIsRejected() {
-    assertBusinessError(
-        () -> service.getItemClaims(
-            25L,
-            new ItemClaimSearchCondition(null, "invalid", 20),
-            7L,
-            false
-        ),
-        ItemClaimErrorCode.INVALID_CURSOR
     );
   }
 

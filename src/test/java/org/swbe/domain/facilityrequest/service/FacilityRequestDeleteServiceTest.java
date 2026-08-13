@@ -117,9 +117,9 @@ class FacilityRequestDeleteServiceTest {
     FacilityRequestAttachment attachment =
         mock(FacilityRequestAttachment.class);
     FileResource file = mock(FileResource.class);
-    when(file.getStorageProvider()).thenReturn("LOCAL");
+    when(file.getStorageProvider()).thenReturn("S3");
     when(file.getStorageKey()).thenReturn("2026/08/09/image.jpg");
-    when(fileStorageRegistry.get("LOCAL")).thenReturn(fileStorage);
+    when(fileStorageRegistry.get("S3")).thenReturn(fileStorage);
     when(attachment.getFile()).thenReturn(file);
     when(facilityRequestRepository.findDetailById(25L))
         .thenReturn(Optional.of(request));
